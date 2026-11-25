@@ -2,6 +2,10 @@
 
 VYRA separates market data from execution. A market-data API key does not create a broker relationship and does not authorize trading.
 
+## Free-tier request budget
+
+Twelve Data's Basic tier currently documents 8 API credits per minute and an 800-credit daily cap; the quote endpoint consumes one credit per symbol and multi-symbol batch requests still consume one credit per symbol. VYRA therefore batches its eight non-crypto symbols into one API call and caches that result for 15 minutes. This is a best-effort zero-cost development allowance, not a real-time market-data SLA. Do not increase the refresh frequency on the Basic key without recalculating daily credits. See [Twelve Data batch request guidance](https://support.twelvedata.com/en/articles/5203360-batch-api-requests), [credits](https://support.twelvedata.com/en/articles/5615854-credits) and [pricing](https://twelvedata.com/pricing).
+
 ## Implemented market data
 
 | Asset class | Adapter | State | Scope |
