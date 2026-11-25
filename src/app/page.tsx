@@ -41,6 +41,11 @@ function money(value: number, currency = 'USD') {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 2 }).format(value);
 }
 
+function quoteIsFresh(quote: Quote) {
+  const age = Date.now() - new Date(quote.asOf).getTime();
+  return Number.isFinite(age) && age >= -30_000 && age <= 60_000;
+}
+
 export default function Home() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [unavailable, setUnavailable] = useState<Array<{assetClass:string;reason:string;provider:string}>>([]);
@@ -67,14 +72,15 @@ export default function Home() {
       setQuotes(Array.isArray(data.quotes) ? data.quotes : []);
       setUnavailable(Array.isArray(data.unavailable) ? data.unavailable : []);
     } catch {
-      setUnavailable([{assetClass:'all',provider:'VYRA API',reason:'Market data request failed. Check the API and provider status.'}]);
+      setQuotes([]);
+      setUnavailable([{assetClass:'all',provider:'VYRA API',reason:'Market data request failed. Old quotes have been cleared.'}]);
     }
   }, []);
 
   const loadAccount = useCallback(async () => {
     try {
       const me = await fetch('/api/me', { cache: 'no-store' });
-      if (!me.ok) { setUserEmail(null); setAccount(null); setOrders([]); setLedger([]); return; }
+      if (!me.ok) { setUserEmail(null); setAccount(null); setOrders([]); setLedger([]); setWatch(['BTC-USD','ETH-USD','NVDA']); return; }
       const meData = await me.json();
       setUserEmail(meData.user?.email ?? null);
       const watchResponse = await fetch('/api/watchlist', { cache: 'no-store' });
@@ -104,9 +110,14 @@ export default function Home() {
         } else {
           setLedger([]);
         }
+      } else {
+        setOrders([]);
+        setLedger([]);
       }
     } catch {
       setAccount(null);
+      setOrders([]);
+      setLedger([]);
     }
   }, []);
 
@@ -122,7 +133,7 @@ export default function Home() {
     const positionsValue = account.positions.reduce((total, position) => {
       const positionSymbol = position.instrument_catalog?.symbol;
       const quote = quotes.find((item) => item.symbol === positionSymbol);
-      return total + (quote && quote.currency === account.currency ? Number(position.quantity) * quote.price : 0);
+      return total + (quote && quote.currency === account.currency && quoteIsFresh(quote) ? Number(position.quantity) * quote.price : 0);
     }, 0);
     return Number(account.cashBalance) + positionsValue;
   }, [account, quotes]);
@@ -174,7 +185,7 @@ export default function Home() {
     finally { setBusy(false); }
   }
 
-  const tradableQuotes = quotes.filter((item) => item.currency === (account?.currency ?? 'USD'));
+  const tradableQuotes = quotes.filter((item) => item.currency === (account?.currency ?? 'USD') && quoteIsFresh(item));
   const selectedQuote = tradableQuotes.find((item) => item.symbol === symbol);
   async function toggleWatch(symbolToToggle: string) {
     const adding = !watch.includes(symbolToToggle);
@@ -246,7 +257,7 @@ export default function Home() {
               const quote = quotes.find((item) => item.symbol === symbol);
               const quantity = Number(position.quantity);
               const averageCost = Number(position.average_cost);
-              const supportedQuote = quote && quote.currency === account.currency;
+              const supportedQuote = quote && quote.currency === account.currency && quoteIsFresh(quote);
               const marketValue = supportedQuote ? quantity * quote.price : null;
               const unrealised = marketValue === null ? null : marketValue - quantity * averageCost;
               return <div className="positionsRow" key={position.instrument_id}>
