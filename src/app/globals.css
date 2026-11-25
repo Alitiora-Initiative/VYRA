@@ -22,3 +22,10 @@
 .positionsHeader{font-size:9px;letter-spacing:.9px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
 .positionsRow{font-size:11px;color:#c7d1da;border-bottom:1px solid #202a33}.positionsRow:last-child{border:0}.positionsRow strong{font-size:12px;color:var(--text)}.positionsRow small{display:block;margin-top:4px;font-size:10px;color:var(--muted)}
 @media(max-width:760px){.positionsPanel{padding:13px}.positionsTable{margin-right:-4px}}
+
+.ledgerPanel{margin-top:24px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:17px;overflow:hidden}
+.ledgerRows{display:grid;gap:10px}.ledgerTransaction{border:1px solid #26313c;border-radius:10px;padding:13px}.ledgerTransactionHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.ledgerTransactionHead strong{font-size:12px;color:var(--text)}.ledgerTransactionHead small{display:block;color:var(--muted);font-size:10px;margin-top:5px}
+.ledgerImmutable{color:#7edfb2;border:1px solid #2d644b;padding:4px 7px;border-radius:20px;font-size:8px;letter-spacing:.8px;white-space:nowrap}
+.ledgerEntries{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.ledgerEntry{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #202a33;padding-top:8px;color:#a9b6c4;font-size:10px;text-transform:capitalize}
+.ledgerDebit{color:#f0bc8b}.ledgerCredit{color:#7bd9a8}
+@media(max-width:700px){.ledgerPanel{padding:13px}.ledgerEntries{grid-template-columns:1fr}.ledgerTransactionHead{flex-direction:column}}
