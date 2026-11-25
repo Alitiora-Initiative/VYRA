@@ -77,6 +77,15 @@ export default function Home() {
       if (!me.ok) { setUserEmail(null); setAccount(null); setOrders([]); setLedger([]); return; }
       const meData = await me.json();
       setUserEmail(meData.user?.email ?? null);
+      const watchResponse = await fetch('/api/watchlist', { cache: 'no-store' });
+      if (watchResponse.ok) {
+        const watchData = await watchResponse.json();
+        if (Array.isArray(watchData.items)) {
+          setWatch(watchData.items.flatMap((item: { instrument_catalog?: { symbol?: string } }) =>
+            item.instrument_catalog?.symbol ? [item.instrument_catalog.symbol] : []
+          ));
+        }
+      }
       const response = await fetch('/api/trading/paper/accounts', { cache: 'no-store' });
       if (!response.ok) { setAccount(null); setOrders([]); setLedger([]); return; }
       const data = await response.json();
@@ -167,6 +176,28 @@ export default function Home() {
 
   const tradableQuotes = quotes.filter((item) => item.currency === (account?.currency ?? 'USD'));
   const selectedQuote = tradableQuotes.find((item) => item.symbol === symbol);
+  async function toggleWatch(symbolToToggle: string) {
+    const adding = !watch.includes(symbolToToggle);
+    setWatch((current) => adding
+      ? [...current, symbolToToggle]
+      : current.filter((value) => value !== symbolToToggle));
+    if (!userEmail) return;
+
+    try {
+      const response = await fetch('/api/watchlist', {
+        method: adding ? 'POST' : 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symbol: symbolToToggle }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error?.message ?? 'Watchlist update failed.');
+    } catch (error) {
+      setWatch((current) => adding
+        ? current.filter((value) => value !== symbolToToggle)
+        : [...current, symbolToToggle]);
+      setMessage(error instanceof Error ? error.message : 'Watchlist update failed.');
+    }
+  }
   function showOrder(preferredSymbol?: string) {
     const preferred = tradableQuotes.find((item) => item.symbol === preferredSymbol) ?? tradableQuotes[0];
     if (!preferred) {
@@ -242,7 +273,7 @@ export default function Home() {
 
         <div className="sectionhead" id="markets"><div><h2>Provider market watch</h2><p>Provider quotes only. Source timestamps shown; not guaranteed real-time.</p></div><button className="outline" onClick={() => void loadMarkets()}><RefreshCw size={15}/> Refresh quotes</button></div>
         {quotes.length ? <div className="marketgrid">{quotes.map((quote) => <div className="market" key={quote.symbol}>
-          <div className="markethead"><div className="coin">{quote.assetClass === 'crypto' ? '₿' : quote.assetClass === 'forex' ? 'FX' : quote.assetClass === 'commodity' ? 'Au' : quote.symbol.slice(0,1)}</div><div><strong>{quote.symbol}</strong><small>{quote.name} · {quote.assetClass}</small></div><button className="star" onClick={() => setWatch((old) => old.includes(quote.symbol) ? old.filter((value) => value !== quote.symbol) : [...old, quote.symbol])} aria-label="Toggle watchlist"><Star size={16} fill={watch.includes(quote.symbol) ? 'currentColor' : 'none'}/></button></div>
+          <div className="markethead"><div className="coin">{quote.assetClass === 'crypto' ? '₿' : quote.assetClass === 'forex' ? 'FX' : quote.assetClass === 'commodity' ? 'Au' : quote.symbol.slice(0,1)}</div><div><strong>{quote.symbol}</strong><small>{quote.name} · {quote.assetClass}</small></div><button className="star" onClick={() => void toggleWatch(quote.symbol)} aria-label={watch.includes(quote.symbol) ? 'Remove from watchlist' : 'Add to watchlist'}><Star size={16} fill={watch.includes(quote.symbol) ? 'currentColor' : 'none'}/></button></div>
           <div className="price">{money(quote.price,quote.currency)}</div><div className={quote.changePercent === null ? 'neutral' : quote.changePercent >= 0 ? 'positive' : 'negative'}>{quote.changePercent === null ? 'Change unavailable' : (quote.changePercent >= 0 ? '+' : '') + quote.changePercent.toFixed(2) + '%'}</div>
           <div className="quoteMeta">{quote.source} · {new Date(quote.asOf).toLocaleTimeString()}</div>
           {account && quote.currency === account.currency && <button className="tradeLink" onClick={() => showOrder(quote.symbol)}>Trade in paper</button>}
