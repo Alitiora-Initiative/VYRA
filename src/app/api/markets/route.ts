@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
   const status = quotes.length ? 200 : 503;
   return NextResponse.json({
     ok: quotes.length > 0,
-    dataStatus: quotes.length ? 'live_provider_quotes' : 'unavailable',
+    dataStatus: quotes.length ? 'provider_quotes' : 'unavailable',
     quotes,
     unavailable: snapshot.unavailable,
     databasePersistence: persistence,
