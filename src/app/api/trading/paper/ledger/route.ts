@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase/server';
 import { jsonError, privateJson } from '@/lib/http';
 
