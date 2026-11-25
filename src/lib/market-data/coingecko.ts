@@ -44,10 +44,10 @@ export async function getCryptoQuotes(): Promise<LiveQuote[]> {
         live: true as const,
       }];
     });
+    if (quotes.length === 0) throw new Error('CoinGecko returned no usable crypto quotes.');
     cache = { expiresAt: Date.now() + CACHE_TTL_MS, quotes };
     return quotes;
   } catch (error) {
-    cache = { expiresAt: Date.now() + CACHE_TTL_MS, quotes: [] };
     throw error;
   }
 }
