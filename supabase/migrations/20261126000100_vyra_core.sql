@@ -99,7 +99,7 @@ create table if not exists public.positions (
 create table if not exists public.ledger_accounts (
   id uuid primary key default gen_random_uuid(),
   trading_account_id uuid not null references public.trading_accounts(id) on delete restrict,
-  account_code text not null check (account_code in ('cash','positions','equity')),
+  account_code text not null check (account_code in ('cash','positions','equity','realized_pnl')),
   currency text not null default 'USD' check (currency = 'USD'),
   created_at timestamptz not null default now(),
   unique (trading_account_id, account_code)
@@ -306,6 +306,8 @@ begin
   values (v_account_id, 'positions', 'USD') returning id into v_positions_id;
   insert into public.ledger_accounts (trading_account_id, account_code, currency)
   values (v_account_id, 'equity', 'USD') returning id into v_equity_id;
+  insert into public.ledger_accounts (trading_account_id, account_code, currency)
+  values (v_account_id, 'realized_pnl', 'USD');
 
   insert into public.ledger_transactions (trading_account_id, event_type, reference_id, idempotency_key, description)
   values (v_account_id, 'paper_opening_balance', v_account_id, 'opening-balance-v1', 'Illustrative paper account opening balance')
@@ -341,6 +343,9 @@ declare
   v_position_qty numeric(28,10);
   v_notional numeric(24,2);
   v_cost numeric(24,10);
+  v_cost_basis numeric(24,2);
+  v_realized_pnl numeric(24,2);
+  v_pnl_id uuid;
 begin
   select * into v_order from public.orders where id = p_order_id for update;
   if not found or v_order.status <> 'open' then return jsonb_build_object('filled', false); end if;
@@ -390,13 +395,33 @@ begin
       updated_at = now();
   else
     if v_position_qty < v_order.quantity then raise exception 'INSUFFICIENT_PAPER_POSITION'; end if;
+    v_cost_basis := round(v_cost * v_order.quantity, 2);
+    v_realized_pnl := v_notional - v_cost_basis;
+    select id into v_pnl_id from public.ledger_accounts
+      where trading_account_id = v_order.trading_account_id and account_code = 'realized_pnl';
+
     insert into public.ledger_transactions (trading_account_id, event_type, reference_id, idempotency_key, description)
     values (v_order.trading_account_id, 'paper_trade', v_order.id, 'paper-order:' || v_order.id::text, 'Paper market/limit sell fill')
     returning id into v_transaction_id;
-    insert into public.ledger_entries (transaction_id, ledger_account_id, direction, amount, currency)
-    values
-      (v_transaction_id, v_cash_id, 'debit', v_notional, v_account.currency),
-      (v_transaction_id, v_positions_id, 'credit', v_notional, v_account.currency);
+
+    if v_realized_pnl > 0 then
+      insert into public.ledger_entries (transaction_id, ledger_account_id, direction, amount, currency)
+      values
+        (v_transaction_id, v_cash_id, 'debit', v_notional, v_account.currency),
+        (v_transaction_id, v_positions_id, 'credit', v_cost_basis, v_account.currency),
+        (v_transaction_id, v_pnl_id, 'credit', v_realized_pnl, v_account.currency);
+    elsif v_realized_pnl < 0 then
+      insert into public.ledger_entries (transaction_id, ledger_account_id, direction, amount, currency)
+      values
+        (v_transaction_id, v_cash_id, 'debit', v_notional, v_account.currency),
+        (v_transaction_id, v_pnl_id, 'debit', abs(v_realized_pnl), v_account.currency),
+        (v_transaction_id, v_positions_id, 'credit', v_cost_basis, v_account.currency);
+    else
+      insert into public.ledger_entries (transaction_id, ledger_account_id, direction, amount, currency)
+      values
+        (v_transaction_id, v_cash_id, 'debit', v_notional, v_account.currency),
+        (v_transaction_id, v_positions_id, 'credit', v_cost_basis, v_account.currency);
+    end if;
 
     update public.positions
       set quantity = quantity - v_order.quantity,
@@ -446,6 +471,7 @@ declare
   v_estimated_price numeric(24,10);
   v_notional numeric(24,2);
   v_marketable boolean;
+  v_current_qty numeric(28,10) := 0;
   v_fill jsonb;
 begin
   if v_user_id is null then raise exception 'AUTH_REQUIRED'; end if;
@@ -483,6 +509,16 @@ begin
   );
   v_notional := round(p_quantity * v_estimated_price, 2);
   if v_notional > v_limits.max_order_notional then raise exception 'ORDER_NOTIONAL_LIMIT_EXCEEDED'; end if;
+
+  select coalesce(quantity, 0) into v_current_qty
+  from public.positions
+  where trading_account_id = p_account_id and instrument_id = p_instrument_id;
+  if p_side = 'buy' and (v_current_qty * v_estimated_price + v_notional) > v_limits.max_position_notional then
+    raise exception 'POSITION_NOTIONAL_LIMIT_EXCEEDED';
+  end if;
+  if p_side = 'sell' and v_current_qty < p_quantity then
+    raise exception 'INSUFFICIENT_PAPER_POSITION';
+  end if;
 
   v_marketable := p_order_type = 'market'
     or (p_side = 'buy' and p_limit_price >= v_estimated_price)
@@ -624,3 +660,71 @@ grant execute on function public.open_paper_account() to authenticated;
 grant execute on function public.submit_paper_order(uuid,uuid,text,text,numeric,numeric,uuid) to authenticated;
 grant execute on function public.cancel_paper_order(uuid) to authenticated;
 grant execute on function public.process_market_quote(uuid) to service_role;
+
+-- Ledger history is append-only and each journal transaction must balance.
+create or replace function private.reject_ledger_mutation()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  raise exception 'LEDGER_IS_IMMUTABLE_USE_A_COMPENSATING_TRANSACTION';
+end;
+$$;
+revoke all on function private.reject_ledger_mutation() from public, anon, authenticated;
+
+drop trigger if exists ledger_entries_no_mutation on public.ledger_entries;
+create trigger ledger_entries_no_mutation
+before update or delete on public.ledger_entries
+for each row execute function private.reject_ledger_mutation();
+
+drop trigger if exists ledger_transactions_no_mutation on public.ledger_transactions;
+create trigger ledger_transactions_no_mutation
+before update or delete on public.ledger_transactions
+for each row execute function private.reject_ledger_mutation();
+
+create or replace function private.assert_ledger_transaction_balanced()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_transaction_id uuid;
+  v_debits numeric(24,2);
+  v_credits numeric(24,2);
+begin
+  if tg_table_name = 'ledger_transactions' then
+    v_transaction_id := new.id;
+  else
+    v_transaction_id := new.transaction_id;
+  end if;
+
+  select
+    coalesce(sum(case when direction = 'debit' then amount else 0 end), 0),
+    coalesce(sum(case when direction = 'credit' then amount else 0 end), 0)
+  into v_debits, v_credits
+  from public.ledger_entries
+  where transaction_id = v_transaction_id;
+
+  if v_debits <= 0 or v_debits <> v_credits then
+    raise exception 'UNBALANCED_LEDGER_TRANSACTION: transaction %, debits %, credits %',
+      v_transaction_id, v_debits, v_credits;
+  end if;
+  return null;
+end;
+$$;
+revoke all on function private.assert_ledger_transaction_balanced() from public, anon, authenticated;
+
+drop trigger if exists ledger_transaction_must_balance on public.ledger_transactions;
+create constraint trigger ledger_transaction_must_balance
+after insert on public.ledger_transactions
+deferrable initially deferred
+for each row execute function private.assert_ledger_transaction_balanced();
+
+drop trigger if exists ledger_entries_must_balance on public.ledger_entries;
+create constraint trigger ledger_entries_must_balance
+after insert on public.ledger_entries
+deferrable initially deferred
+for each row execute function private.assert_ledger_transaction_balanced();
