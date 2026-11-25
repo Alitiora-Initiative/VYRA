@@ -285,6 +285,9 @@ declare
 begin
   if v_user_id is null then raise exception 'AUTH_REQUIRED'; end if;
 
+  -- Serialise account creation so concurrent first-login requests remain idempotent.
+  perform pg_advisory_xact_lock(hashtextextended(v_user_id::text || ':paper-account', 0));
+
   select id into v_account_id
   from public.trading_accounts
   where user_id = v_user_id and account_type = 'paper' and status = 'active'
@@ -355,9 +358,6 @@ begin
 
   select * into v_account from public.trading_accounts where id = v_order.trading_account_id for update;
   if v_account.status <> 'active' or v_account.account_type <> 'paper' then raise exception 'PAPER_ACCOUNT_INACTIVE'; end if;
-
-  -- Serialise account creation to make retries safe under concurrent requests.
-  perform pg_advisory_xact_lock(hashtextextended(v_user_id::text || ':paper-account', 0));
 
   select id into v_cash_id from public.ledger_accounts
     where trading_account_id = v_order.trading_account_id and account_code = 'cash';
