@@ -16,7 +16,7 @@ export function validatePaperOrder(input, limits) {
   if (input.type === 'market' && input.limitPrice !== undefined && input.limitPrice !== null) {
     errors.push('Market orders cannot include a limit price.');
   }
-  if (typeof limits?.maxOrderNotional !== 'number' || limits.maxOrderNotional <= 0) {
+  if (typeof limits?.maxOrderNotional !== 'number' || !Number.isFinite(limits.maxOrderNotional) || limits.maxOrderNotional <= 0) {
     errors.push('Risk limits are unavailable.');
   }
   if (Number.isFinite(input.quantity) && Number.isFinite(input.referencePrice)) {
