@@ -32,13 +32,14 @@ A free Render Node web-service blueprint is included in `render.yaml` (Frankfurt
 6. Configure `TWELVEDATA_API_KEY` to enable shares, FX and metals quotes. Crypto spot quotes use CoinGecko and may require `COINGECKO_DEMO_API_KEY` if rate-limited.
 7. Install dependencies and run `npm run dev`.
 
-The service role key must remain server-side and must never use a `NEXT_PUBLIC_` prefix. Keep secrets in Vercel Environment Variables, not Git.
+The SQL migration sets the current paper defaults to USD 100,000 starting cash, $10,000 maximum order notional, $25,000 maximum position notional, $1,000 daily realised-loss stop and 5 basis points assumed adverse slippage. The service role key must remain server-side and must never use a `NEXT_PUBLIC_` prefix. Keep secrets in your hosting provider's environment-variable store, not Git.
 
 ## Main endpoints
 
 | Endpoint | Purpose |
 | --- | --- |
 | `GET /api/health` | Runtime configuration and execution gates |
+| `GET /api/execution/readiness` | Provider slots and live execution lock |
 | `GET /api/markets` | Live provider quotes and provider availability |
 | `GET /api/instruments` | Database-backed instrument catalogue |
 | `GET /api/me` | Current authenticated user |
