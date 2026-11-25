@@ -21,3 +21,8 @@ test('applies adverse slippage in the correct direction', () => {
   assert.equal(applySlippage(100, 'buy', 10), 100.1);
   assert.equal(applySlippage(100, 'sell', 10), 99.9);
 });
+
+test('rejects an order without a fresh positive reference price', () => {
+  assert.equal(validatePaperOrder({ side: 'buy', type: 'market', quantity: 1 }, limits).ok, false);
+  assert.equal(validatePaperOrder({ side: 'buy', type: 'market', quantity: 1, referencePrice: 0 }, limits).ok, false);
+});
