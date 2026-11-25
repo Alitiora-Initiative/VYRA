@@ -22,6 +22,13 @@ type Order = {
   status: string; average_fill_price: number | null; created_at: string;
   instrument_catalog?: { symbol: string; name: string };
 };
+type LedgerTransaction = {
+  id: string; event_type: string; description: string; created_at: string;
+  ledger_entries?: Array<{
+    id: string; direction: 'debit' | 'credit'; amount: number; currency: string;
+    ledger_accounts?: { account_code: string };
+  }>;
+};
 
 const nav = [
   ['Overview', LayoutDashboard], ['Markets', ChartNoAxesCombined],
@@ -36,7 +43,7 @@ export default function Home() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [unavailable, setUnavailable] = useState<Array<{assetClass:string;reason:string;provider:string}>>([]);
   const [account, setAccount] = useState<PaperAccount | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);\n  const [ledger, setLedger] = useState<LedgerTransaction[]>([]);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [active, setActive] = useState('Overview');
   const [watch, setWatch] = useState<string[]>(['BTC-USD', 'ETH-USD', 'NVDA']);
@@ -64,11 +71,11 @@ export default function Home() {
   const loadAccount = useCallback(async () => {
     try {
       const me = await fetch('/api/me', { cache: 'no-store' });
-      if (!me.ok) { setUserEmail(null); setAccount(null); setOrders([]); return; }
+      if (!me.ok) { setUserEmail(null); setAccount(null); setOrders([]); setLedger([]); return; }
       const meData = await me.json();
       setUserEmail(meData.user?.email ?? null);
       const response = await fetch('/api/trading/paper/accounts', { cache: 'no-store' });
-      if (!response.ok) { setAccount(null); return; }
+      if (!response.ok) { setAccount(null); setOrders([]); setLedger([]); return; }
       const data = await response.json();
       const nextAccount = data.accounts?.[0] ?? null;
       setAccount(nextAccount);
@@ -77,6 +84,13 @@ export default function Home() {
         if (orderResponse.ok) {
           const orderData = await orderResponse.json();
           setOrders(Array.isArray(orderData.orders) ? orderData.orders : []);
+        }
+        const ledgerResponse = await fetch('/api/trading/paper/ledger?accountId=' + encodeURIComponent(nextAccount.id), { cache: 'no-store' });
+        if (ledgerResponse.ok) {
+          const ledgerData = await ledgerResponse.json();
+          setLedger(Array.isArray(ledgerData.transactions) ? ledgerData.transactions : []);
+        } else {
+          setLedger([]);
         }
       }
     } catch {
@@ -225,6 +239,17 @@ export default function Home() {
         <div className="sectionhead" id="activity"><div><h2>Paper order activity</h2><p>Server-validated order lifecycle and ledger postings.</p></div></div>
         {account ? <div className="orderList">{orders.length ? orders.slice(0,8).map((order) => <div className="orderRow" key={order.id}><div><strong>{order.instrument_catalog?.symbol || 'Instrument'} · {order.side.toUpperCase()}</strong><small>{order.order_type} · {Number(order.quantity).toLocaleString()} units · {new Date(order.created_at).toLocaleString()}</small></div><span className={'orderStatus '+order.status}>{order.status}</span>{order.status === 'open' && <button className="cancelLink" disabled={busy} onClick={() => void cancelOrder(order.id)}>Cancel</button>}</div>) : <p className="emptyCopy">No paper orders yet. Select a live quote and submit your first paper order.</p>}</div>
           : <div className="emptyState"><BriefcaseBusiness size={22}/><strong>Your paper activity will appear here</strong><p>Sign in and open a paper account to submit market and limit orders.</p><Link className="tradeLink" href="/login">Sign in to continue</Link></div>}
+
+        {account && <section className="ledgerPanel" id="ledger">
+          <div className="sectionhead compact"><div><h2>Paper ledger</h2><p>Immutable double-entry journal · last 20 transactions</p></div></div>
+          {ledger.length ? <div className="ledgerRows">{ledger.slice(0,20).map((transaction) => <article className="ledgerTransaction" key={transaction.id}>
+            <div className="ledgerTransactionHead"><div><strong>{transaction.description}</strong><small>{transaction.event_type.replaceAll('_',' ')} · {new Date(transaction.created_at).toLocaleString()}</small></div><span className="ledgerImmutable">IMMUTABLE</span></div>
+            <div className="ledgerEntries">{(transaction.ledger_entries ?? []).map((entry) => <div className="ledgerEntry" key={entry.id}>
+              <span>{entry.ledger_accounts?.account_code?.replaceAll('_',' ') ?? 'Ledger account'}</span>
+              <span className={entry.direction === 'debit' ? 'ledgerDebit' : 'ledgerCredit'}>{entry.direction.toUpperCase()} {money(Number(entry.amount),entry.currency)}</span>
+            </div>)}</div>
+          </article>)}</div> : <p className="emptyCopy">No ledger transactions are available yet.</p>}
+        </section>}
 
         {orderOpen && <div className="modalBackdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOrderOpen(false); }}><section className="orderModal" role="dialog" aria-modal="true" aria-labelledby="orderTitle">
           <div className="modalHead"><div><div className="eyebrow">PAPER EXECUTION</div><h2 id="orderTitle">New order</h2></div><button className="iconbtn" onClick={() => setOrderOpen(false)} aria-label="Close"><X size={17}/></button></div>
