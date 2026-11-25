@@ -548,15 +548,17 @@ begin
   select coalesce(quantity, 0) into v_current_qty
   from public.positions
   where trading_account_id = p_account_id and instrument_id = p_instrument_id;
-  select coalesce(sum(case when le.direction = 'debit' then le.amount else -le.amount end), 0)
-  into v_daily_realized_loss
-  from public.ledger_entries le
-  join public.ledger_accounts la on la.id = le.ledger_account_id
-  where la.trading_account_id = p_account_id
-    and la.account_code = 'realized_pnl'
-    and le.created_at >= date_trunc('day', now());
-  if v_daily_realized_loss > v_limits.max_daily_realized_loss then
-    raise exception 'DAILY_REALIZED_LOSS_LIMIT_EXCEEDED';
+  if p_side = 'buy' then
+    select coalesce(sum(case when le.direction = 'debit' then le.amount else -le.amount end), 0)
+    into v_daily_realized_loss
+    from public.ledger_entries le
+    join public.ledger_accounts la on la.id = le.ledger_account_id
+    where la.trading_account_id = p_account_id
+      and la.account_code = 'realized_pnl'
+      and le.created_at >= date_trunc('day', now());
+    if v_daily_realized_loss > v_limits.max_daily_realized_loss then
+      raise exception 'DAILY_REALIZED_LOSS_LIMIT_EXCEEDED';
+    end if;
   end if;
 
   if p_side = 'buy' and (v_current_qty * v_estimated_price + v_notional) > v_limits.max_position_notional then
