@@ -6,7 +6,7 @@ import {
   Activity, ArrowUpRight, Bell, BriefcaseBusiness,
   ChartNoAxesCombined, CircleHelp, Command, CreditCard, Globe2,
   LayoutDashboard, LogIn, Menu, Plus, Settings, ShieldCheck,
-  Star, Wallet, RefreshCw, ExternalLink, X,
+  Star, RefreshCw, ExternalLink, X,
 } from 'lucide-react';
 
 type Quote = {
@@ -34,7 +34,7 @@ type LedgerTransaction = {
 
 const nav = [
   ['Overview', LayoutDashboard], ['Markets', ChartNoAxesCombined],
-  ['Portfolio', BriefcaseBusiness], ['Wallet', Wallet], ['Activity', Activity],
+  ['Portfolio', BriefcaseBusiness], ['Activity', Activity],
 ] as const;
 
 function money(value: number, currency = 'USD') {
