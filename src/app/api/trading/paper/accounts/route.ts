@@ -12,74 +12,22 @@ export async function GET() {
 
   const { data: accounts, error } = await supabase
     .from('trading_accounts')
-    .select('id,account_type,status,currency,created_at')
+    .select('id')
     .eq('user_id', userData.user.id)
     .eq('account_type', 'paper')
     .order('created_at', { ascending: false });
-  if (error) return jsonError('Could not load paper accounts. Apply the VYRA database migration first.', 503, 'DATABASE_NOT_READY');
+  if (error) return jsonError('Could not load paper accounts.', 503, 'DATABASE_NOT_READY');
 
   const snapshots = [];
   for (const account of accounts ?? []) {
-    const { data: ledgerAccounts } = await supabase
-      .from('ledger_accounts').select('id,account_code').eq('trading_account_id', account.id);
-    const cashAccount = ledgerAccounts?.find((row) => row.account_code === 'cash');
-    let cashBalance = 0;
-    if (cashAccount) {
-      const { data: entries } = await supabase
-        .from('ledger_entries').select('direction,amount').eq('ledger_account_id', cashAccount.id);
-      cashBalance = (entries ?? []).reduce((total, entry) =>
-        total + (entry.direction === 'debit' ? Number(entry.amount) : -Number(entry.amount)), 0);
-    }
-    const { data: openBuys } = await supabase
-      .from('orders')
-      .select('quantity,limit_price')
-      .eq('trading_account_id', account.id)
-      .eq('side', 'buy')
-      .eq('status', 'open');
-    const reservedCash = (openBuys ?? []).reduce((total, order) =>
-      total + Number(order.quantity) * Number(order.limit_price ?? 0), 0);
-
-    const { data: openSells } = await supabase
-      .from('orders')
-      .select('instrument_id,quantity')
-      .eq('trading_account_id', account.id)
-      .eq('side', 'sell')
-      .eq('status', 'open');
-    const reservedByInstrument = new Map<string, number>();
-    for (const order of openSells ?? []) {
-      reservedByInstrument.set(
-        order.instrument_id,
-        (reservedByInstrument.get(order.instrument_id) ?? 0) + Number(order.quantity),
-      );
-    }
-
-    const { data: positions } = await supabase
-      .from('positions')
-      .select('instrument_id,quantity,average_cost,instrument_catalog(symbol,name,asset_class)')
-      .eq('trading_account_id', account.id)
-      .gt('quantity', 0);
-    const enrichedPositions = (positions ?? []).map((position) => {
-      const quantity = Number(position.quantity);
-      const reservedQuantity = reservedByInstrument.get(position.instrument_id) ?? 0;
-      return { ...position, reservedQuantity, availableQuantity: Math.max(0, quantity - reservedQuantity) };
+    const { data, error: snapshotError } = await supabase.rpc('get_paper_account_snapshot', {
+      p_account_id: account.id,
     });
-    const { data: riskLimits } = await supabase
-      .from('risk_limits')
-      .select('max_order_notional,max_position_notional,max_daily_realized_loss,slippage_bps')
-      .eq('trading_account_id', account.id)
-      .maybeSingle();
-
-    snapshots.push({
-      ...account,
-      cashBalance,
-      reservedCash,
-      availableCash: Math.max(0, cashBalance - reservedCash),
-      riskLimits,
-      positions: enrichedPositions,
-    });
+    if (snapshotError) return jsonError('Could not calculate paper account balances.', 503, 'ACCOUNT_SNAPSHOT_NOT_READY');
+    if (data) snapshots.push(data);
   }
 
-  return privateJson({ accounts: snapshots, source: 'database_ledger' });
+  return privateJson({ accounts: snapshots, source: 'database_ledger_aggregate' });
 }
 
 export async function POST(request: NextRequest) {
