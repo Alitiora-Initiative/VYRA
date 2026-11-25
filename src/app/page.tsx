@@ -16,6 +16,7 @@ type Quote = {
 type PaperAccount = {
   id: string; account_type: string; status: string; currency: string;
   cashBalance: number; availableCash: number; reservedCash: number;
+  riskLimits?: { max_order_notional: number; max_position_notional: number; max_daily_realized_loss: number; slippage_bps: number } | null;
   positions: Array<{ quantity: number; average_cost: number; reservedQuantity: number; availableQuantity: number; instrument_catalog?: { symbol: string; name: string; asset_class: string } }>;
 };
 type Order = {
@@ -226,6 +227,16 @@ export default function Home() {
               </div>;
             })}
           </div> : <p className="emptyCopy">No open positions. Filled paper buys will appear here.</p>}
+        </section>}
+
+        {account?.riskLimits && <section className="riskPanel">
+          <div className="riskPanelTitle"><ShieldCheck size={16}/> Paper risk limits <span>server enforced</span></div>
+          <div className="riskMetrics">
+            <div><small>Max order notional</small><strong>{money(Number(account.riskLimits.max_order_notional),account.currency)}</strong></div>
+            <div><small>Max position notional</small><strong>{money(Number(account.riskLimits.max_position_notional),account.currency)}</strong></div>
+            <div><small>Daily loss stop</small><strong>{money(Number(account.riskLimits.max_daily_realized_loss),account.currency)}</strong></div>
+            <div><small>Assumed adverse slippage</small><strong>{Number(account.riskLimits.slippage_bps).toFixed(1)} bps</strong></div>
+          </div>
         </section>}
 
         <div className="sectionhead" id="markets"><div><h2>Live market watch</h2><p>Provider quotes only. No hardcoded market prices.</p></div><button className="outline" onClick={() => void loadMarkets()}><RefreshCw size={15}/> Refresh quotes</button></div>
