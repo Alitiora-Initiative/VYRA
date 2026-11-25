@@ -10,7 +10,7 @@ type CoinGeckoPayload = Record<string, { usd?: number; usd_24h_change?: number }
 
 export async function getCryptoQuotes(): Promise<LiveQuote[]> {
   const ids = COINS.map((coin) => coin.id).join(',');
-  const headers: HeadersInit = { accept: 'application/json' };
+  const headers: Record<string, string> = { accept: 'application/json' };
   if (process.env.COINGECKO_DEMO_API_KEY) {
     headers['x-cg-demo-api-key'] = process.env.COINGECKO_DEMO_API_KEY;
   }
