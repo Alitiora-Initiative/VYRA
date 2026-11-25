@@ -767,6 +767,75 @@ $$;
 revoke all on function private.open_paper_account() from public, anon;
 revoke all on function private.submit_paper_order(uuid,uuid,text,text,numeric,numeric,uuid) from public, anon;
 revoke all on function private.cancel_paper_order(uuid) from public, anon;
+
+create or replace function private.match_user_paper_orders(p_instrument_id uuid, p_account_id uuid)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  v_order public.orders%rowtype;
+  v_quote public.market_quotes%rowtype;
+  v_limits public.risk_limits%rowtype;
+  v_price numeric(24,10);
+  v_count integer := 0;
+begin
+  if auth.uid() is null or not exists (
+    select 1 from public.trading_accounts
+    where id = p_account_id and user_id = auth.uid()
+      and account_type = 'paper' and status = 'active'
+  ) then
+    raise exception 'PAPER_ACCOUNT_NOT_OWNED';
+  end if;
+
+  select * into v_quote from public.market_quotes
+  where instrument_id = p_instrument_id
+    and observed_at >= now() - interval '60 seconds'
+    and observed_at <= now() + interval '30 seconds';
+  if not found then return 0; end if;
+
+  for v_order in
+    select * from public.orders
+    where instrument_id = p_instrument_id
+      and trading_account_id = p_account_id
+      and status = 'open' and order_type = 'limit'
+    order by created_at asc
+    for update
+  loop
+    select * into v_limits from public.risk_limits
+    where trading_account_id = v_order.trading_account_id;
+    v_price := v_quote.last_price * (
+      1 + case when v_order.side = 'buy' then v_limits.slippage_bps else -v_limits.slippage_bps end / 10000
+    );
+    if (v_order.side = 'buy' and v_order.limit_price >= v_price)
+       or (v_order.side = 'sell' and v_order.limit_price <= v_price) then
+      begin
+        perform private.execute_paper_fill(v_order.id, v_price);
+        v_count := v_count + 1;
+      exception when others then
+        update public.orders
+          set status = 'rejected', rejection_reason = left(sqlerrm, 240), updated_at = now()
+          where id = v_order.id and status = 'open';
+      end;
+    end if;
+  end loop;
+  return v_count;
+end;
+$;
+
+create or replace function public.process_my_paper_quote(p_instrument_id uuid, p_account_id uuid)
+returns integer
+language plpgsql
+security invoker
+set search_path = ''
+as $
+begin
+  if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
+  return private.match_user_paper_orders(p_instrument_id, p_account_id);
+end;
+$;
+
 revoke all on function private.match_open_orders(uuid) from public, anon, authenticated;
 revoke all on function private.execute_paper_fill(uuid,numeric) from public, anon, authenticated, service_role;
 revoke all on function public.open_paper_account() from public, anon;
@@ -780,6 +849,10 @@ grant execute on function public.open_paper_account() to authenticated;
 grant execute on function public.submit_paper_order(uuid,uuid,text,text,numeric,numeric,uuid) to authenticated;
 grant execute on function public.cancel_paper_order(uuid) to authenticated;
 grant execute on function public.process_market_quote(uuid) to service_role;
+revoke all on function private.match_user_paper_orders(uuid,uuid) from public, anon;
+grant execute on function private.match_user_paper_orders(uuid,uuid) to authenticated;
+revoke all on function public.process_my_paper_quote(uuid,uuid) from public, anon;
+grant execute on function public.process_my_paper_quote(uuid,uuid) to authenticated;
 
 -- Ledger history is append-only and each journal transaction must balance.
 create or replace function private.reject_ledger_mutation()
