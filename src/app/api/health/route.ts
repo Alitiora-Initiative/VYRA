@@ -1,0 +1,1 @@
+export async function GET(){return Response.json({status:"ok",service:"vyra",mode:"prototype",tradingEnabled:false,marketData:"not-connected",timestamp:new Date().toISOString()},{headers:{"Cache-Control":"no-store"}});}
