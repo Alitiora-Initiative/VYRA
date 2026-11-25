@@ -26,3 +26,9 @@ test('rejects an order without a fresh positive reference price', () => {
   assert.equal(validatePaperOrder({ side: 'buy', type: 'market', quantity: 1 }, limits).ok, false);
   assert.equal(validatePaperOrder({ side: 'buy', type: 'market', quantity: 1, referencePrice: 0 }, limits).ok, false);
 });
+
+test('rejects missing or non-finite configured risk limits', () => {
+  const order = { side: 'buy', type: 'market', quantity: 1, referencePrice: 100 };
+  assert.equal(validatePaperOrder(order, {}).ok, false);
+  assert.equal(validatePaperOrder(order, { maxOrderNotional: Number.NaN }).ok, false);
+});
