@@ -1,13 +1,14 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { getSupabaseBrowser } from '@/lib/supabase/browser';
 
 export default function LoginPage() {
   const router = useRouter();
-  const params = useSearchParams();
+  const [callbackError, setCallbackError] = useState(false);
+  useEffect(() => { setCallbackError(new URLSearchParams(window.location.search).get('error') === 'callback_failed'); }, []);
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,7 +45,7 @@ export default function LoginPage() {
       <div className="authEyebrow">SECURE ACCOUNT ACCESS</div>
       <h1>{mode === 'signin' ? 'Welcome back.' : 'Create your account.'}</h1>
       <p className="authLead">Access your multi-asset workspace. Live trading is not enabled.</p>
-      {params.get('error') && <p className="authMessage" role="alert">Authentication callback failed. Please sign in again.</p>}
+      {callbackError && <p className="authMessage" role="alert">Authentication callback failed. Please sign in again.</p>}
       <form onSubmit={submit} className="authForm">
         <label>Email address<input type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" /></label>
         <label>Password<input type="password" autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} minLength={8} required value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 8 characters" /></label>
