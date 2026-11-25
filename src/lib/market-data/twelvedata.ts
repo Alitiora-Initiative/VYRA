@@ -54,15 +54,14 @@ function parseQuote(value: unknown): TwelveDataQuote | null {
 
 function mapBatchPayload(payload: BatchPayload): LiveQuote[] {
   const quotes: LiveQuote[] = [];
-  const asOfFallback = new Date().toISOString();
 
   for (const instrument of SYMBOLS) {
     const row = parseQuote(payload[instrument.symbol]);
     if (!row || row.status === 'error' || row.code || (!row.close && !row.price)) continue;
 
     const price = Number(row.close ?? row.price);
-    const asOf = parseTime(row) ?? asOfFallback;
-    if (!Number.isFinite(price) || price <= 0) continue;
+    const asOf = parseTime(row);
+    if (!Number.isFinite(price) || price <= 0 || !asOf) continue;
 
     quotes.push({
       symbol: instrument.symbol,
