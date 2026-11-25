@@ -9,7 +9,6 @@ export type ProviderQuote = {
   currency: string;
   source: string;
   asOf: string;
-  live: true;
 };
 
 export type MarketUnavailable = {
