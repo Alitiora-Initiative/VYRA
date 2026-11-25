@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const supabase = await getSupabaseServer();
   if (!supabase) {
-    return NextResponse.json({ authenticated: false, configured: false }, { status: 503 });
+    return NextResponse.json({ authenticated: false, configured: false }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
   }
 
   const { data, error } = await supabase.auth.getUser();
