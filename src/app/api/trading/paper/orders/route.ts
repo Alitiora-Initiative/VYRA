@@ -49,8 +49,9 @@ export async function POST(request: NextRequest) {
   if (type === 'limit' && typeof limitPrice !== 'number') return jsonError('Limit orders require a numeric limitPrice.');
 
   const { data: instrument, error: instrumentError } = await supabase
-    .from('instrument_catalog').select('id,symbol').eq('symbol', symbol).eq('is_enabled', true).maybeSingle();
+    .from('instrument_catalog').select('id,symbol,quote_currency').eq('symbol', symbol).eq('is_enabled', true).maybeSingle();
   if (instrumentError || !instrument) return jsonError('Instrument is unavailable or not listed.', 404, 'INSTRUMENT_NOT_FOUND');
+  if (instrument.quote_currency !== 'USD') return jsonError('Paper execution is currently limited to USD-quoted instruments. Cross-currency conversion is not implemented.', 422, 'CURRENCY_NOT_SUPPORTED');
 
   const { data: quote } = await supabase
     .from('market_quotes').select('last_price,observed_at,source').eq('instrument_id', instrument.id).maybeSingle();
