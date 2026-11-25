@@ -40,6 +40,7 @@ create table if not exists public.risk_limits (
   trading_account_id uuid primary key references public.trading_accounts(id) on delete cascade,
   max_order_notional numeric(20,2) not null default 10000 check (max_order_notional > 0),
   max_position_notional numeric(20,2) not null default 25000 check (max_position_notional > 0),
+  max_daily_realized_loss numeric(20,2) not null default 1000 check (max_daily_realized_loss > 0),
   slippage_bps numeric(10,2) not null default 5 check (slippage_bps between 0 and 1000),
   created_at timestamptz not null default now()
 );
@@ -404,7 +405,12 @@ begin
     values (v_order.trading_account_id, 'paper_trade', v_order.id, 'paper-order:' || v_order.id::text, 'Paper market/limit sell fill')
     returning id into v_transaction_id;
 
-    if v_realized_pnl > 0 then
+    if v_cost_basis = 0 then
+      insert into public.ledger_entries (transaction_id, ledger_account_id, direction, amount, currency)
+      values
+        (v_transaction_id, v_cash_id, 'debit', v_notional, v_account.currency),
+        (v_transaction_id, v_pnl_id, 'credit', v_notional, v_account.currency);
+    elsif v_realized_pnl > 0 then
       insert into public.ledger_entries (transaction_id, ledger_account_id, direction, amount, currency)
       values
         (v_transaction_id, v_cash_id, 'debit', v_notional, v_account.currency),
@@ -472,6 +478,7 @@ declare
   v_notional numeric(24,2);
   v_marketable boolean;
   v_current_qty numeric(28,10) := 0;
+  v_daily_realized_loss numeric(24,2) := 0;
   v_fill jsonb;
 begin
   if v_user_id is null then raise exception 'AUTH_REQUIRED'; end if;
@@ -513,6 +520,17 @@ begin
   select coalesce(quantity, 0) into v_current_qty
   from public.positions
   where trading_account_id = p_account_id and instrument_id = p_instrument_id;
+  select coalesce(sum(case when le.direction = 'debit' then le.amount else -le.amount end), 0)
+  into v_daily_realized_loss
+  from public.ledger_entries le
+  join public.ledger_accounts la on la.id = le.ledger_account_id
+  where la.trading_account_id = p_account_id
+    and la.account_code = 'realized_pnl'
+    and le.created_at >= date_trunc('day', now());
+  if v_daily_realized_loss > v_limits.max_daily_realized_loss then
+    raise exception 'DAILY_REALIZED_LOSS_LIMIT_EXCEEDED';
+  end if;
+
   if p_side = 'buy' and (v_current_qty * v_estimated_price + v_notional) > v_limits.max_position_notional then
     raise exception 'POSITION_NOTIONAL_LIMIT_EXCEEDED';
   end if;
