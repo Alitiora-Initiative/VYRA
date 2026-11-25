@@ -18,12 +18,11 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-export function isSameOriginRequest(request: Request & { nextUrl?: URL }) {
+export function isSameOriginRequest(request: Request) {
   const origin = request.headers.get('origin');
   if (!origin) return true;
   try {
-    const requestOrigin = request.nextUrl?.origin ?? new URL(request.url).origin;
-    return new URL(origin).origin === requestOrigin;
+    return new URL(origin).origin === new URL(request.url).origin;
   } catch {
     return false;
   }
