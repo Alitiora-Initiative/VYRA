@@ -20,34 +20,30 @@ export async function getCryptoQuotes(): Promise<LiveQuote[]> {
     headers['x-cg-demo-api-key'] = process.env.COINGECKO_DEMO_API_KEY;
   }
 
-  try {
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,
-      { headers, cache: 'no-store', signal: AbortSignal.timeout(8_000) },
-    );
-    if (!response.ok) throw new Error(`CoinGecko returned HTTP ${response.status}`);
+  const response = await fetch(
+    `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,
+    { headers, cache: 'no-store', signal: AbortSignal.timeout(8_000) },
+  );
+  if (!response.ok) throw new Error(`CoinGecko returned HTTP ${response.status}`);
 
-    const payload = await response.json() as CoinGeckoPayload;
-    const asOf = new Date().toISOString();
-    const quotes = COINS.flatMap((coin) => {
-      const row = payload[coin.id];
-      if (!row || typeof row.usd !== 'number' || !Number.isFinite(row.usd) || row.usd <= 0) return [];
-      return [{
-        symbol: coin.symbol,
-        name: coin.name,
-        assetClass: 'crypto' as const,
-        price: row.usd,
-        changePercent: typeof row.usd_24h_change === 'number' ? row.usd_24h_change : null,
-        currency: 'USD',
-        source: 'CoinGecko',
-        asOf,
-        live: true as const,
-      }];
-    });
-    if (quotes.length === 0) throw new Error('CoinGecko returned no usable crypto quotes.');
-    cache = { expiresAt: Date.now() + CACHE_TTL_MS, quotes };
-    return quotes;
-  } catch (error) {
-    throw error;
-  }
+  const payload = await response.json() as CoinGeckoPayload;
+  const asOf = new Date().toISOString();
+  const quotes = COINS.flatMap((coin) => {
+    const row = payload[coin.id];
+    if (!row || typeof row.usd !== 'number' || !Number.isFinite(row.usd) || row.usd <= 0) return [];
+    return [{
+      symbol: coin.symbol,
+      name: coin.name,
+      assetClass: 'crypto' as const,
+      price: row.usd,
+      changePercent: typeof row.usd_24h_change === 'number' ? row.usd_24h_change : null,
+      currency: 'USD',
+      source: 'CoinGecko',
+      asOf,
+      live: true as const,
+    }];
+  });
+  if (quotes.length === 0) throw new Error('CoinGecko returned no usable crypto quotes.');
+  cache = { expiresAt: Date.now() + CACHE_TTL_MS, quotes };
+  return quotes;
 }
