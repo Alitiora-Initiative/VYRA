@@ -96,7 +96,7 @@ export default function Home() {
     const positionsValue = account.positions.reduce((total, position) => {
       const positionSymbol = position.instrument_catalog?.symbol;
       const quote = quotes.find((item) => item.symbol === positionSymbol);
-      return total + (quote ? Number(position.quantity) * quote.price : 0);
+      return total + (quote && quote.currency === account.currency ? Number(position.quantity) * quote.price : 0);
     }, 0);
     return Number(account.cashBalance) + positionsValue;
   }, [account, quotes]);
@@ -161,7 +161,7 @@ export default function Home() {
       <div className="sidebottom"><ShieldCheck size={18}/><div><strong>Risk controls active</strong><small>Paper mode only · live disabled</small></div></div>
     </aside>
     <section className="content">
-      <header className="topbar"><div className="crumb"><Menu size={18}/><span>Workspace</span><b>/</b>{active}</div><div className="topactions"><button className="iconbtn" onClick={() => void loadMarkets()} aria-label="Refresh market data"><RefreshCw size={16}/></button><button className="iconbtn" aria-label="Notifications"><Bell size={17}/></button>{userEmail ? <span className="account">{userEmail}</span> : <Link className="account" href="/login"><LogIn size={16}/>Sign in</Link>}</div></header>
+      <header className="topbar"><div className="crumb"><Menu size={18}/><span>Workspace</span><b>/</b>{active}</div><div className="topactions"><button className="iconbtn" onClick={() => void loadMarkets()} aria-label="Refresh market data"><RefreshCw size={16}/></button><button className="iconbtn" aria-label="Notifications"><Bell size={17}/></button>{userEmail ? <><span className="account">{userEmail}</span><form action="/auth/signout" method="post"><button className="account" type="submit">Sign out</button></form></> : <Link className="account" href="/login"><LogIn size={16}/>Sign in</Link>}</div></header>
       <div className="page">
         <div className="welcome"><div><div className="eyebrow"><Globe2 size={14}/> MULTI-ASSET BROKERAGE FOUNDATION</div><h1>Trade with clarity.</h1><p>One workspace for crypto, equities, FX and commodities.</p></div><div className="status"><span className="dot"/> PAPER MODE <ShieldCheck size={14}/></div></div>
         <div className="notice"><ShieldCheck size={19}/><div><strong>Paper trading only — live execution is locked</strong><p>Prices below come from connected market-data providers and carry source timestamps. Paper fills use an explicit 5 bps slippage assumption. No client funds or live broker orders are handled.</p></div></div>
@@ -170,7 +170,7 @@ export default function Home() {
           <div className="balheader"><span>Paper account</span><span className="pillText">{account ? 'ACTIVE · SIMULATED' : 'NOT OPENED'}</span></div>
           {account ? <>
             <h2>{portfolioValue === null ? '—' : money(portfolioValue, account.currency)}</h2>
-            <div className="gain"><ShieldCheck size={16}/>Paper portfolio value <span>Based on latest available quotes; missing quotes excluded</span></div>
+            <div className="gain"><ShieldCheck size={16}/>Paper portfolio value <span>USD-quoted positions only; stale and non-USD positions excluded</span></div>
             <div className="balancefooter"><div><small>Cash available</small><strong>{money(Number(account.cashBalance),account.currency)}</strong></div><div><small>Open positions</small><strong>{account.positions.length}</strong></div><button className="primary" onClick={() => setOrderOpen(true)}><ArrowUpRight size={16}/> New paper order</button></div>
           </> : <>
             <h2>—</h2><div className="gain">No account balance is displayed until you create a paper account.</div>
