@@ -6,6 +6,9 @@ export function validatePaperOrder(input, limits) {
   if (typeof input.quantity !== 'number' || !Number.isFinite(input.quantity) || input.quantity <= 0) {
     errors.push('Quantity must be a positive finite number.');
   }
+  if (typeof input.referencePrice !== 'number' || !Number.isFinite(input.referencePrice) || input.referencePrice <= 0) {
+    errors.push('A fresh positive reference price is required.');
+  }
   if (input.quantity > 10000000) errors.push('Quantity exceeds the platform maximum.');
   if (input.type === 'limit' && (typeof input.limitPrice !== 'number' || !Number.isFinite(input.limitPrice) || input.limitPrice <= 0)) {
     errors.push('A limit order requires a positive limit price.');
