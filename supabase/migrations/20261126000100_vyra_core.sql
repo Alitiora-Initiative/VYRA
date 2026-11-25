@@ -347,12 +347,17 @@ declare
   v_cost_basis numeric(24,2);
   v_realized_pnl numeric(24,2);
   v_pnl_id uuid;
+  v_limits public.risk_limits%rowtype;
+  v_daily_loss numeric(24,2) := 0;
 begin
   select * into v_order from public.orders where id = p_order_id for update;
   if not found or v_order.status <> 'open' then return jsonb_build_object('filled', false); end if;
 
   select * into v_account from public.trading_accounts where id = v_order.trading_account_id for update;
   if v_account.status <> 'active' or v_account.account_type <> 'paper' then raise exception 'PAPER_ACCOUNT_INACTIVE'; end if;
+
+  -- Serialise account creation to make retries safe under concurrent requests.
+  perform pg_advisory_xact_lock(hashtextextended(v_user_id::text || ':paper-account', 0));
 
   select id into v_cash_id from public.ledger_accounts
     where trading_account_id = v_order.trading_account_id and account_code = 'cash';
@@ -374,6 +379,26 @@ begin
   v_notional := round(v_order.quantity * p_fill_price, 2);
   if v_notional <= 0 then raise exception 'INVALID_NOTIONAL'; end if;
   if v_order.side = 'buy' and v_cash < v_notional then raise exception 'INSUFFICIENT_PAPER_CASH'; end if;
+
+  select * into v_limits from public.risk_limits where trading_account_id = v_order.trading_account_id;
+  if not found then raise exception 'RISK_LIMITS_MISSING'; end if;
+  if v_notional > v_limits.max_order_notional then raise exception 'ORDER_NOTIONAL_LIMIT_EXCEEDED'; end if;
+
+  if v_order.side = 'buy' then
+    if (v_position_qty * p_fill_price + v_notional) > v_limits.max_position_notional then
+      raise exception 'POSITION_NOTIONAL_LIMIT_EXCEEDED';
+    end if;
+    select coalesce(sum(case when le.direction = 'debit' then le.amount else -le.amount end), 0)
+      into v_daily_loss
+    from public.ledger_entries le
+    join public.ledger_accounts la on la.id = le.ledger_account_id
+    where la.trading_account_id = v_order.trading_account_id
+      and la.account_code = 'realized_pnl'
+      and le.created_at >= date_trunc('day', now());
+    if v_daily_loss > v_limits.max_daily_realized_loss then
+      raise exception 'DAILY_REALIZED_LOSS_LIMIT_EXCEEDED';
+    end if;
+  end if;
 
   if v_order.side = 'buy' then
     insert into public.ledger_transactions (trading_account_id, event_type, reference_id, idempotency_key, description)
