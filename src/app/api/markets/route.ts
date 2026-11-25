@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { getMarketSnapshot } from '@/lib/market-data';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { getSupabaseServer } from '@/lib/supabase/server';
