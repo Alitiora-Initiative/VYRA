@@ -282,6 +282,7 @@ create policy "provider owner reads own connections" on public.provider_connecti
 
 grant select on public.instrument_catalog, public.market_quotes to anon, authenticated;
 grant select, insert, delete on public.user_watchlist to authenticated;
+grant update on public.profiles to authenticated;
 grant select on public.profiles, public.trading_accounts, public.risk_limits, public.orders,
   public.fills, public.positions, public.ledger_accounts, public.ledger_transactions,
   public.ledger_entries, public.audit_events, public.provider_connections to authenticated;
