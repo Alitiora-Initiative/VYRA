@@ -1,6 +1,6 @@
 export type AssetClass = 'crypto' | 'equity' | 'forex' | 'commodity';
 
-export type LiveQuote = {
+export type ProviderQuote = {
   symbol: string;
   name: string;
   assetClass: AssetClass;
@@ -19,7 +19,7 @@ export type MarketUnavailable = {
 };
 
 export type MarketSnapshot = {
-  quotes: LiveQuote[];
+  quotes: ProviderQuote[];
   unavailable: MarketUnavailable[];
   fetchedAt: string;
 };
