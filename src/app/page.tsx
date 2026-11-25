@@ -11,7 +11,7 @@ import {
 
 type Quote = {
   symbol: string; name: string; assetClass: string; price: number;
-  changePercent: number | null; currency: string; source: string; asOf: string; live: true;
+  changePercent: number | null; currency: string; source: string; asOf: string;
 };
 type PaperAccount = {
   id: string; account_type: string; status: string; currency: string;
