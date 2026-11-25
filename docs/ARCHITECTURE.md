@@ -11,7 +11,8 @@ VYRA is a multi-asset brokerage software foundation with separate market-data an
 - Market data: CoinGecko crypto snapshots and Twelve Data batch quotes. Providers return their own timestamps; quote freshness is enforced before paper execution. Free-tier caching is intentionally conservative.
 - Paper OMS: account creation, market/limit orders, cancellation, UUID client idempotency, stale-quote rejection and user-scoped matching of open paper orders.
 - Paper risk: order notional, position exposure, daily realised-loss stop, cash reservations, share reservations and explicit adverse-slippage assumption.
-- Paper accounting: append-only double-entry journal, balanced transaction triggers, cash/position/equity/realised-P&L accounts, immutable audit events and user-owned read access.
+- Paper accounting: append-only double-entry journal, balanced transaction triggers, cash/position/equity/realised-P&L accounts, immutable audit events and user-owned read access. Paper account cash, reservations and positions are aggregated in Postgres to avoid REST row-limit truncation.
+- User preferences: user-owned RLS watchlist and display-name profile updates.
 - Execution boundary: one provider capability contract per asset class. All live adapters reject execution.
 
 ## Request flow
