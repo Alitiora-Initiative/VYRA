@@ -1,32 +1,28 @@
-# VYRA roadmap
+# Build sequence
 
-## Stage 0 — foundation
-- [x] Repository and product scope
-- [x] Dashboard shell
-- [x] Architecture and risk notes
-- [ ] CI, test suite, dependency security
+## Implemented in code
+1. Multi-asset Next.js foundation and responsive market console.
+2. Supabase SSR authentication wiring and callback flow.
+3. Provider-backed market data adapters for crypto, equities, FX and metals; no hardcoded prices.
+4. Supabase migration with profiles, instrument catalogue, accounts, risk limits, quotes, orders, fills, positions, ledger, audit and provider connection records.
+5. RLS, private paper RPC functions, idempotent market/limit paper orders, cancellation and market quote matching.
+6. Paper risk gates and immutable balanced ledger postings.
+7. Provider-specific execution contract boundary with all live execution hard-disabled.
+8. Unit tests and deployment workflow.
 
-## Stage 1 — identity & data
-- [ ] Authentication, MFA, recovery, role model
-- [ ] Instrument schema and provider contracts
-- [ ] Licensed/approved real-time and delayed data sources
-- [ ] Data freshness and market-status indicators
+## Infrastructure still to configure
+1. Provision a dedicated VYRA Supabase project and apply the migration.
+2. Set the Supabase Data API exposed schema and verify RLS / grants.
+3. Set Vercel environment variables and confirm the deploy build.
+4. Add a Twelve Data key if equities, FX and commodity quotes are required; configure CoinGecko demo key if rate limits require it.
+5. Configure email provider, allowed redirect URLs, CAPTCHA and MFA policy.
 
-## Stage 2 — paper OMS
-- [ ] Order state machine and idempotency
-- [ ] Paper fills based on documented rules and data feeds
-- [ ] Risk limits and kill switch
-- [ ] Audit logs, portfolio accounting, reconciliation
+## Before real-money operations
+1. Select and contract asset-class-specific execution/custody providers.
+2. Complete legal/regulatory review for every intended market and customer jurisdiction.
+3. Implement provider adapters, sandbox tests, order-state reconciliation, fees, settlement and failure recovery.
+4. Build KYC/AML/sanctions, client-asset controls, deposits/withdrawals and independent reconciliation.
+5. Complete security audit, penetration testing, incident response, monitoring and kill-switch certification.
+6. Run internal staff tests, then a limited approved pilot, then staged production rollout only after all sign-offs.
 
-## Stage 3 — regulated/provider integrations
-- [ ] Legal assessment for target jurisdictions
-- [ ] Provider and broker partnerships
-- [ ] KYC/AML and sanctions screening as required
-- [ ] Funding, custody, settlement and statements
-- [ ] Sandbox tests and independent security assessment
-
-## Stage 4 — controlled live rollout
-- [ ] Live capability gates, restricted rollout and monitoring
-- [ ] User disclosures and support workflows
-- [ ] Incident response and recovery tests
-- [ ] Only after required approvals and certifications
+The roadmap is a gating plan, not a claim that these integrations or approvals already exist.
