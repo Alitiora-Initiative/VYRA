@@ -4,6 +4,7 @@
 
 - Supabase SSR Auth uses cookie-backed sessions and refreshes claims in Next.js middleware.
 - Authenticated endpoints call `auth.getUser()` before exposing or mutating user data.
+- Account, order, profile, watchlist and sign-out mutations reject cross-origin Origin headers; absent Origin headers remain accepted for non-browser callers.
 - The service-role key is read only by a server-only helper and is not exposed to the browser.
 - User-owned rows use RLS policies keyed to `auth.uid()`.
 - Ledger tables have no client write grants, are append-only, and use deferred balance triggers to ensure debits equal credits.
