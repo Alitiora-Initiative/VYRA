@@ -373,6 +373,8 @@ declare
   v_pnl_id uuid;
   v_limits public.risk_limits%rowtype;
   v_daily_loss numeric(24,2) := 0;
+  v_reserved_buy numeric(24,2) := 0;
+  v_reserved_sell numeric(28,10) := 0;
 begin
   select * into v_order from public.orders where id = p_order_id for update;
   if not found or v_order.status <> 'open' then return jsonb_build_object('filled', false); end if;
@@ -390,6 +392,17 @@ begin
   from public.ledger_entries le
   where le.ledger_account_id = v_cash_id;
 
+  select coalesce(sum(o.quantity * coalesce(o.limit_price, p_fill_price)), 0)
+    into v_reserved_buy
+  from public.orders o
+  where o.trading_account_id = v_order.trading_account_id
+    and o.side = 'buy' and o.status = 'open' and o.id <> v_order.id;
+  select coalesce(sum(o.quantity), 0)
+    into v_reserved_sell
+  from public.orders o
+  where o.trading_account_id = v_order.trading_account_id
+    and o.side = 'sell' and o.status = 'open' and o.id <> v_order.id;
+
   select coalesce(quantity, 0), coalesce(average_cost, 0)
     into v_position_qty, v_cost
   from public.positions
@@ -400,14 +413,19 @@ begin
   if p_fill_price is null or p_fill_price <= 0 then raise exception 'INVALID_FILL_PRICE'; end if;
   v_notional := round(v_order.quantity * p_fill_price, 2);
   if v_notional <= 0 then raise exception 'INVALID_NOTIONAL'; end if;
-  if v_order.side = 'buy' and v_cash < v_notional then raise exception 'INSUFFICIENT_PAPER_CASH'; end if;
+  if v_order.side = 'buy' and v_cash < (v_notional + v_reserved_buy) then
+    raise exception 'INSUFFICIENT_PAPER_CASH_OR_RESERVED';
+  end if;
+  if v_order.side = 'sell' and (v_position_qty - v_reserved_sell) < v_order.quantity then
+    raise exception 'INSUFFICIENT_PAPER_POSITION_OR_RESERVED';
+  end if;
 
   select * into v_limits from public.risk_limits where trading_account_id = v_order.trading_account_id;
   if not found then raise exception 'RISK_LIMITS_MISSING'; end if;
   if v_notional > v_limits.max_order_notional then raise exception 'ORDER_NOTIONAL_LIMIT_EXCEEDED'; end if;
 
   if v_order.side = 'buy' then
-    if (v_position_qty * p_fill_price + v_notional) > v_limits.max_position_notional then
+    if (v_position_qty * p_fill_price + v_notional + v_reserved_buy) > v_limits.max_position_notional then
       raise exception 'POSITION_NOTIONAL_LIMIT_EXCEEDED';
     end if;
     select coalesce(sum(case when le.direction = 'debit' then le.amount else -le.amount end), 0)
@@ -526,6 +544,12 @@ declare
   v_marketable boolean;
   v_current_qty numeric(28,10) := 0;
   v_daily_realized_loss numeric(24,2) := 0;
+  v_cash_account_id uuid;
+  v_cash_available numeric(24,2) := 0;
+  v_reserved_buy numeric(24,2) := 0;
+  v_reserved_sell numeric(28,10) := 0;
+  v_commitment_price numeric(24,10);
+  v_order_commitment numeric(24,2);
   v_fill jsonb;
 begin
   if v_user_id is null then raise exception 'AUTH_REQUIRED'; end if;
@@ -567,12 +591,30 @@ begin
   v_estimated_price := v_quote.last_price * (
     1 + case when p_side = 'buy' then v_limits.slippage_bps else -v_limits.slippage_bps end / 10000
   );
-  v_notional := round(p_quantity * v_estimated_price, 2);
-  if v_notional > v_limits.max_order_notional then raise exception 'ORDER_NOTIONAL_LIMIT_EXCEEDED'; end if;
+  v_commitment_price := case when p_order_type = 'limit' then p_limit_price else v_estimated_price end;
+  v_order_commitment := round(p_quantity * v_commitment_price, 2);
+  if v_order_commitment > v_limits.max_order_notional then raise exception 'ORDER_NOTIONAL_LIMIT_EXCEEDED'; end if;
 
   select coalesce(quantity, 0) into v_current_qty
   from public.positions
   where trading_account_id = p_account_id and instrument_id = p_instrument_id;
+
+  select id into v_cash_account_id
+  from public.ledger_accounts
+  where trading_account_id = p_account_id and account_code = 'cash';
+  select coalesce(sum(case when le.direction = 'debit' then le.amount else -le.amount end), 0)
+    into v_cash_available
+  from public.ledger_entries le
+  where le.ledger_account_id = v_cash_account_id;
+
+  select coalesce(sum(o.quantity * coalesce(o.limit_price, v_estimated_price)), 0)
+    into v_reserved_buy
+  from public.orders o
+  where o.trading_account_id = p_account_id and o.side = 'buy' and o.status = 'open';
+  select coalesce(sum(o.quantity), 0)
+    into v_reserved_sell
+  from public.orders o
+  where o.trading_account_id = p_account_id and o.side = 'sell' and o.status = 'open';
   if p_side = 'buy' then
     select coalesce(sum(case when le.direction = 'debit' then le.amount else -le.amount end), 0)
     into v_daily_realized_loss
@@ -586,11 +628,16 @@ begin
     end if;
   end if;
 
-  if p_side = 'buy' and (v_current_qty * v_estimated_price + v_notional) > v_limits.max_position_notional then
-    raise exception 'POSITION_NOTIONAL_LIMIT_EXCEEDED';
+  if p_side = 'buy' then
+    if v_cash_available < v_reserved_buy + v_order_commitment then
+      raise exception 'INSUFFICIENT_PAPER_CASH_OR_RESERVED';
+    end if;
+    if (v_current_qty * v_estimated_price + v_reserved_buy + v_order_commitment) > v_limits.max_position_notional then
+      raise exception 'POSITION_NOTIONAL_LIMIT_EXCEEDED';
+    end if;
   end if;
-  if p_side = 'sell' and v_current_qty < p_quantity then
-    raise exception 'INSUFFICIENT_PAPER_POSITION';
+  if p_side = 'sell' and (v_current_qty - v_reserved_sell) < p_quantity then
+    raise exception 'INSUFFICIENT_PAPER_POSITION_OR_RESERVED';
   end if;
 
   v_marketable := p_order_type = 'market'
