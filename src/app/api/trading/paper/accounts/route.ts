@@ -1,5 +1,6 @@
+import { NextRequest } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase/server';
-import { jsonError, privateJson } from '@/lib/http';
+import { isSameOriginRequest, jsonError, privateJson } from '@/lib/http';
 
 export const dynamic = 'force-dynamic';
 
@@ -81,7 +82,8 @@ export async function GET() {
   return privateJson({ accounts: snapshots, source: 'database_ledger' });
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  if (!isSameOriginRequest(request)) return jsonError('Cross-origin mutation rejected.', 403, 'ORIGIN_REJECTED');
   const supabase = await getSupabaseServer();
   if (!supabase) return jsonError('Authentication database is not configured.', 503, 'AUTH_NOT_CONFIGURED');
   const { data: userData, error: authError } = await supabase.auth.getUser();
