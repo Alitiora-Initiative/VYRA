@@ -45,7 +45,8 @@ export default function Home() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [unavailable, setUnavailable] = useState<Array<{assetClass:string;reason:string;provider:string}>>([]);
   const [account, setAccount] = useState<PaperAccount | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);\n  const [ledger, setLedger] = useState<LedgerTransaction[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ledger, setLedger] = useState<LedgerTransaction[]>([]);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [active, setActive] = useState('Overview');
   const [watch, setWatch] = useState<string[]>(['BTC-USD', 'ETH-USD', 'NVDA']);
