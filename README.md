@@ -45,8 +45,9 @@ The SQL migration sets the current paper defaults to USD 100,000 starting cash, 
 | `GET /api/instruments` | Database-backed instrument catalogue |
 | `GET /api/me` | Current authenticated user |
 | `GET/PATCH /api/account/profile` | Read/update display name |
+| `GET/POST/DELETE /api/watchlist` | User-owned instrument watchlist |
 | `GET /api/trading/paper/ledger` | Read immutable paper journal |
-| `GET/POST /api/trading/paper/accounts` | Read or open a paper account |
+| `GET/POST /api/trading/paper/accounts` | Read aggregated account balances/reservations or open a paper account |
 | `GET/POST /api/trading/paper/orders` | List or submit paper orders |
 | `POST /api/trading/paper/orders/:id/cancel` | Cancel an open paper order |
 
