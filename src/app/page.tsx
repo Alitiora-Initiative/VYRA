@@ -188,6 +188,31 @@ export default function Home() {
           </>}
         </section>
 
+        {account && <section className="positionsPanel" id="positions">
+          <div className="sectionhead compact"><div><h2>Open positions</h2><p>Mark-to-market only when a fresh USD quote is available.</p></div></div>
+          {account.positions.length ? <div className="positionsTable">
+            <div className="positionsHeader"><span>Instrument</span><span>Quantity</span><span>Avg. cost</span><span>Last price</span><span>Market value</span><span>Unrealised P&amp;L</span></div>
+            {account.positions.map((position) => {
+              const instrument = position.instrument_catalog;
+              const symbol = instrument?.symbol ?? position.instrument_id;
+              const quote = quotes.find((item) => item.symbol === symbol);
+              const quantity = Number(position.quantity);
+              const averageCost = Number(position.average_cost);
+              const supportedQuote = quote && quote.currency === account.currency;
+              const marketValue = supportedQuote ? quantity * quote.price : null;
+              const unrealised = marketValue === null ? null : marketValue - quantity * averageCost;
+              return <div className="positionsRow" key={position.instrument_id}>
+                <strong>{symbol}<small>{instrument?.name ?? 'Instrument'}</small></strong>
+                <span>{quantity.toLocaleString('en-US', { maximumFractionDigits: 8 })}</span>
+                <span>{money(averageCost, account.currency)}</span>
+                <span>{supportedQuote ? money(quote.price, account.currency) : 'Unavailable'}</span>
+                <span>{marketValue === null ? 'Unavailable' : money(marketValue, account.currency)}</span>
+                <span className={unrealised === null ? 'neutral' : unrealised >= 0 ? 'positive' : 'negative'}>{unrealised === null ? 'FX / quote unavailable' : (unrealised >= 0 ? '+' : '') + money(unrealised, account.currency)}</span>
+              </div>;
+            })}
+          </div> : <p className="emptyCopy">No open positions. Filled paper buys will appear here.</p>}
+        </section>}
+
         <div className="sectionhead" id="markets"><div><h2>Live market watch</h2><p>Provider quotes only. No hardcoded market prices.</p></div><button className="outline" onClick={() => void loadMarkets()}><RefreshCw size={15}/> Refresh quotes</button></div>
         {quotes.length ? <div className="marketgrid">{quotes.map((quote) => <div className="market" key={quote.symbol}>
           <div className="markethead"><div className="coin">{quote.assetClass === 'crypto' ? '₿' : quote.assetClass === 'forex' ? 'FX' : quote.assetClass === 'commodity' ? 'Au' : quote.symbol.slice(0,1)}</div><div><strong>{quote.symbol}</strong><small>{quote.name} · {quote.assetClass}</small></div><button className="star" onClick={() => setWatch((old) => old.includes(quote.symbol) ? old.filter((value) => value !== quote.symbol) : [...old, quote.symbol])} aria-label="Toggle watchlist"><Star size={16} fill={watch.includes(quote.symbol) ? 'currentColor' : 'none'}/></button></div>
