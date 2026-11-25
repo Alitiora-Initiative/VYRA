@@ -1,7 +1,7 @@
-import type { LiveQuote } from './types';
+import type { ProviderQuote } from './types';
 
 const CACHE_TTL_MS = 60_000;
-let cache: { expiresAt: number; quotes: LiveQuote[] } | null = null;
+let cache: { expiresAt: number; quotes: ProviderQuote[] } | null = null;
 
 const COINS = [
   { id: 'bitcoin', symbol: 'BTC-USD', name: 'Bitcoin' },
@@ -11,7 +11,7 @@ const COINS = [
 
 type CoinGeckoPayload = Record<string, { usd?: number; usd_24h_change?: number }>;
 
-export async function getCryptoQuotes(): Promise<LiveQuote[]> {
+export async function getCryptoQuotes(): Promise<ProviderQuote[]> {
   if (cache && cache.expiresAt > Date.now()) return cache.quotes;
 
   const ids = COINS.map((coin) => coin.id).join(',');
@@ -40,7 +40,6 @@ export async function getCryptoQuotes(): Promise<LiveQuote[]> {
       currency: 'USD',
       source: 'CoinGecko',
       asOf,
-      live: true as const,
     }];
   });
   if (quotes.length === 0) throw new Error('CoinGecko returned no usable crypto quotes.');
