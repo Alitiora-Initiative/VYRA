@@ -67,7 +67,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $vyra$
 begin
   if tg_op = 'UPDATE' and old.observed_at > new.observed_at then
     return old;
@@ -75,7 +75,7 @@ begin
   new.updated_at := now();
   return new;
 end;
-$;
+$vyra$;
 revoke all on function private.keep_latest_market_quote() from public, anon, authenticated;
 
 drop trigger if exists market_quotes_keep_latest on public.market_quotes;
@@ -758,7 +758,7 @@ returns jsonb
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $vyra$
 declare
   v_user_id uuid := auth.uid();
   v_account public.trading_accounts%rowtype;
@@ -843,14 +843,14 @@ begin
     'positions', v_positions
   );
 end;
-$;
+$vyra$;
 
 create or replace function public.get_paper_account_snapshot(p_account_id uuid)
 returns jsonb
 language sql
 security invoker
 set search_path = ''
-as $ select private.get_paper_account_snapshot(p_account_id); $;
+as $vyra$ select private.get_paper_account_snapshot(p_account_id); $vyra$;
 
 create or replace function private.cancel_paper_order(p_order_id uuid)
 returns jsonb
@@ -917,7 +917,7 @@ returns integer
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $vyra$
 declare
   v_order public.orders%rowtype;
   v_quote public.market_quotes%rowtype;
@@ -966,19 +966,19 @@ begin
   end loop;
   return v_count;
 end;
-$;
+$vyra$;
 
 create or replace function public.process_my_paper_quote(p_instrument_id uuid, p_account_id uuid)
 returns integer
 language plpgsql
 security invoker
 set search_path = ''
-as $
+as $vyra$
 begin
   if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
   return private.match_user_paper_orders(p_instrument_id, p_account_id);
 end;
-$;
+$vyra$;
 
 revoke all on function private.match_open_orders(uuid) from public, anon, authenticated;
 revoke all on function private.execute_paper_fill(uuid,numeric) from public, anon, authenticated, service_role;
