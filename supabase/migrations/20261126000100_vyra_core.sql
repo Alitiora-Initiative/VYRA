@@ -774,8 +774,7 @@ begin
   from public.trading_accounts
   where id = p_account_id
     and user_id = v_user_id
-    and account_type = 'paper'
-  for update;
+    and account_type = 'paper';
   if not found then raise exception 'ACCOUNT_NOT_FOUND'; end if;
 
   select id into v_cash_id
