@@ -30,12 +30,46 @@ export async function GET() {
       cashBalance = (entries ?? []).reduce((total, entry) =>
         total + (entry.direction === 'debit' ? Number(entry.amount) : -Number(entry.amount)), 0);
     }
+    const { data: openBuys } = await supabase
+      .from('orders')
+      .select('quantity,limit_price')
+      .eq('trading_account_id', account.id)
+      .eq('side', 'buy')
+      .eq('status', 'open');
+    const reservedCash = (openBuys ?? []).reduce((total, order) =>
+      total + Number(order.quantity) * Number(order.limit_price ?? 0), 0);
+
+    const { data: openSells } = await supabase
+      .from('orders')
+      .select('instrument_id,quantity')
+      .eq('trading_account_id', account.id)
+      .eq('side', 'sell')
+      .eq('status', 'open');
+    const reservedByInstrument = new Map<string, number>();
+    for (const order of openSells ?? []) {
+      reservedByInstrument.set(
+        order.instrument_id,
+        (reservedByInstrument.get(order.instrument_id) ?? 0) + Number(order.quantity),
+      );
+    }
+
     const { data: positions } = await supabase
       .from('positions')
       .select('instrument_id,quantity,average_cost,instrument_catalog(symbol,name,asset_class)')
       .eq('trading_account_id', account.id)
       .gt('quantity', 0);
-    snapshots.push({ ...account, cashBalance, positions: positions ?? [] });
+    const enrichedPositions = (positions ?? []).map((position) => {
+      const quantity = Number(position.quantity);
+      const reservedQuantity = reservedByInstrument.get(position.instrument_id) ?? 0;
+      return { ...position, reservedQuantity, availableQuantity: Math.max(0, quantity - reservedQuantity) };
+    });
+    snapshots.push({
+      ...account,
+      cashBalance,
+      reservedCash,
+      availableCash: Math.max(0, cashBalance - reservedCash),
+      positions: enrichedPositions,
+    });
   }
 
   return privateJson({ accounts: snapshots, source: 'database_ledger' });
