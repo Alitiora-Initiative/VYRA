@@ -289,6 +289,12 @@ create trigger on_auth_user_created_vyra
 after insert on auth.users
 for each row execute function private.handle_new_user();
 
+-- Also provision profiles for auth users that already existed before this migration.
+insert into public.profiles (id, display_name)
+select id, coalesce(raw_user_meta_data ->> 'name', email)
+from auth.users
+on conflict (id) do nothing;
+
 create or replace function private.open_paper_account()
 returns jsonb
 language plpgsql
