@@ -63,11 +63,18 @@ export async function GET() {
       const reservedQuantity = reservedByInstrument.get(position.instrument_id) ?? 0;
       return { ...position, reservedQuantity, availableQuantity: Math.max(0, quantity - reservedQuantity) };
     });
+    const { data: riskLimits } = await supabase
+      .from('risk_limits')
+      .select('max_order_notional,max_position_notional,max_daily_realized_loss,slippage_bps')
+      .eq('trading_account_id', account.id)
+      .maybeSingle();
+
     snapshots.push({
       ...account,
       cashBalance,
       reservedCash,
       availableCash: Math.max(0, cashBalance - reservedCash),
+      riskLimits,
       positions: enrichedPositions,
     });
   }
