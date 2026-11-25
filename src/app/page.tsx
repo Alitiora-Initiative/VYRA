@@ -239,7 +239,7 @@ export default function Home() {
           </div>
         </section>}
 
-        <div className="sectionhead" id="markets"><div><h2>Live market watch</h2><p>Provider quotes only. No hardcoded market prices.</p></div><button className="outline" onClick={() => void loadMarkets()}><RefreshCw size={15}/> Refresh quotes</button></div>
+        <div className="sectionhead" id="markets"><div><h2>Provider market watch</h2><p>Provider quotes only. Source timestamps shown; not guaranteed real-time.</p></div><button className="outline" onClick={() => void loadMarkets()}><RefreshCw size={15}/> Refresh quotes</button></div>
         {quotes.length ? <div className="marketgrid">{quotes.map((quote) => <div className="market" key={quote.symbol}>
           <div className="markethead"><div className="coin">{quote.assetClass === 'crypto' ? '₿' : quote.assetClass === 'forex' ? 'FX' : quote.assetClass === 'commodity' ? 'Au' : quote.symbol.slice(0,1)}</div><div><strong>{quote.symbol}</strong><small>{quote.name} · {quote.assetClass}</small></div><button className="star" onClick={() => setWatch((old) => old.includes(quote.symbol) ? old.filter((value) => value !== quote.symbol) : [...old, quote.symbol])} aria-label="Toggle watchlist"><Star size={16} fill={watch.includes(quote.symbol) ? 'currentColor' : 'none'}/></button></div>
           <div className="price">{money(quote.price,quote.currency)}</div><div className={quote.changePercent === null ? 'neutral' : quote.changePercent >= 0 ? 'positive' : 'negative'}>{quote.changePercent === null ? 'Change unavailable' : (quote.changePercent >= 0 ? '+' : '') + quote.changePercent.toFixed(2) + '%'}</div>
