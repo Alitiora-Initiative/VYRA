@@ -148,7 +148,17 @@ export default function Home() {
     finally { setBusy(false); }
   }
 
-  const selectedQuote = quotes.find((item) => item.symbol === symbol);
+  const tradableQuotes = quotes.filter((item) => item.currency === (account?.currency ?? 'USD'));
+  const selectedQuote = tradableQuotes.find((item) => item.symbol === symbol);
+  function showOrder(preferredSymbol?: string) {
+    const preferred = tradableQuotes.find((item) => item.symbol === preferredSymbol) ?? tradableQuotes[0];
+    if (!preferred) {
+      setMessage('There are no fresh USD-quoted instruments available for paper execution.');
+      return;
+    }
+    setSymbol(preferred.symbol);
+    setOrderOpen(true);
+  }
   return <main className="shell">
     <aside className="sidebar">
       <div className="brand"><div className="logo">V</div><div>VYRA<span>MARKETS</span></div></div>
@@ -171,7 +181,7 @@ export default function Home() {
           {account ? <>
             <h2>{portfolioValue === null ? '—' : money(portfolioValue, account.currency)}</h2>
             <div className="gain"><ShieldCheck size={16}/>Paper portfolio value <span>USD-quoted positions only; stale and non-USD positions excluded</span></div>
-            <div className="balancefooter"><div><small>Cash available</small><strong>{money(Number(account.cashBalance),account.currency)}</strong></div><div><small>Open positions</small><strong>{account.positions.length}</strong></div><button className="primary" onClick={() => setOrderOpen(true)}><ArrowUpRight size={16}/> New paper order</button></div>
+            <div className="balancefooter"><div><small>Cash available</small><strong>{money(Number(account.cashBalance),account.currency)}</strong></div><div><small>Open positions</small><strong>{account.positions.length}</strong></div><button className="primary" onClick={() => showOrder()}><ArrowUpRight size={16}/> New paper order</button></div>
           </> : <>
             <h2>—</h2><div className="gain">No account balance is displayed until you create a paper account.</div>
             <div className="balancefooter"><div><small>Account type</small><strong>Paper / simulated</strong></div><div><small>Starting balance</small><strong>$100,000 simulated</strong></div><button className="primary" disabled={!userEmail || busy} onClick={() => void openPaperAccount()}><Plus size={16}/> {busy ? 'Opening…' : 'Open paper account'}</button></div>
@@ -183,7 +193,7 @@ export default function Home() {
           <div className="markethead"><div className="coin">{quote.assetClass === 'crypto' ? '₿' : quote.assetClass === 'forex' ? 'FX' : quote.assetClass === 'commodity' ? 'Au' : quote.symbol.slice(0,1)}</div><div><strong>{quote.symbol}</strong><small>{quote.name} · {quote.assetClass}</small></div><button className="star" onClick={() => setWatch((old) => old.includes(quote.symbol) ? old.filter((value) => value !== quote.symbol) : [...old, quote.symbol])} aria-label="Toggle watchlist"><Star size={16} fill={watch.includes(quote.symbol) ? 'currentColor' : 'none'}/></button></div>
           <div className="price">{money(quote.price,quote.currency)}</div><div className={quote.changePercent === null ? 'neutral' : quote.changePercent >= 0 ? 'positive' : 'negative'}>{quote.changePercent === null ? 'Change unavailable' : (quote.changePercent >= 0 ? '+' : '') + quote.changePercent.toFixed(2) + '%'}</div>
           <div className="quoteMeta">{quote.source} · {new Date(quote.asOf).toLocaleTimeString()}</div>
-          {account && <button className="tradeLink" onClick={() => { setSymbol(quote.symbol); setOrderOpen(true); }}>Trade in paper</button>}
+          {account && quote.currency === account.currency && <button className="tradeLink" onClick={() => showOrder(quote.symbol)}>Trade in paper</button>}
         </div>)}</div> : <div className="emptyState"><Activity size={22}/><strong>{loading ? 'Loading provider quotes…' : 'No live quotes available'}</strong><p>Crypto uses the public CoinGecko API. Add a Twelve Data API key to enable stocks, FX and commodities. Provider errors are shown below.</p></div>}
         {unavailable.length > 0 && <div className="providerStatus"><strong>Provider status</strong>{unavailable.map((item,index)=><p key={item.assetClass + index}><span>{item.assetClass.toUpperCase()}</span> {item.provider}: {item.reason}</p>)}</div>}
         
@@ -194,7 +204,7 @@ export default function Home() {
         {orderOpen && <div className="modalBackdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOrderOpen(false); }}><section className="orderModal" role="dialog" aria-modal="true" aria-labelledby="orderTitle">
           <div className="modalHead"><div><div className="eyebrow">PAPER EXECUTION</div><h2 id="orderTitle">New order</h2></div><button className="iconbtn" onClick={() => setOrderOpen(false)} aria-label="Close"><X size={17}/></button></div>
           <form className="orderForm" onSubmit={submitOrder}>
-            <label>Instrument<select value={symbol} onChange={(event) => setSymbol(event.target.value)}>{quotes.map((quote) => <option value={quote.symbol} key={quote.symbol}>{quote.symbol} · {quote.name}</option>)}</select></label>
+            <label>Instrument<select value={symbol} onChange={(event) => setSymbol(event.target.value)}>{tradableQuotes.map((quote) => <option value={quote.symbol} key={quote.symbol}>{quote.symbol} · {quote.name}</option>)}</select></label>
             <div className="formPair"><label>Side<select value={side} onChange={(event) => setSide(event.target.value as 'buy'|'sell')}><option value="buy">Buy</option><option value="sell">Sell</option></select></label><label>Order type<select value={orderType} onChange={(event) => setOrderType(event.target.value as 'market'|'limit')}><option value="market">Market</option><option value="limit">Limit</option></select></label></div>
             <label>Quantity<input type="number" step="any" min="0.00000001" required value={quantity} onChange={(event) => setQuantity(event.target.value)}/></label>
             {orderType === 'limit' && <label>Limit price ({selectedQuote?.currency || 'USD'})<input type="number" step="any" min="0.00000001" required value={limitPrice} onChange={(event) => setLimitPrice(event.target.value)}/></label>}
