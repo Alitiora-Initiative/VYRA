@@ -1,4 +1,4 @@
-import type { AssetClass, LiveQuote } from './types';
+import type { AssetClass, ProviderQuote } from './types';
 
 export type TwelveDataInstrument = {
   symbol: string;
@@ -33,7 +33,7 @@ type TwelveDataQuote = {
 };
 type BatchPayload = Record<string, TwelveDataQuote | string | number | null>;
 
-let cache: { expiresAt: number; value: { quotes: LiveQuote[]; unavailable: Array<{ assetClass: AssetClass; reason: string; provider: string }> } } | null = null;
+let cache: { expiresAt: number; value: { quotes: ProviderQuote[]; unavailable: Array<{ assetClass: AssetClass; reason: string; provider: string }> } } | null = null;
 
 function parseTime(data: TwelveDataQuote): string | null {
   if (data.timestamp !== undefined) {
@@ -52,8 +52,8 @@ function parseQuote(value: unknown): TwelveDataQuote | null {
   return value as TwelveDataQuote;
 }
 
-function mapBatchPayload(payload: BatchPayload): LiveQuote[] {
-  const quotes: LiveQuote[] = [];
+function mapBatchPayload(payload: BatchPayload): ProviderQuote[] {
+  const quotes: ProviderQuote[] = [];
 
   for (const instrument of SYMBOLS) {
     const row = parseQuote(payload[instrument.symbol]);
@@ -76,7 +76,6 @@ function mapBatchPayload(payload: BatchPayload): LiveQuote[] {
         : 'USD',
       source: 'Twelve Data',
       asOf,
-      live: true,
     });
   }
   return quotes;
@@ -89,7 +88,7 @@ export async function getTwelveDataQuotes() {
   const apiKey = process.env.TWELVEDATA_API_KEY;
   if (!apiKey) {
     const value = {
-      quotes: [] as LiveQuote[],
+      quotes: [] as ProviderQuote[],
       unavailable: (['equity', 'forex', 'commodity'] as const).map((assetClass) => ({
         assetClass,
         reason: 'Configure TWELVEDATA_API_KEY to enable shares, FX and commodity quotes.',
@@ -124,7 +123,7 @@ export async function getTwelveDataQuotes() {
     return value;
   } catch (error) {
     const value = {
-      quotes: [] as LiveQuote[],
+      quotes: [] as ProviderQuote[],
       unavailable: (['equity', 'forex', 'commodity'] as const).map((assetClass) => ({
         assetClass,
         provider: 'Twelve Data',
