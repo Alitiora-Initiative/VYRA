@@ -1,22 +1,51 @@
-# VYRA architecture (initial)
+# VYRA architecture
 
-## Principle
-VYRA is a multi-asset brokerage software prototype. It must not imply that it is licensed, connected to real execution, or displaying live data until those claims are independently verified.
+## Product boundary
 
-## Domains
-- Identity and account profile (auth provider to be selected; MFA and recovery required)
-- Instrument catalogue and provider-backed market data
-- Order management system (OMS), immutable order lifecycle
-- Pre-trade risk: limits, asset eligibility, stale-data rejection, idempotency and kill switch
-- Execution adapters: separately scoped provider integrations for crypto, equities, FX and commodities
-- Double-entry ledger, settlement/reconciliation and withdrawal controls
-- Audit trail, monitoring, incident response and admin console
+VYRA is a multi-asset brokerage software foundation with separate market-data and execution adapters for crypto, equities, FX and commodities. It is not a licensed broker, custodian, exchange, money transmitter or investment adviser. Live trading, deposits, withdrawals and custody are disabled.
 
-## Security requirements
-Secrets only server-side; encrypted storage; signed webhooks; rate limits; strict validation; CSRF protection; secure sessions; MFA; access roles; tamper-resistant audit; dependency scans; backup and restore tests. No client-side API secrets or privileged signing keys.
+## Implemented application domains
+
+- Identity: Supabase Auth email/password sign-up, sign-in, callback, sign-out and password recovery; profiles use the authenticated user ID and RLS.
+- Instrument catalogue: database-backed catalogue for crypto, equities, FX and metals.
+- Market data: CoinGecko crypto snapshots and Twelve Data batch quotes. Providers return their own timestamps; quote freshness is enforced before paper execution. Free-tier caching is intentionally conservative.
+- Paper OMS: account creation, market/limit orders, cancellation, UUID client idempotency, stale-quote rejection and user-scoped matching of open paper orders.
+- Paper risk: order notional, position exposure, daily realised-loss stop, cash reservations, share reservations and explicit adverse-slippage assumption.
+- Paper accounting: append-only double-entry journal, balanced transaction triggers, cash/position/equity/realised-P&L accounts, immutable audit events and user-owned read access.
+- Execution boundary: one provider capability contract per asset class. All live adapters reject execution.
+
+## Request flow
+
+1. Authenticated user submits a paper order with a client-generated UUID idempotency key.
+2. API authenticates the user, validates payload, finds an enabled instrument and a fresh stored provider quote.
+3. PostgreSQL checks account ownership, USD quote-currency support, order/position/daily-loss risk and existing cash/share reservations.
+4. Marketable orders are filled inside a database transaction using the configured slippage assumption; non-marketable limit orders remain open.
+5. Each fill writes order state, fill record, position change, balanced ledger journal and immutable audit event in the same transaction.
+6. Provider quote refresh can match only the currently signed-in user's own paper account. Public visitors cannot trigger other customers' paper orders.
+
+## Asset-class separation
+
+| Asset class | Data adapter | Execution |
+| --- | --- | --- |
+| Crypto | CoinGecko | Disabled provider slot |
+| Equities | Twelve Data | Disabled provider slot |
+| FX | Twelve Data | Disabled provider slot |
+| Commodities | Twelve Data | Disabled provider slot |
+
+A symbol being visible does not mean it is supported for paper execution. The first paper ledger is USD-only and rejects quote currencies requiring FX conversion. This avoids silently mixing currencies or presenting a false converted balance.
+
+## Infrastructure
+
+Next.js runs as a Node server. Supabase provides Auth, Postgres and RLS when a dedicated VYRA project is configured. The migration lives in `supabase/migrations`. The Render free blueprint is included for an eventual preview deployment; Vercel linking is not available for this private organisation-owned GitHub repo on the currently connected Hobby team.
+
+## Security requirements before production
+
+Secrets server-side; MFA; recovery controls; origin/CSRF protections; rate limits; signed webhooks; strict validation; role separation; tamper-resistant audit; dependency/secret scans; backup and restore tests; independent security review. Do not expose service-role keys or broker credentials to the browser.
 
 ## Execution policy
-Paper trading is the default. Live order execution stays disabled until legal/regulatory review, provider approval, KYC/AML requirements, funding, custody, execution tests, monitoring, and incident/kill-switch procedures are validated. Never represent paper results as real fills.
 
-## Provider interface
-Provider adapters should implement capabilities rather than pretend all asset classes share the same order types, session hours, custody, settlement or market-data semantics.
+Paper trading is the only order execution mode. Live order execution remains disabled until jurisdiction-specific legal/regulatory review, provider approval, KYC/AML/sanctions controls, client money/custody architecture, funding, provider conformance tests, settlement/reconciliation, monitoring, incident and kill-switch procedures, security review and production certification are complete.
+
+## Accounting scope
+
+The ledger is a paper ledger only. It is not suitable for customer funds. Multi-currency balances, holds for real settlement, margin, shorting, derivatives, financing, fees, deposits, withdrawals, bank reconciliation and custody are not implemented.
