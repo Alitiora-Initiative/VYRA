@@ -376,6 +376,7 @@ begin
   for update;
   if not found then v_position_qty := 0; v_cost := 0; end if;
 
+  if p_fill_price is null or p_fill_price <= 0 then raise exception 'INVALID_FILL_PRICE'; end if;
   v_notional := round(v_order.quantity * p_fill_price, 2);
   if v_notional <= 0 then raise exception 'INVALID_NOTIONAL'; end if;
   if v_order.side = 'buy' and v_cash < v_notional then raise exception 'INSUFFICIENT_PAPER_CASH'; end if;
@@ -507,8 +508,8 @@ declare
   v_fill jsonb;
 begin
   if v_user_id is null then raise exception 'AUTH_REQUIRED'; end if;
-  if p_side not in ('buy','sell') then raise exception 'INVALID_SIDE'; end if;
-  if p_order_type not in ('market','limit') then raise exception 'INVALID_ORDER_TYPE'; end if;
+  if p_side is null or p_side not in ('buy','sell') then raise exception 'INVALID_SIDE'; end if;
+  if p_order_type is null or p_order_type not in ('market','limit') then raise exception 'INVALID_ORDER_TYPE'; end if;
   if p_quantity is null or p_quantity <= 0 or p_quantity > 10000000 then raise exception 'INVALID_QUANTITY'; end if;
   if p_order_type = 'limit' and (p_limit_price is null or p_limit_price <= 0) then raise exception 'INVALID_LIMIT_PRICE'; end if;
   if p_order_type = 'market' and p_limit_price is not null then raise exception 'MARKET_ORDER_HAS_LIMIT_PRICE'; end if;
@@ -531,6 +532,9 @@ begin
   select * into v_instrument from public.instrument_catalog
   where id = p_instrument_id and is_enabled = true;
   if not found then raise exception 'INSTRUMENT_NOT_AVAILABLE'; end if;
+  if v_instrument.quote_currency <> v_account.currency then
+    raise exception 'CURRENCY_NOT_SUPPORTED';
+  end if;
 
   select * into v_quote from public.market_quotes
   where instrument_id = p_instrument_id;
