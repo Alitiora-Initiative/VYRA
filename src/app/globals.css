@@ -29,3 +29,11 @@
 .ledgerEntries{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.ledgerEntry{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #202a33;padding-top:8px;color:#a9b6c4;font-size:10px;text-transform:capitalize}
 .ledgerDebit{color:#f0bc8b}.ledgerCredit{color:#7bd9a8}
 @media(max-width:700px){.ledgerPanel{padding:13px}.ledgerEntries{grid-template-columns:1fr}.ledgerTransactionHead{flex-direction:column}}
+
+.riskPanel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 26px}
+.riskPanelTitle{display:flex;align-items:center;gap:8px;color:var(--green);font-size:11px;font-weight:700}
+.riskPanelTitle span{margin-left:auto;color:#718191;font-size:9px;text-transform:uppercase;letter-spacing:.8px}
+.riskMetrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:14px}
+.riskMetrics small{display:block;color:var(--muted);font-size:10px;margin-bottom:6px}.riskMetrics strong{font-size:13px;color:var(--text)}
+.positionsRow>span small{display:block;color:#8292a2;font-size:9px;margin-top:4px}
+@media(max-width:700px){.riskMetrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
