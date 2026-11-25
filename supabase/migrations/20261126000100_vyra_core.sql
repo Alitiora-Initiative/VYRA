@@ -753,6 +753,106 @@ begin
 end;
 $$;
 
+create or replace function private.get_paper_account_snapshot(p_account_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  v_user_id uuid := auth.uid();
+  v_account public.trading_accounts%rowtype;
+  v_cash_id uuid;
+  v_cash_balance numeric(24,2) := 0;
+  v_reserved_cash numeric(24,2) := 0;
+  v_risk_limits jsonb := '{}'::jsonb;
+  v_positions jsonb := '[]'::jsonb;
+begin
+  if v_user_id is null then raise exception 'AUTH_REQUIRED'; end if;
+
+  select * into v_account
+  from public.trading_accounts
+  where id = p_account_id
+    and user_id = v_user_id
+    and account_type = 'paper'
+  for update;
+  if not found then raise exception 'ACCOUNT_NOT_FOUND'; end if;
+
+  select id into v_cash_id
+  from public.ledger_accounts
+  where trading_account_id = p_account_id and account_code = 'cash';
+
+  select coalesce(sum(case when direction = 'debit' then amount else -amount end), 0)
+    into v_cash_balance
+  from public.ledger_entries
+  where ledger_account_id = v_cash_id;
+
+  select coalesce(sum(quantity * coalesce(limit_price, 0)), 0)
+    into v_reserved_cash
+  from public.orders
+  where trading_account_id = p_account_id
+    and side = 'buy'
+    and status = 'open';
+
+  select to_jsonb(r) - 'trading_account_id'
+    into v_risk_limits
+  from public.risk_limits r
+  where r.trading_account_id = p_account_id;
+
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'instrument_id', p.instrument_id,
+        'quantity', p.quantity,
+        'average_cost', p.average_cost,
+        'reservedQuantity', coalesce(reserved.quantity, 0),
+        'availableQuantity', greatest(0, p.quantity - coalesce(reserved.quantity, 0)),
+        'instrument_catalog', jsonb_build_object(
+          'symbol', i.symbol,
+          'name', i.name,
+          'asset_class', i.asset_class
+        )
+      )
+      order by i.symbol
+    ),
+    '[]'::jsonb
+  )
+  into v_positions
+  from public.positions p
+  join public.instrument_catalog i on i.id = p.instrument_id
+  left join (
+    select instrument_id, sum(quantity) as quantity
+    from public.orders
+    where trading_account_id = p_account_id
+      and side = 'sell'
+      and status = 'open'
+    group by instrument_id
+  ) reserved on reserved.instrument_id = p.instrument_id
+  where p.trading_account_id = p_account_id
+    and p.quantity > 0;
+
+  return jsonb_build_object(
+    'id', v_account.id,
+    'account_type', v_account.account_type,
+    'status', v_account.status,
+    'currency', v_account.currency,
+    'created_at', v_account.created_at,
+    'cashBalance', v_cash_balance,
+    'reservedCash', v_reserved_cash,
+    'availableCash', greatest(0, v_cash_balance - v_reserved_cash),
+    'riskLimits', v_risk_limits,
+    'positions', v_positions
+  );
+end;
+$;
+
+create or replace function public.get_paper_account_snapshot(p_account_id uuid)
+returns jsonb
+language sql
+security invoker
+set search_path = ''
+as $ select private.get_paper_account_snapshot(p_account_id); $;
+
 create or replace function private.cancel_paper_order(p_order_id uuid)
 returns jsonb
 language plpgsql
@@ -808,6 +908,10 @@ $$;
 revoke all on function private.open_paper_account() from public, anon;
 revoke all on function private.submit_paper_order(uuid,uuid,text,text,numeric,numeric,uuid) from public, anon;
 revoke all on function private.cancel_paper_order(uuid) from public, anon;
+revoke all on function private.get_paper_account_snapshot(uuid) from public, anon;
+grant execute on function private.get_paper_account_snapshot(uuid) to authenticated;
+revoke all on function public.get_paper_account_snapshot(uuid) from public, anon;
+grant execute on function public.get_paper_account_snapshot(uuid) to authenticated;
 
 create or replace function private.match_user_paper_orders(p_instrument_id uuid, p_account_id uuid)
 returns integer
