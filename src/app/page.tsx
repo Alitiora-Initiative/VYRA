@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import {
-  Activity, ArrowDownLeft, ArrowUpRight, Bell, BriefcaseBusiness,
+  Activity, ArrowUpRight, Bell, BriefcaseBusiness,
   ChartNoAxesCombined, CircleHelp, Command, CreditCard, Globe2,
-  LayoutDashboard, LogIn, Menu, Plus, Search, Settings, ShieldCheck,
+  LayoutDashboard, LogIn, Menu, Plus, Settings, ShieldCheck,
   Star, Wallet, RefreshCw, ExternalLink, X,
 } from 'lucide-react';
 
