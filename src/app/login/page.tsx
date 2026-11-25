@@ -52,6 +52,7 @@ export default function LoginPage() {
         <button className="authSubmit" disabled={busy}>{busy ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}</button>
       </form>
       {message && <p className="authMessage" role="status">{message}</p>}
+      {mode === 'signin' && <Link className="authSwitchLink" href="/forgot-password">Forgot your password?</Link>}
       <button className="authSwitch" onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setMessage(''); }}>
         {mode === 'signin' ? 'New to VYRA? Create an account' : 'Already registered? Sign in'}
       </button>
