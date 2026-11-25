@@ -1,6 +1,6 @@
 import type { LiveQuote } from './types';
 
-const COINS = [
+const CACHE_TTL_MS = 60_000;\nlet cache: { expiresAt: number; quotes: LiveQuote[] } | null = null;\n\nconst COINS = [
   { id: 'bitcoin', symbol: 'BTC-USD', name: 'Bitcoin' },
   { id: 'ethereum', symbol: 'ETH-USD', name: 'Ethereum' },
   { id: 'solana', symbol: 'SOL-USD', name: 'Solana' },
@@ -25,7 +25,7 @@ export async function getCryptoQuotes(): Promise<LiveQuote[]> {
 
   const payload = await response.json() as CoinGeckoPayload;
   const asOf = new Date().toISOString();
-  return COINS.flatMap((coin) => {
+  const quotes = COINS.flatMap((coin) => {
     const row = payload[coin.id];
     if (!row || typeof row.usd !== 'number' || !Number.isFinite(row.usd) || row.usd <= 0) return [];
     return [{
