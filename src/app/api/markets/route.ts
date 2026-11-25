@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
   // Persist quotes only when VYRA's own database has been configured and migrated.
   // Failure to persist never turns a provider failure into a fabricated quote.
   let persistence: 'saved' | 'not_configured' | 'not_migrated' = 'not_configured';
+  let matching: 'available' | 'not_configured' | 'not_migrated' = 'not_configured';
   const admin = getSupabaseAdmin();
   if (admin && quotes.length) {
     const { data: instruments, error: catalogError } = await admin
@@ -44,6 +45,13 @@ export async function GET(request: NextRequest) {
       if (rows.length) {
         const { error } = await admin.from('market_quotes').upsert(rows, { onConflict: 'instrument_id' });
         persistence = error ? 'not_migrated' : 'saved';
+        if (!error) {
+          const matchingResults = await Promise.all((instruments ?? []).map((instrument) =>
+            admin.rpc('process_market_quote', { p_instrument_id: instrument.id })
+          ));
+          if (matchingResults.some((result) => result.error)) matching = 'not_migrated';
+          else matching = 'available';
+        }
       }
     }
   }
@@ -55,6 +63,7 @@ export async function GET(request: NextRequest) {
     quotes,
     unavailable: snapshot.unavailable,
     databasePersistence: persistence,
+    limitOrderMatching: matching,
     fetchedAt: snapshot.fetchedAt,
   }, {
     status,
