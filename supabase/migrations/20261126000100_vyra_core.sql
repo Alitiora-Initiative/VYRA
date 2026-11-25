@@ -23,6 +23,14 @@ create table if not exists public.instrument_catalog (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.user_watchlist (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  instrument_id uuid not null references public.instrument_catalog(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (user_id, instrument_id)
+);
+
 create table if not exists public.trading_accounts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete restrict,
@@ -196,6 +204,7 @@ on conflict (symbol) do update set
 -- Every user-owned table is protected by RLS; no user can write ledger postings directly.
 alter table public.profiles enable row level security;
 alter table public.instrument_catalog enable row level security;
+alter table public.user_watchlist enable row level security;
 alter table public.trading_accounts enable row level security;
 alter table public.risk_limits enable row level security;
 alter table public.market_quotes enable row level security;
@@ -217,6 +226,16 @@ drop policy if exists "enabled instruments are readable" on public.instrument_ca
 create policy "enabled instruments are readable" on public.instrument_catalog for select to anon, authenticated using (is_enabled = true);
 drop policy if exists "market quotes are readable" on public.market_quotes;
 create policy "market quotes are readable" on public.market_quotes for select to anon, authenticated using (true);
+
+drop policy if exists "watchlist owner reads own items" on public.user_watchlist;
+create policy "watchlist owner reads own items" on public.user_watchlist
+  for select to authenticated using (user_id = (select auth.uid()));
+drop policy if exists "watchlist owner inserts own items" on public.user_watchlist;
+create policy "watchlist owner inserts own items" on public.user_watchlist
+  for insert to authenticated with check (user_id = (select auth.uid()));
+drop policy if exists "watchlist owner deletes own items" on public.user_watchlist;
+create policy "watchlist owner deletes own items" on public.user_watchlist
+  for delete to authenticated using (user_id = (select auth.uid()));
 
 drop policy if exists "account owner reads account" on public.trading_accounts;
 create policy "account owner reads account" on public.trading_accounts for select to authenticated using (user_id = (select auth.uid()));
@@ -262,12 +281,13 @@ drop policy if exists "provider owner reads own connections" on public.provider_
 create policy "provider owner reads own connections" on public.provider_connections for select to authenticated using (user_id = (select auth.uid()));
 
 grant select on public.instrument_catalog, public.market_quotes to anon, authenticated;
+grant select, insert, delete on public.user_watchlist to authenticated;
 grant select on public.profiles, public.trading_accounts, public.risk_limits, public.orders,
   public.fills, public.positions, public.ledger_accounts, public.ledger_transactions,
   public.ledger_entries, public.audit_events, public.provider_connections to authenticated;
 grant all on public.instrument_catalog, public.market_quotes, public.profiles, public.trading_accounts,
   public.risk_limits, public.orders, public.fills, public.positions, public.ledger_accounts,
-  public.ledger_transactions, public.ledger_entries, public.audit_events, public.provider_connections to service_role;
+  public.ledger_transactions, public.ledger_entries, public.audit_events, public.provider_connections, public.user_watchlist to service_role;
 
 create or replace function private.handle_new_user()
 returns trigger
