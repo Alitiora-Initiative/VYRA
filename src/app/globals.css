@@ -40,3 +40,9 @@
 
 .authSwitchLink{display:block;margin-top:16px;color:#84ddb5;text-decoration:none;font-size:12px}
 .authSwitchLink:hover{text-decoration:underline}
+
+.settingsCard{width:min(100%,620px);padding:32px;background:var(--panel);border:1px solid var(--line);border-radius:18px}
+.backLink{display:inline-flex;align-items:center;gap:7px;color:#9eb0bd;text-decoration:none;font-size:12px;margin-bottom:24px}
+.settingsSecurity{display:flex;gap:12px;align-items:flex-start;padding:14px;margin-top:24px;border:1px solid #294b3b;background:#11231c;color:var(--green);border-radius:11px}
+.settingsSecurity strong{display:block;color:var(--text);font-size:12px}.settingsSecurity small{display:block;color:#9cb6a9;font-size:11px;line-height:1.6;margin-top:4px}
+.authSubmit{display:flex;align-items:center;justify-content:center;gap:8px}
