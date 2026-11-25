@@ -15,7 +15,8 @@ type Quote = {
 };
 type PaperAccount = {
   id: string; account_type: string; status: string; currency: string;
-  cashBalance: number; positions: Array<{ quantity: number; average_cost: number; instrument_catalog?: { symbol: string; name: string; asset_class: string } }>;
+  cashBalance: number; availableCash: number; reservedCash: number;
+  positions: Array<{ quantity: number; average_cost: number; reservedQuantity: number; availableQuantity: number; instrument_catalog?: { symbol: string; name: string; asset_class: string } }>;
 };
 type Order = {
   id: string; side: string; order_type: string; quantity: number;
@@ -195,7 +196,7 @@ export default function Home() {
           {account ? <>
             <h2>{portfolioValue === null ? '—' : money(portfolioValue, account.currency)}</h2>
             <div className="gain"><ShieldCheck size={16}/>Paper portfolio value <span>USD-quoted positions only; stale and non-USD positions excluded</span></div>
-            <div className="balancefooter"><div><small>Cash available</small><strong>{money(Number(account.cashBalance),account.currency)}</strong></div><div><small>Open positions</small><strong>{account.positions.length}</strong></div><button className="primary" onClick={() => showOrder()}><ArrowUpRight size={16}/> New paper order</button></div>
+            <div className="balancefooter"><div><small>Cash available</small><strong>{money(Number(account.availableCash ?? account.cashBalance),account.currency)}</strong></div><div><small>Cash reserved for open orders</small><strong>{money(Number(account.reservedCash ?? 0),account.currency)}</strong></div><div><small>Open positions</small><strong>{account.positions.length}</strong></div><button className="primary" onClick={() => showOrder()}><ArrowUpRight size={16}/> New paper order</button></div>
           </> : <>
             <h2>—</h2><div className="gain">No account balance is displayed until you create a paper account.</div>
             <div className="balancefooter"><div><small>Account type</small><strong>Paper / simulated</strong></div><div><small>Starting balance</small><strong>$100,000 simulated</strong></div><button className="primary" disabled={!userEmail || busy} onClick={() => void openPaperAccount()}><Plus size={16}/> {busy ? 'Opening…' : 'Open paper account'}</button></div>
@@ -217,7 +218,7 @@ export default function Home() {
               const unrealised = marketValue === null ? null : marketValue - quantity * averageCost;
               return <div className="positionsRow" key={position.instrument_id}>
                 <strong>{symbol}<small>{instrument?.name ?? 'Instrument'}</small></strong>
-                <span>{quantity.toLocaleString('en-US', { maximumFractionDigits: 8 })}</span>
+                <span>{quantity.toLocaleString('en-US', { maximumFractionDigits: 8 })}<small>{Number(position.availableQuantity ?? quantity).toLocaleString('en-US', { maximumFractionDigits: 8 })} available</small></span>
                 <span>{money(averageCost, account.currency)}</span>
                 <span>{supportedQuote ? money(quote.price, account.currency) : 'Unavailable'}</span>
                 <span>{marketValue === null ? 'Unavailable' : money(marketValue, account.currency)}</span>
