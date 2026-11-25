@@ -5,11 +5,11 @@ VYRA is a multi-asset brokerage software foundation designed around distinct mar
 ## Current build
 
 - Next.js application with Supabase SSR email/password authentication.
-- Live market-data adapters: CoinGecko for crypto spot snapshots and Twelve Data for equities, FX and commodities.
+- Provider-backed market-data adapters: CoinGecko for crypto spot snapshots and Twelve Data for equities, FX and commodities, with free-tier-aware batching/caching.
 - Quote API that reports provider errors and does not fall back to invented market values.
 - Database-backed instrument catalogue and market-quote persistence.
 - Paper account opening with an illustrative USD 100,000 balance.
-- Server-side market/limit paper order lifecycle, UUID idempotency, quote-age checks, maximum order/position/daily-realized-loss limits and 5 bps adverse-slippage assumption.
+- Server-side market/limit paper order lifecycle, UUID idempotency, quote-age checks, cash/share reservations for open limit orders, maximum order/position/daily-realized-loss limits and 5 bps adverse-slippage assumption.
 - Immutable double-entry paper ledger with deferred journal-balance checks and realized P&L posting.
 - Row Level Security on user-owned records.
 - Live execution adapter contracts with a hard-disabled implementation for each asset class.
@@ -30,9 +30,10 @@ A free Render Node web-service blueprint is included in `render.yaml` (Frankfurt
 4. Apply `supabase/migrations/20261126000100_vyra_core.sql` to the dedicated VYRA Supabase project.
 5. In Supabase API settings, expose the `public` schema to PostgREST. The 2026 default no longer automatically exposes new public tables; keep RLS enabled and preserve the grants/policies in this migration.
 6. Configure `TWELVEDATA_API_KEY` to enable shares, FX and metals quotes. Crypto spot quotes use CoinGecko and may require `COINGECKO_DEMO_API_KEY` if rate-limited.
-7. Install dependencies and run `npm run dev`.
+7. Set the Supabase Auth site URL and allowed redirect URLs to include `/auth/callback` and `/reset-password` on your local/deployed origin.
+8. Install dependencies and run `npm run dev`.
 
-The SQL migration sets the current paper defaults to USD 100,000 starting cash, $10,000 maximum order notional, $25,000 maximum position notional, $1,000 daily realised-loss stop and 5 basis points assumed adverse slippage. The service role key must remain server-side and must never use a `NEXT_PUBLIC_` prefix. Keep secrets in your hosting provider's environment-variable store, not Git.
+The SQL migration sets the current paper defaults to USD 100,000 starting cash, $10,000 maximum order notional, $25,000 maximum position notional, $1,000 daily realised-loss stop and 5 basis points assumed adverse slippage. Passwords can be recovered with the email reset flow once Supabase email delivery and redirect URLs are configured. The service role key must remain server-side and must never use a `NEXT_PUBLIC_` prefix. Keep secrets in your hosting provider's environment-variable store, not Git.
 
 ## Main endpoints
 
@@ -40,9 +41,11 @@ The SQL migration sets the current paper defaults to USD 100,000 starting cash, 
 | --- | --- |
 | `GET /api/health` | Runtime configuration and execution gates |
 | `GET /api/execution/readiness` | Provider slots and live execution lock |
-| `GET /api/markets` | Live provider quotes and provider availability |
+| `GET /api/markets` | Provider quotes, timestamps and provider availability |
 | `GET /api/instruments` | Database-backed instrument catalogue |
 | `GET /api/me` | Current authenticated user |
+| `GET/PATCH /api/account/profile` | Read/update display name |
+| `GET /api/trading/paper/ledger` | Read immutable paper journal |
 | `GET/POST /api/trading/paper/accounts` | Read or open a paper account |
 | `GET/POST /api/trading/paper/orders` | List or submit paper orders |
 | `POST /api/trading/paper/orders/:id/cancel` | Cancel an open paper order |
