@@ -17,6 +17,10 @@ const SYMBOLS: TwelveDataInstrument[] = [
   { symbol: 'XAG/USD', name: 'Silver / US Dollar', assetClass: 'commodity' },
 ];
 
+// The free Basic plan has an 800-credit daily cap. A quote costs one credit
+// per symbol, so this 8-symbol batch is intentionally cached for 15 minutes
+// (at most 768 symbol-credits/day for one warm app instance, excluding retries).
+const CACHE_TTL_MS = 15 * 60 * 1000;
 type TwelveDataQuote = {
   close?: string;
   price?: string;
@@ -27,6 +31,9 @@ type TwelveDataQuote = {
   message?: string;
   code?: number;
 };
+type BatchPayload = Record<string, TwelveDataQuote | string | number | null>;
+
+let cache: { expiresAt: number; value: { quotes: LiveQuote[]; unavailable: Array<{ assetClass: AssetClass; reason: string; provider: string }> } } | null = null;
 
 function parseTime(data: TwelveDataQuote): string | null {
   if (data.timestamp !== undefined) {
@@ -40,73 +47,94 @@ function parseTime(data: TwelveDataQuote): string | null {
   return null;
 }
 
-async function fetchOne(instrument: TwelveDataInstrument, apiKey: string): Promise<LiveQuote | null> {
-  const url = new URL('https://api.twelvedata.com/quote');
-  url.searchParams.set('symbol', instrument.symbol);
-  url.searchParams.set('apikey', apiKey);
-  const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(8_000) });
-  if (!response.ok) throw new Error(`Twelve Data returned HTTP ${response.status} for ${instrument.symbol}`);
-  const data = await response.json() as TwelveDataQuote;
-  if (data.status === 'error' || data.code || !data.close) {
-    throw new Error(data.message || `No quote returned for ${instrument.symbol}`);
-  }
+function parseQuote(value: unknown): TwelveDataQuote | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as TwelveDataQuote;
+}
 
-  const price = Number(data.close || data.price);
-  const asOf = parseTime(data);
-  if (!Number.isFinite(price) || price <= 0 || !asOf) {
-    throw new Error(`Twelve Data returned an invalid or undated quote for ${instrument.symbol}`);
-  }
+function mapBatchPayload(payload: BatchPayload): LiveQuote[] {
+  const quotes: LiveQuote[] = [];
+  const asOfFallback = new Date().toISOString();
 
-  return {
-    symbol: instrument.symbol,
-    name: instrument.name,
-    assetClass: instrument.assetClass,
-    price,
-    changePercent: data.percent_change !== undefined && Number.isFinite(Number(data.percent_change))
-      ? Number(data.percent_change)
-      : null,
-    currency: instrument.assetClass === 'forex' ? instrument.symbol.split('/')[1] : 'USD',
-    source: 'Twelve Data',
-    asOf,
-    live: true,
-  };
+  for (const instrument of SYMBOLS) {
+    const row = parseQuote(payload[instrument.symbol]);
+    if (!row || row.status === 'error' || row.code || (!row.close && !row.price)) continue;
+
+    const price = Number(row.close ?? row.price);
+    const asOf = parseTime(row) ?? asOfFallback;
+    if (!Number.isFinite(price) || price <= 0) continue;
+
+    quotes.push({
+      symbol: instrument.symbol,
+      name: instrument.name,
+      assetClass: instrument.assetClass,
+      price,
+      changePercent: row.percent_change !== undefined && Number.isFinite(Number(row.percent_change))
+        ? Number(row.percent_change)
+        : null,
+      currency: instrument.assetClass === 'forex' || instrument.assetClass === 'commodity'
+        ? instrument.symbol.split('/')[1]
+        : 'USD',
+      source: 'Twelve Data',
+      asOf,
+      live: true,
+    });
+  }
+  return quotes;
 }
 
 export async function getTwelveDataQuotes() {
+  const now = Date.now();
+  if (cache && cache.expiresAt > now) return cache.value;
+
   const apiKey = process.env.TWELVEDATA_API_KEY;
   if (!apiKey) {
-    return {
+    const value = {
       quotes: [] as LiveQuote[],
-      unavailable: [{
-        assetClass: 'equity' as const,
-        reason: 'Configure TWELVEDATA_API_KEY to enable equity, FX and commodity quotes.',
+      unavailable: (['equity', 'forex', 'commodity'] as const).map((assetClass) => ({
+        assetClass,
+        reason: 'Configure TWELVEDATA_API_KEY to enable shares, FX and commodity quotes.',
         provider: 'Twelve Data',
-      }, {
-        assetClass: 'forex' as const,
-        reason: 'Configure TWELVEDATA_API_KEY to enable FX quotes.',
-        provider: 'Twelve Data',
-      }, {
-        assetClass: 'commodity' as const,
-        reason: 'Configure TWELVEDATA_API_KEY to enable commodity quotes.',
-        provider: 'Twelve Data',
-      }],
+      })),
     };
+    cache = { expiresAt: now + CACHE_TTL_MS, value };
+    return value;
   }
 
-  const results = await Promise.allSettled(SYMBOLS.map((symbol) => fetchOne(symbol, apiKey)));
-  const quotes: LiveQuote[] = [];
-  const failed = new Set<AssetClass>();
-  results.forEach((result, index) => {
-    if (result.status === 'fulfilled' && result.value) quotes.push(result.value);
-    else failed.add(SYMBOLS[index].assetClass);
-  });
+  const url = new URL('https://api.twelvedata.com/quote');
+  url.searchParams.set('symbol', SYMBOLS.map((item) => item.symbol).join(','));
+  url.searchParams.set('apikey', apiKey);
 
-  return {
-    quotes,
-    unavailable: [...failed].map((assetClass) => ({
-      assetClass,
-      provider: 'Twelve Data',
-      reason: 'The provider did not return a valid, timestamped quote for every requested instrument.',
-    })),
-  };
+  try {
+    const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(12_000) });
+    if (!response.ok) throw new Error(`Twelve Data returned HTTP ${response.status}`);
+    const payload = await response.json() as BatchPayload;
+    const quotes = mapBatchPayload(payload);
+    const missingClasses = [...new Set(
+      SYMBOLS.filter((item) => !quotes.some((quote) => quote.symbol === item.symbol)).map((item) => item.assetClass),
+    )];
+    const value = {
+      quotes,
+      unavailable: missingClasses.map((assetClass) => ({
+        assetClass,
+        provider: 'Twelve Data',
+        reason: 'The provider returned no valid timestamped quote for one or more requested symbols.',
+      })),
+    };
+    cache = { expiresAt: now + CACHE_TTL_MS, value };
+    return value;
+  } catch (error) {
+    const value = {
+      quotes: [] as LiveQuote[],
+      unavailable: (['equity', 'forex', 'commodity'] as const).map((assetClass) => ({
+        assetClass,
+        provider: 'Twelve Data',
+        reason: error instanceof Error ? error.message : 'Market data provider failed.',
+      })),
+    };
+    // Cache failures too, preventing a refresh storm from repeatedly consuming
+    // API credits when the free provider quota is exhausted or unavailable.
+    cache = { expiresAt: now + CACHE_TTL_MS, value };
+    return value;
+  }
 }
