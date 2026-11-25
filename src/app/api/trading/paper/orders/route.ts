@@ -58,6 +58,10 @@ export async function POST(request: NextRequest) {
     .from('risk_limits').select('max_order_notional').eq('trading_account_id', accountId).maybeSingle();
 
   const referencePrice = quote ? Number(quote.last_price) : Number.NaN;
+  const quoteAgeMs = quote?.observed_at ? Date.now() - new Date(quote.observed_at).getTime() : Number.POSITIVE_INFINITY;
+  if (!quote || !Number.isFinite(quoteAgeMs) || quoteAgeMs < -30_000 || quoteAgeMs > 60_000) {
+    return jsonError('A fresh provider quote is required. Refresh market data and retry.', 422, 'QUOTE_UNAVAILABLE');
+  }
   const risk = validatePaperOrder({
     side, type, quantity, limitPrice,
     referencePrice,
