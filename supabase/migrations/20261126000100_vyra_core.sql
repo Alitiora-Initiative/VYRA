@@ -54,6 +54,27 @@ create table if not exists public.market_quotes (
 );
 create index if not exists market_quotes_observed_idx on public.market_quotes(observed_at desc);
 
+create or replace function private.keep_latest_market_quote()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $
+begin
+  if tg_op = 'UPDATE' and old.observed_at > new.observed_at then
+    return old;
+  end if;
+  new.updated_at := now();
+  return new;
+end;
+$;
+revoke all on function private.keep_latest_market_quote() from public, anon, authenticated;
+
+drop trigger if exists market_quotes_keep_latest on public.market_quotes;
+create trigger market_quotes_keep_latest
+before insert or update on public.market_quotes
+for each row execute function private.keep_latest_market_quote();
+
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
   trading_account_id uuid not null references public.trading_accounts(id) on delete restrict,
@@ -538,7 +559,7 @@ begin
 
   select * into v_quote from public.market_quotes
   where instrument_id = p_instrument_id;
-  if not found or v_quote.observed_at < now() - interval '60 seconds' then raise exception 'QUOTE_MISSING_OR_STALE'; end if;
+  if not found or v_quote.observed_at < now() - interval '60 seconds' or v_quote.observed_at > now() + interval '30 seconds' then raise exception 'QUOTE_MISSING_OR_STALE'; end if;
 
   select * into v_limits from public.risk_limits where trading_account_id = p_account_id;
   if not found then raise exception 'RISK_LIMITS_MISSING'; end if;
