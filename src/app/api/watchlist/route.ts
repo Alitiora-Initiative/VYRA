@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  if (!isSameOriginRequest(request)) return jsonError('Cross-origin mutation rejected.', 403, 'ORIGIN_REJECTED');
   const supabase = await getSupabaseServer();
   if (!supabase) return jsonError('Authentication is not configured.', 503, 'AUTH_NOT_CONFIGURED');
   const { data: auth, error: authError } = await supabase.auth.getUser();
