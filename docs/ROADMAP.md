@@ -12,6 +12,7 @@
 8. Double-entry immutable paper ledger, balanced posting triggers and visible account journal.
 9. Asset-class-specific execution contracts with live execution hard-disabled.
 10. Unit tests, GitHub Actions validation workflow and Dependabot update configuration.
+11. User watchlist and profile settings, aggregated paper account summaries and same-origin mutation checks.
 
 ## Zero-capital setup still required
 
