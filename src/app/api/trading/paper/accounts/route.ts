@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase/server';
 import { jsonError, privateJson } from '@/lib/http';
 
