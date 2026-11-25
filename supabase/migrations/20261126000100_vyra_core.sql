@@ -373,9 +373,9 @@ begin
 
   v_notional := round(v_order.quantity * p_fill_price, 2);
   if v_notional <= 0 then raise exception 'INVALID_NOTIONAL'; end if;
+  if v_order.side = 'buy' and v_cash < v_notional then raise exception 'INSUFFICIENT_PAPER_CASH'; end if;
 
   if v_order.side = 'buy' then
-    if v_cash < v_notional then raise exception 'INSUFFICIENT_PAPER_CASH'; end if;
     insert into public.ledger_transactions (trading_account_id, event_type, reference_id, idempotency_key, description)
     values (v_order.trading_account_id, 'paper_trade', v_order.id, 'paper-order:' || v_order.id::text, 'Paper market/limit buy fill')
     returning id into v_transaction_id;
@@ -488,6 +488,9 @@ begin
   if p_order_type = 'limit' and (p_limit_price is null or p_limit_price <= 0) then raise exception 'INVALID_LIMIT_PRICE'; end if;
   if p_order_type = 'market' and p_limit_price is not null then raise exception 'MARKET_ORDER_HAS_LIMIT_PRICE'; end if;
   if p_client_order_id is null then raise exception 'CLIENT_ORDER_ID_REQUIRED'; end if;
+
+  -- Serialise retries for the same account/client idempotency key.
+  perform pg_advisory_xact_lock(hashtextextended(p_account_id::text || ':' || p_client_order_id::text, 0));
 
   select * into v_account from public.trading_accounts
   where id = p_account_id and user_id = v_user_id for update;
