@@ -4,7 +4,8 @@ import { getSupabaseServer } from '@/lib/supabase/server';
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
   const next = request.nextUrl.searchParams.get('next');
-  const safeNext = next?.startsWith('/') && !next.startsWith('//') ? next : '/';
+  // Only accept known internal destinations; never treat a query string as a redirect URL.
+  const safeNext = next === '/reset-password' ? '/reset-password' : '/';
 
   if (code) {
     const supabase = await getSupabaseServer();
