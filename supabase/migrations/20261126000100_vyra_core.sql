@@ -867,6 +867,13 @@ end;
 $$;
 revoke all on function private.reject_ledger_mutation() from public, anon, authenticated;
 
+-- Audit events are append-only. Operational corrections are new events, not edits.
+drop trigger if exists audit_events_no_mutation on public.audit_events;
+create trigger audit_events_no_mutation
+before update or delete on public.audit_events
+for each row execute function private.reject_ledger_mutation();
+
+
 drop trigger if exists ledger_entries_no_mutation on public.ledger_entries;
 create trigger ledger_entries_no_mutation
 before update or delete on public.ledger_entries
