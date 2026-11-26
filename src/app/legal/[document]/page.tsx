@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 const DOCUMENTS: Record<string, { title: string; description: string }> = {
@@ -25,13 +26,13 @@ export default async function LegalDocumentStatusPage({
   return (
     <main className="legalStatusShell">
       <section className="legalStatusCard">
-        <a className="legalStatusBrand" href="/">VYRA <span>MARKETS</span></a>
+        <Link className="legalStatusBrand" href="/">VYRA <span>MARKETS</span></Link>
         <p className="eyebrow">DOCUMENT STATUS · NOT A PUBLISHED POLICY</p>
         <h1>{item.title}</h1>
         <div className="legalPending">Pending regulated-provider and legal approval</div>
         <p>{item.description}</p>
         <p className="legalFinePrint">This page is a publication-status notice, not the legal document itself. VYRA has no active customer-money, deposit, withdrawal or live-execution service. Do not rely on this page as a contractual term, compliance policy or legal advice.</p>
-        <a className="legalBack" href="/">Return to VYRA Markets</a>
+        <Link className="legalBack" href="/">Return to VYRA Markets</Link>
       </section>
     </main>
   );
