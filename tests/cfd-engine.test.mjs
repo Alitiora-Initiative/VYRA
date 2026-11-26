@@ -185,7 +185,7 @@ test('hybrid operating model retains only the approved exposure amount and route
     operatingModel: 'hybrid', maxRetainedExposure: 1000,
     permissions: {
       principal: true, dealing: true, agencyRouted: true, externalVenueApproved: true,
-      bestExecution: true, conflictsControls: true,
+      externalHedging: true, bestExecution: true, conflictsControls: true,
     },
   };
   const result = resolvePaperBrokerageOperatingModel({ policy, netExposureAfterTrade: 1400, now });
