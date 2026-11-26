@@ -702,3 +702,22 @@ The current zero-capital hosting comparison is recorded in [HOSTING_AND_INFRASTR
 ## 23. Full technology vendor map
 
 A deeper layer-by-layer vendor shortlist, including brokerage rails, private-market and hedge-fund marketplaces, institutional fund distribution, KYC/KYB/AML, market data, charting, custody, client money, fund administration, monitoring and security tooling, is maintained in [BROKERAGE_TECH_VENDOR_MAP.md](BROKERAGE_TECH_VENDOR_MAP.md). The map distinguishes an execution broker from a fund manager, custodian, prime broker, transfer agent, market-data vendor, KYC processor and technology supplier. It intentionally recommends one regulated partner first rather than attempting to connect every vendor at once. No provider on the map is a confirmed VYRA partner.
+
+
+## 24. Competitive wedge: VYRA AccessGraph
+
+VYRA's next differentiator is not a bigger instrument catalogue or another broker dashboard. It is **evidence-backed access orchestration**.
+
+The implemented AccessGraph v1.1 evaluates:
+- jurisdiction;
+- customer/investor category (retail, professional or institutional);
+- product class;
+- actual activity performed by VYRA.
+
+For the Kenya rule pack it maps published CMA licensing categories, the ISPP/CIS platform route, online-forex classification, and the 2026 VASP licensing and promotions framework. Each mapped rule links to primary source documents and lists required review work. Countries without a verified rule pack return unassessed and remain blocked. Twelve evidence gates are incomplete by default; even completing them requires independent human legal/compliance go/no-go.
+
+The product is implemented at /access-graph and exposed at GET /api/access-graph. The evaluator and tests are in src/lib/access-graph/rules.mjs and tests/access-graph.test.mjs. The rulepack is a product-control prototype, not a legal opinion, comprehensive legislative database, regulatory approval or automatic authorisation.
+
+The investor and hackathon case is that VYRA can become the policy and customer-experience interoperability layer around authorised providers. Its potential defensibility comes from accumulated reviewed rule evidence, partner capability records, conformance-tested adapters and reconciled provider event history. A static rule database alone is not a moat; production partner integrations, measurable reductions in integration time, lower exception rates and signed customer demand are necessary proof.
+
+The detailed competitive thesis, five-minute demo script, investor validation milestones and proposed revenue hypotheses are in [HACKATHON_AND_INVESTOR_THESIS.md](HACKATHON_AND_INVESTOR_THESIS.md).
