@@ -102,7 +102,7 @@ test('partial internalisation splits only the aggregate book and enforces retain
     reviewedAt: new Date(NOW - 1000).toISOString(),
     effectiveFrom: new Date(NOW - 1000).toISOString(),
     internalisationRatio: 0.25, maxRetainedExposure: 500,
-    permissions: { dealingPrincipal: true, externalHedging: true },
+    permissions: { dealingPrincipal: true, externalHedging: true, bestExecution: true, conflictsControls: true },
   };
   const result = resolvePaperHedgePlan({ policy, aggregateNetExposure: -1200, now: NOW });
   assert.equal(result.retainedExposure, 300);
