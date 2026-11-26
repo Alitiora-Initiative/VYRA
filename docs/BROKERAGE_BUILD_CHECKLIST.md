@@ -13,7 +13,8 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [x] Add the 12,000+ word researched brokerage master plan.
 - [x] Add brokerage operating, data, order, reconciliation and deployment flowcharts.
 - [x] Document the country/product/customer-type launch gates and current provider model in `docs/PROVIDER_BROKERAGE_LAUNCH_CHECKLIST.md`.
-- [ ] Create a versioned regulatory perimeter register by country, product, customer type and activity.
+- [x] Create a first versioned Kenya regulatory evidence/rule pack for AccessGraph covering VASP activity/promotion, CIS platform distribution, securities intermediation and online forex.
+- [ ] Expand the rule/evidence register with qualified counsel across customer type, each additional jurisdiction, instrument and activity; unknown markets remain blocked.
 - [ ] Obtain external Kenyan legal advice on ISPP, broker-dealer, online forex and referral boundaries.
 - [ ] Request written CMA classification guidance for VYRA's exact customer journeys.
 - [ ] Download and reconcile current 2025 General Licensing Regulations and 2026 CMA ISPP / broker-dealer checklists.
@@ -95,7 +96,7 @@ A completed document or software task does not mean VYRA is authorised to conduc
 
 ## P1 — Product and software foundations
 
-- [ ] Build a jurisdiction policy engine with default-deny behaviour for unknown country or customer type.
+- [x] Build the first AccessGraph jurisdiction/product/activity evaluator with versioned evidence, default-deny for unknown jurisdictions and eleven incomplete release gates.
 - [ ] Build a partner capability registry for market data, onboarding, accounts, KYC status, deposits, withdrawals, balances, positions, orders, statements and support.
 - [ ] Build a partner directory with legal entity, regulator, licence, category, scope, official register link and evidence date.
 - [ ] Build a product catalogue with identifier, legal provider, asset class, issuer/manager, currency, domicile, customer restrictions, fees and risks.
@@ -106,7 +107,8 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [ ] Add pseudonymous referral events without personal data in URL parameters.
 - [ ] Add link versioning, partner approval, attribution expiry, duplicate/referral fraud controls and audit history.
 - [ ] Add a provider hand-off screen explaining that account opening takes place with the named partner (requires an approved named partner first).
-- [ ] Add source timestamps and last-verified dates to data and partner cards.
+- [x] Add source evidence metadata, rule-pack version and review date to AccessGraph.
+- [ ] Extend source timestamps and last-verified dates to every partner and instrument record.
 - [ ] Add balanced risk disclosures and compensation/conflict labels.
 - [ ] Add content approval workflow; unapproved promotions cannot publish.
 - [ ] Add customer complaint links to the accountable legal entity.
@@ -251,6 +253,16 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [ ] Test encrypted database export and restoration; keep Neon Free strictly to synthetic development and paper trading, never a live regulated brokerage book of record.
 - [x] Leave Supabase projects 9N8 and Space Ledger completely untouched.
 
+
+## P0 — Hackathon and investor positioning
+
+- [x] Define VYRA's competitive wedge as evidence-backed market access and provider interoperability rather than a generic broker clone.
+- [x] Commit hackathon/investor thesis, five-minute demo script, customer model and proof-point roadmap.
+- [x] Add a working AccessGraph UI, public API, Kenya source register and default-deny test suite.
+- [ ] Capture a real end-to-end demo video from a verified running deployment.
+- [ ] Interview at least 15 broker, fund-manager, compliance and operations buyers; record validated pain and willingness to pay.
+- [ ] Obtain two written design-partner letters of intent and one signed sandbox/data access agreement.
+- [ ] Measure false-block rate, rule-review time, adapter onboarding time, reconciliation mismatches and event-recovery rate in a real partner sandbox.
 
 ## P0 — Provider checklist implementation
 
