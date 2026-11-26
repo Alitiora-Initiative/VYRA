@@ -15,7 +15,7 @@ VYRA is a multi-asset brokerage software foundation designed around distinct mar
 - Immutable double-entry paper ledger with deferred journal-balance checks and realized P&L posting.
 - Row Level Security on user-owned records.
 - Live execution adapter contracts with a hard-disabled implementation for each asset class.
-- VYRA Access Graph: versioned country × product × activity policy evaluator with source-linked Kenya rules, explicit unassessed markets and eleven default-deny launch evidence gates.
+- VYRA Access Graph: versioned country × product × activity policy evaluator with source-linked Kenya rules, explicit unassessed markets and twelve default-deny launch evidence gates including customer classification.
 - Interactive route simulator at /access-graph and public source/evidence API at GET /api/access-graph. The rulepack is a product-control aid, not legal advice or an authorisation.
 
 ## Not yet live
