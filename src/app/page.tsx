@@ -17,7 +17,7 @@ type PaperAccount = {
   id: string; account_type: string; status: string; currency: string;
   cashBalance: number; availableCash: number; reservedCash: number;
   riskLimits?: { max_order_notional: number; max_position_notional: number; max_daily_realized_loss: number; slippage_bps: number } | null;
-  positions: Array<{ quantity: number; average_cost: number; reservedQuantity: number; availableQuantity: number; instrument_catalog?: { symbol: string; name: string; asset_class: string } }>;
+  positions: Array<{ instrument_id: string; quantity: number; average_cost: number; reservedQuantity: number; availableQuantity: number; instrument_catalog?: { symbol: string; name: string; asset_class: string } }>;
 };
 type Order = {
   id: string; side: string; order_type: string; quantity: number;
