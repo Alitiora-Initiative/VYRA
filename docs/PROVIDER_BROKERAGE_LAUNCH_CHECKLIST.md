@@ -34,6 +34,31 @@ VYRA's current intended route remains **partner-led market access**: the license
 
 Do not select a provider because its sales page says “white label” or “global.” Obtain written answers for the exact VYRA legal entity, target residents and products.
 
+### First distinguish two different provider roles
+
+The checklist's “choose a provider” section is mainly about a **white-label technology supplier**. That supplier may provide the traderoom, CRM, dealing desk, liquidity connectivity, KYC integrations, billing integrations, reports, mobile apps and affiliate tools.
+
+That is not automatically the **regulated brokerage principal**. VYRA still needs a named legal entity that is authorised for the exact country, customer type and product, and that legally owns the client account, KYC/AML decisions, custody/client assets, execution, clearing, settlement and customer disclosures. One company may provide both technology and some regulated services, but this must be proven contractually and through regulator records; do not infer it from a “turnkey” label.
+
+### White-label technology suppliers shown in the reference checklist
+
+These are candidates to request demonstrations and written proposals from, not endorsements or approved partners.
+
+| Provider | Publicly described scope | Public price signal checked 26 Nov 2026 | VYRA assessment / due-diligence focus |
+|---|---|---|---|
+| **Quadcode** | White-label Forex/CFD brokerage stack with traderoom, back office, dealing, liquidity/quotes, KYC, billing/PSP connections, web/desktop/mobile apps, sales and affiliate modules | Website lists Lite at **US$17,500**, Advanced **US$37,000**, Full **US$50,000** and Prime **US$90,000**; ask for current written quote and recurring fees | Closest match to the supplied six-step checklist and broadest exact bundle; high upfront cost. Confirm the exact products/regions, which services are included at each tier, setup vs recurring costs, execution/custody entities, partner licences and minimums |
+| **B2Broker** | B2CORE CRM/trader room, B2TRADER multi-asset trading, B2COPY copy/PAMM/MAM, liquidity/connectivity and white-label platform components | Public page shows examples starting around **US$1,000/month** for B2CORE, **US$2,500/month** for B2TRADER and **US$1,500/month** for B2COPY; an A-book liquidity bundle may offset subscriptions against commissions | Broad technology and liquidity ecosystem; determine if a complete package is required, minimum A-book flow/commissions, liquidity mark-ups, setup/hosting and who is the legal broker/custodian |
+| **Leverate** | White-label trading terminal, CRM/client portal, web/mobile/desktop, charts, hosting, liquidity integration, copy trading and broker back office | Its pricing page advertises **€1,690/month** for up to 1,000 real accounts or 250 active traders; CRM/client portal is shown as a **€2,390/month** add-on | The clearest published monthly-price comparison; check whether payment rails, KYC, dealing, server licences, support and local-country permissions are included or charged separately |
+| **TradeSmarter** | Multi-asset white-label platform and CRM/back office across FX/CFD, crypto futures, digital options and prop-trading products; site advertises 300+ payment gateway and 180+ liquidity integrations | Custom quotation; public page does not provide a complete fixed package price | Potential fit for a large integrated stack; get a detailed module/asset matrix, regional payment coverage, liquidity counterparties, fees, risk model and exact product legal classification |
+| **Soft-FX** | Forex and digital-asset brokerage solutions, TickTrader platform, web/mobile/desktop trader apps, Trader's Room, liquidity aggregation, PAMM and APIs | Custom quotation; no comparable public package price found | Worth comparing for a software-led FX/digital-asset build; verify each LP connector, hosting/support obligations, data/custody options and the difference between software delivery and regulated operation |
+| **AlphaPoint** | White-label digital-asset exchange software, liquidity aggregation, order book, risk-management and KYC/AML support for broker-dealer/institutional workflows | Enterprise quotation; no public price found | More specialised for crypto/digital-asset exchange infrastructure than a complete FX/CFD brokerage; include only if VYRA deliberately chooses a separately authorised digital-asset venue/market model |
+
+**Sources checked:** Quadcode (https://quadcode.com/ and https://quadcode.com/white-label-broker); B2Broker (https://b2broker.com/ and https://b2broker.com/fees-and-pricing/); Leverate (https://leverate.com/pricing/trading-platform/); TradeSmarter (https://www.tradesmarter.com/); Soft-FX (https://www.soft-fx.com/solutions/forex-broker-turnkey/); AlphaPoint (https://alphapoint.com/wp-content/uploads/2024/04/AlphaPoint-Exchange-Software-Product.pdf); original checklist PDF (https://fsms.quadcode.com/storage/public/d0/q3/akhmsj7oc3be3cog/Checklist.pdf).
+
+Prices are provider-published examples, not firm VYRA quotations. They do not include all legal, regulator, capital, data, banking, market-access, country-specific, tax, ongoing operating or transaction-volume costs. Request a 12–36 month total-cost schedule including onboarding/setup, recurring platform, per-account/volume charges, liquidity/bridge, PSP, KYC, market-data, mobile-store, support, customisation, termination and data-export fees.
+
+**VYRA decision:** do not sign with or integrate a white-label supplier yet. First choose one initial product and jurisdiction, establish the lawful partner-led operating model, and get written confirmation of which legal entity will execute and hold customer assets. Then run the same requirements against at least three technology suppliers using a weighted scorecard.
+
 ### Provider candidates to approach
 
 | Candidate | Best initial question | What must be proven |
