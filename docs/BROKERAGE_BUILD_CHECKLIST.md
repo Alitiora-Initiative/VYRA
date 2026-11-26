@@ -12,6 +12,7 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [x] Separate simulated balances from any future partner-sourced balances.
 - [x] Add the 12,000+ word researched brokerage master plan.
 - [x] Add brokerage operating, data, order, reconciliation and deployment flowcharts.
+- [x] Document the country/product/customer-type launch gates and current provider model in `docs/PROVIDER_BROKERAGE_LAUNCH_CHECKLIST.md`.
 - [ ] Create a versioned regulatory perimeter register by country, product, customer type and activity.
 - [ ] Obtain external Kenyan legal advice on ISPP, broker-dealer, online forex and referral boundaries.
 - [ ] Request written CMA classification guidance for VYRA's exact customer journeys.
@@ -23,19 +24,27 @@ A completed document or software task does not mean VYRA is authorised to conduc
 
 ## P0 — Infrastructure and deployment
 
-- [!] Provision a dedicated VYRA Supabase project. Current organisation is at its two-active-free-project limit.
-- [ ] Find another approved organisation with free project capacity, or separately approve a specific project lifecycle change. Never reuse another product database by assumption.
-- [ ] Apply the reviewed VYRA database migration only after isolated project provisioning.
-- [ ] Verify tables, grants, RLS, RPC permissions, triggers and ownership.
-- [ ] Run Supabase security advisors and resolve findings.
-- [ ] Configure Auth site URL, redirect allow-list, email delivery and password recovery.
-- [!] Create a free Render demo service only after selecting My Workspace or JOJO; neither service has been created.
-- [ ] Keep GitHub private; do not buy a Vercel upgrade or make the repository public to bypass current limitations.
-- [ ] Add a pinned npm lockfile and use deterministic npm ci in CI.
-- [ ] Run GitHub Actions unit tests, typecheck, lint and production build and retain the actual logs.
+- [x] Preserve the existing unrelated Supabase projects 9N8 and Space Ledger; neither was modified.
+- [x] Provision dedicated Neon Postgres project `vyra-markets` in Frankfurt, with `vyra` database and dedicated main branch.
+- [x] Enable Neon Managed Better Auth and Neon Data API on VYRA's branch.
+- [x] Commit and apply the Neon-native schema migration at `neon/migrations/20261126000100_vyra_core.sql`.
+- [x] Verify 14 public tables, RLS enabled on all 14, 19 public RLS policies and 69 validated constraints.
+- [x] Keep UUID user IDs after inspecting Neon Managed Auth's UUID primary key; do not change the existing UUID foreign keys.
+- [x] Remove Supabase runtime clients, Supabase middleware and service-role runtime dependency from the active app path.
+- [x] Add Neon Next.js server/client auth integration and the Neon Data API adapter.
+- [x] Create a dedicated quote-ingestion PostgreSQL role; it cannot modify customer accounts, orders, positions or ledger records.
+- [x] Enforce email verification for new Neon Auth accounts and enable the shared Neon email provider; delivery/reset still require end-to-end test.
+- [x] Add VYRA favicon, installable-web-app manifest, legal-document status pages and analytics consent gate.
+- [~] GitHub CI: 16 unit tests and TypeScript passed on the Neon migration commits; native ESLint flat-config replacement is being checked after the former legacy-compat configuration failed. Production build remains unverified.
+- [ ] Finish CI with clean unit tests, typecheck, lint and production Next.js build on one current main commit.
+- [ ] Verify Neon sign-up, verification email, sign-in, session refresh, sign-out and password reset end-to-end using a test mailbox.
+- [ ] Add the exact deployed staging origin to Neon Auth trusted domains after the Render service URL is known.
+- [ ] Provision the free Render paper-demo web service and set the four Neon environment variables securely; do not deploy as a live brokerage.
+- [ ] Configure an approved custom domain and business mailboxes when domain/ownership and email provider are selected.
 - [ ] Add secret scanning, dependency auditing and branch protection.
-- [ ] Separate health and readiness checks without exposing secrets or infrastructure metadata.
-- [ ] Document backups and test restoration before storing any real personal data.
+- [ ] Document encrypted backups, retention and tested restoration before any personal/financial data is stored.
+- [ ] Keep GitHub private; do not buy a Vercel upgrade or make the repository public to bypass current limitations.
+
 
 ## P1 — Partner research and eligibility
 
@@ -90,11 +99,13 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [ ] Build a partner capability registry for market data, onboarding, accounts, KYC status, deposits, withdrawals, balances, positions, orders, statements and support.
 - [ ] Build a partner directory with legal entity, regulator, licence, category, scope, official register link and evidence date.
 - [ ] Build a product catalogue with identifier, legal provider, asset class, issuer/manager, currency, domicile, customer restrictions, fees and risks.
+- [x] Add partner-specific country/product eligibility checks and default-deny gates in the existing partner eligibility module.
 - [ ] Add partner-specific country/product allow-lists and emergency disable switches.
+- [x] Add a first-visit analytics consent choice; the optional GTM script is only loaded after analytics acceptance.
 - [ ] Add versioned consent and privacy event history.
 - [ ] Add pseudonymous referral events without personal data in URL parameters.
 - [ ] Add link versioning, partner approval, attribution expiry, duplicate/referral fraud controls and audit history.
-- [ ] Add a provider hand-off screen explaining that account opening takes place with the named partner.
+- [ ] Add a provider hand-off screen explaining that account opening takes place with the named partner (requires an approved named partner first).
 - [ ] Add source timestamps and last-verified dates to data and partner cards.
 - [ ] Add balanced risk disclosures and compensation/conflict labels.
 - [ ] Add content approval workflow; unapproved promotions cannot publish.
@@ -233,3 +244,19 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [ ] Run unit tests, typecheck, lint and production build; require green CI before promoting schema.
 - [ ] Keep Neon Free for synthetic paper data and integration testing only; do not use it as a live regulated brokerage book of record.
 - [ ] Leave Supabase projects 9N8 and Space Ledger completely untouched.
+
+
+## P0 — Provider checklist implementation
+
+- [x] Map the supplied third-party Brokerage Launch Checklist to VYRA's actual system state.
+- [x] Record the current product as partner-led market access, not an owned brokerage.
+- [x] Add VYRA brand/favicon and an installable web manifest.
+- [x] Add legal document publication-status routes for AML, payment policy, terms, order execution, privacy and fees; they explicitly do not pretend the missing provider PDFs exist.
+- [x] Add an optional Google Tag Manager integration that remains off until a visitor opts into analytics.
+- [x] Prepare an App Store listing draft for the paper-only prototype and record Google/Apple financial-app eligibility restrictions.
+- [ ] Receive and approve the provider's six legal PDFs before publishing real policies.
+- [ ] Select provider, contract and verified initial jurisdiction/product scope.
+- [ ] Verify domain ownership, custom business email and social profile URLs.
+- [ ] Complete approved app icon, feature graphic, mobile screenshots and native iOS/Android builds.
+- [ ] Build and approve affiliate offer, commission, promotion, attribution and payout controls.
+- [ ] Implement or integrate provider-owned KYC, AML, billing, liquidity, dealing and reporting modules under contract.
