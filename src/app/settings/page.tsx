@@ -60,6 +60,6 @@ export default function SettingsPage() {
     </form>}
     {message && <p className="authMessage" role="status">{message}</p>}
     <div className="settingsSecurity"><ShieldCheck size={18}/><div><strong>Trading environment</strong><small>Paper-only. Live broker connections, deposits and withdrawals are disabled.</small></div></div>
-    <div className="quickLinks"><Link href="/forgot-password">Change or reset password</Link><Link href="/api/execution/readiness">Provider readiness</Link></div>
+    <div className="quickLinks"><Link href="/partners">Brokerage partner research</Link><Link href="/forgot-password">Change or reset password</Link><Link href="/api/execution/readiness">Provider readiness</Link></div>
   </section></main>;
 }
