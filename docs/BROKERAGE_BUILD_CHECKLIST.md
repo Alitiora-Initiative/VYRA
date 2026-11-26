@@ -242,12 +242,14 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [ ] Run real JWT-backed cross-user isolation tests with two synthetic users across profiles, watchlists, accounts, orders, positions, fills and ledger.
 - [ ] Test paper-account opening, market/limit order, duplicate idempotency, cancellation, quote freshness, concurrency, rollback and journal balance using synthetic users.
 - [ ] Complete backup export and restore test; Neon Free is for demo/paper only, not a live brokerage book of record.
-- [ ] Run paper order, fill, cancellation, journal balance, idempotency, stale quote and immutable audit tests against Neon.
-- [ ] Implement and end-to-end test sign-up, sign-in, session refresh, sign-out, email confirmation and password recovery.
+- [ ] Complete JWT-backed account isolation and application integration testing with two synthetic users. The direct grants/RLS catalogue inspection has passed, but it is not a substitute for session-level tests.
+- [ ] Exercise paper account opening, market/limit orders, idempotency retries, cancellation, quote-age rejection, risk limits, concurrent submissions, fill rollback and balanced journal posting against Neon.
+- [ ] Complete Neon email OTP delivery, password recovery, session refresh, sign-out and reset-session revocation tests using a controlled test mailbox.
 - [ ] Verify all server-side credentials are absent from browser bundles, Git history and API responses.
-- [ ] Run unit tests, typecheck, lint and production build; require green CI before promoting schema.
-- [ ] Keep Neon Free for synthetic paper data and integration testing only; do not use it as a live regulated brokerage book of record.
-- [ ] Leave Supabase projects 9N8 and Space Ledger completely untouched.
+- [x] Run unit tests, typecheck, lint and production build; all four passed in GitHub Actions on commit `9f0e6d65ceed9a53fdf5457f600d5a67adc37783`.
+- [ ] Verify the latest documentation-only CI run completes successfully as well.
+- [ ] Test encrypted database export and restoration; keep Neon Free strictly to synthetic development and paper trading, never a live regulated brokerage book of record.
+- [x] Leave Supabase projects 9N8 and Space Ledger completely untouched.
 
 
 ## P0 — Provider checklist implementation
