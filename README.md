@@ -72,6 +72,7 @@ VYRA is being developed first as a **partner-led market-access platform**, not a
 - [Brokerage flowcharts](docs/BROKERAGE_FLOWCHARTS.md) — regulatory gates, customer hand-off, future order lifecycle, data/privacy boundary, reconciliation and deployment.
 - [Brokerage build checklist](docs/BROKERAGE_BUILD_CHECKLIST.md) — staged engineering, legal, partner and launch tasks.
 - [Partner and regulation research register](docs/BROKERAGE_RESEARCH_REGISTER.md) — primary-source links, due-diligence questions and known evidence gaps.
+- [Kenya VASP 2026 addendum](docs/KENYA_VASP_2026_ADDENDUM.md) — crypto-specific licensing, territorial scope, promotions and paid-up/liquid capital requirements.
 - [GitHub implementation issues](https://github.com/Alitiora-Initiative/VYRA/issues) — trackable delivery backlog.
 
 **Current infrastructure blocker:** a dedicated VYRA Supabase project could not be created because the only available organisation reached its two-active-free-project limit. Existing projects 9N8 and Space Ledger were left untouched. VYRA must remain isolated; do not apply its migration to either unrelated project. A Render demo service also awaits the owner's workspace selection. Real-money features remain disabled.
