@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, ArrowUpRight, BriefcaseBusiness, CircleAlert, LockKeyhole, Network, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, CircleAlert, LockKeyhole, Network, ShieldCheck } from 'lucide-react';
 import { getProviderGraphSnapshot } from '@/lib/provider-graph/capabilities.mjs';
 
 export default function ProviderGraphPage() {
@@ -74,7 +74,7 @@ export default function ProviderGraphPage() {
         <div><ShieldCheck size={20}/><strong>What it takes to become a connected provider</strong></div>
         <ol>
           <li>Verify the legal entity and current licence directly against the regulator register.</li>
-          <li>Record country, customer category and product permissions for VYRA's exact activity.</li>
+          <li>Record country, customer category and product permissions for VYRA&apos;s exact activity.</li>
           <li>Obtain signed agreements and responsibility allocation for accounts, KYC, assets, execution, complaints and data.</li>
           <li>Connect a sandbox using scoped secrets, signed events, idempotency and failure handling.</li>
           <li>Complete conformance, security, reconciliation and legal/compliance review.</li>
