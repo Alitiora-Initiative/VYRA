@@ -1,11 +1,11 @@
 import type { NextRequest } from 'next/server';
-import { getSupabaseServer } from '@/lib/supabase/server';
+import { getNeonServer } from '@/lib/neon/server';
 import { isRecord, isSameOriginRequest, jsonError, privateJson } from '@/lib/http';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const supabase = await getSupabaseServer();
+  const supabase = await getNeonServer();
   if (!supabase) return jsonError('Authentication is not configured.', 503, 'AUTH_NOT_CONFIGURED');
   const { data: auth, error: authError } = await supabase.auth.getUser();
   if (authError || !auth.user) return jsonError('Sign in to view account settings.', 401, 'UNAUTHENTICATED');
@@ -24,7 +24,7 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   if (!isSameOriginRequest(request)) return jsonError('Cross-origin mutation rejected.', 403, 'ORIGIN_REJECTED');
-  const supabase = await getSupabaseServer();
+  const supabase = await getNeonServer();
   if (!supabase) return jsonError('Authentication is not configured.', 503, 'AUTH_NOT_CONFIGURED');
   const { data: auth, error: authError } = await supabase.auth.getUser();
   if (authError || !auth.user) return jsonError('Sign in to update account settings.', 401, 'UNAUTHENTICATED');
@@ -37,8 +37,7 @@ export async function PATCH(request: NextRequest) {
 
   const { data, error } = await supabase
     .from('profiles')
-    .update({ display_name: displayName, updated_at: new Date().toISOString() })
-    .eq('id', auth.user.id)
+    .upsert({ id: auth.user.id, display_name: displayName, updated_at: new Date().toISOString() }, { onConflict: 'id' })
     .select('id,display_name,updated_at')
     .maybeSingle();
   if (error || !data) return jsonError('Profile update failed. Apply the VYRA database migration and sign in again.', 503, 'PROFILE_UPDATE_FAILED');
