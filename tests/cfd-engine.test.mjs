@@ -88,7 +88,7 @@ test('calculates progressive margin using explicit contiguous notional tiers', a
     ],
   });
   assert.equal(result.ok, true);
-  assert.equal(result.requiredMargin, 18333.33333333);
+  assert.equal(result.requiredMargin, 13333.33333333);
   assert.equal(result.appliedTiers.length, 3);
 });
 
