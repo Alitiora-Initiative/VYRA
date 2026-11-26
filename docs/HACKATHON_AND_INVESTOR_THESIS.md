@@ -62,6 +62,14 @@ The provider graph is distinct from the legal rule graph. A provider may provide
 
 A provider cannot become "approved" because an employee added a logo or because an endpoint responds.
 
+### Composite route gate — permission and provider evidence meet at runtime
+
+The new composite decision service calls AccessGraph and Provider Graph together for the same country, customer type, product, activity and provider. It returns the source-backed regulatory signal, the exact provider roles required by the selected activity, missing evidence and an explicit deny/escalate decision. Provider capability evidence must include an evidence identifier, title, trusted source/document reference, accountable reviewer, verification date and a re-verification deadline. Expired, future-dated, incomplete or absent evidence blocks the capability. Unknown activities require every capability role rather than inheriting a weaker route.
+
+The route-check API accepts only the route dimensions; it does not accept caller-supplied approval flags or capability records. A fully evidenced and mapped route can only be escalated to human legal/compliance review. Customer onboarding, referrals, order transmission, live execution, customer money, account opening and custody remain disabled. The API does not create partner evidence, prove that a partner is authorised, or grant a licence; its current registry contains static research candidates only.
+
+This is the differentiator VYRA should demonstrate to judges: one decision path that connects statutory context, investor eligibility, supplier accountability and technical readiness, and can explain precisely why a proposed route is blocked. The next engineering milestone is a privileged, audited evidence registry and change workflow rather than a shortcut that labels an unverified provider as approved.
+
 ### Reconciliation as a first-class feature
 
 A trade API response is not the source of truth for settlement. VYRA's integration contract should distinguish accepted, pending, partially filled, filled, cancelled, rejected, settled and reconciled states. Each inbound event is signed, deduplicated and sequenced. Daily statements reconcile cash, positions, fills, fees and corporate actions. A material mismatch disables the affected feature and opens a discrepancy case.
