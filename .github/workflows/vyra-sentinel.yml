@@ -1,0 +1,27 @@
+name: VYRA Sentinel
+
+on:
+  push:
+    paths:
+      - "hackathons/vyra-risk-review/**"
+      - ".github/workflows/vyra-sentinel.yml"
+  pull_request:
+    paths:
+      - "hackathons/vyra-risk-review/**"
+      - ".github/workflows/vyra-sentinel.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hackathons/vyra-risk-review
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: hackathons/vyra-risk-review/package-lock.json
+      - run: npm install --no-audit --no-fund
+      - run: npm test
