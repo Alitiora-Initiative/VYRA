@@ -164,3 +164,6 @@
   .accessEvidenceItem{gap:9px;padding:11px}
   .accessFooter{flex-direction:column}
 }
+
+.accessCustomerNote{margin-top:11px;padding:10px 12px;border-left:2px solid #9e7b47;background:#19180f;color:#b8ae94;font-size:10px;line-height:1.6}
+.accessCustomerNote strong{color:#e0ca9e}
