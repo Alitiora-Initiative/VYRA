@@ -18,6 +18,7 @@ VYRA's current intended route remains **partner-led market access**: the license
 | Database | Dedicated Neon Postgres, Frankfurt, VYRA main branch; Neon Managed Better Auth and Data API | Provisioned for paper/sandbox use |
 | Risk engine | Server-side paper-order checks, quote-age checks, idempotency and paper ledger | Paper use only |
 | Market data | CoinGecko crypto snapshots and Twelve Data adapter for equities, FX and commodities | Development feeds; commercial redistribution rights not evidenced |
+| Access control / policy | AccessGraph v1.1: versioned Kenya country × customer type × product × activity rules with primary-source links and twelve default-deny release gates | Kenya scoped rule pack only; UK/US/EU/UAE unassessed; not legal advice or production authorisation |
 | Partners | IBKR, Saxo, Alpaca, DriveWealth, Upvest and institutional platforms are research candidates | No appointment or contract |
 | Countries | No country/product/customer-type combination is approved for VYRA | Default deny |
 | Funding and withdrawals | No payment rails or client-money accounts | Not implemented |
