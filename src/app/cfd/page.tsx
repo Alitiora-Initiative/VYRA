@@ -206,7 +206,7 @@ export default function CfdTraderoomPage() {
                 <div className="cfdQuoteCell"><small>Ask</small><strong>{quoteState.available && quote ? price(quote.ask, contract.quote_currency) : 'Unavailable'}</strong></div>
                 <div className="cfdQuoteCell"><small>Spread</small><strong>{quoteState.available && quoteState.spreadBps !== null ? quoteState.spreadBps.toFixed(2) + ' bps' : '—'}</strong></div>
                 <div className="cfdSourceCell">
-                  {quoteState.available && quote ? <><span className="cfdQuoteBadge">{quote.quoteKind === 'executable' ? 'PROVIDER-LABELLED EXECUTABLE' : 'INDICATIVE'}</span><small>{quote.source} · {time(quote.observedAt)}</small></> : <><span className="cfdUnavailable">QUOTE UNAVAILABLE</span><small>{quoteState.reason || 'No fresh provider quote in the permitted window.'}</small></>}
+                  {quoteState.available && quote ? <><span className="cfdQuoteBadge">{quote.quoteKind === 'executable' ? 'PROVIDER-LABELLED EXECUTABLE' : 'INDICATIVE'}</span><small>{quote.source} · {time(quote.observedAt)}</small></> : <><span className="cfdUnavailable">QUOTE UNAVAILABLE</span><small>{('reason' in quoteState ? quoteState.reason : 'No fresh provider quote in the permitted window.')}</small></>}
                 </div>
               </article>;
             })}
