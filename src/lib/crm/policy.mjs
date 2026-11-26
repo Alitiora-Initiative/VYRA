@@ -25,6 +25,10 @@ const CASE_ROLES = Object.freeze({
   partner_incident: ['admin', 'partner_manager', 'operations'],
 });
 
+const TASK_ROLES = Object.freeze([
+  'admin','sales','support','compliance','finance','dealing','operations','partner_manager',
+]);
+
 export function canCreateLead(role) {
   return role === 'admin' || role === 'sales';
 }
@@ -38,19 +42,18 @@ export function canAccessCase(role, category) {
 }
 
 export function canCreateTask(role) {
-  return ['admin', 'sales', 'support', 'compliance', 'operations'].includes(role);
+  return TASK_ROLES.includes(role);
 }
 
 export function canChangeLeadStage(role, stage) {
   if (!LEAD_STAGES.includes(stage)) return false;
   if (!canCreateLead(role)) return false;
-  // A staff edit cannot mark a lead as onboarding or an approved client.
-  // Those stages require a future verified partner-event workflow.
   return !['partner_onboarding', 'partner_confirmed'].includes(stage);
 }
 
 export function canUpdateTask(role, assignedTo, actorId) {
-  return assignedTo === actorId || role === 'admin' || role === 'operations';
+  return TASK_ROLES.includes(role) &&
+    (assignedTo === actorId || role === 'admin' || role === 'operations');
 }
 
 export function isSafeCrmText(value, max = 600) {

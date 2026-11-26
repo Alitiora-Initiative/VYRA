@@ -32,12 +32,23 @@ test('handoff and verified-client stages cannot be asserted by a human CRM edit'
   assert.ok(LEAD_STAGES.includes('partner_confirmed'));
 });
 
-test('tasks and partner management are role scoped', () => {
-  assert.equal(canCreateTask('support'), true);
-  assert.equal(canCreateTask('finance'), false);
-  assert.equal(canManagePartners('partner_manager'), true);
-  assert.equal(canManagePartners('sales'), false);
+test('task creation covers brokerage operations roles but not read-only', () => {
+  for (const role of ['sales','support','compliance','finance','dealing','operations','partner_manager','admin']) {
+    assert.equal(canCreateTask(role), true);
+  }
+  assert.equal(canCreateTask('read_only'), false);
+});
+
+test('task updates are restricted to eligible assignees and operations control', () => {
   assert.equal(canUpdateTask('sales', 'u1', 'u1'), true);
+  assert.equal(canUpdateTask('finance', 'u1', 'u1'), true);
+  assert.equal(canUpdateTask('read_only', 'u1', 'u1'), false);
   assert.equal(canUpdateTask('sales', 'u2', 'u1'), false);
   assert.equal(canUpdateTask('operations', 'u2', 'u1'), true);
+});
+
+test('partner management is reserved for partner managers and administrators', () => {
+  assert.equal(canManagePartners('partner_manager'), true);
+  assert.equal(canManagePartners('admin'), true);
+  assert.equal(canManagePartners('sales'), false);
 });

@@ -77,6 +77,7 @@ export default function BrokerageCRMPage() {
   const [showLeadForm, setShowLeadForm] = useState(false);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [showCaseForm, setShowCaseForm] = useState(false);
+  const [showPartnerForm, setShowPartnerForm] = useState(false);
   const [leadForm, setLeadForm] = useState({
     fullName: '', email: '', phone: '', countryCode: 'KE',
     source: 'organic', campaignName: '', marketingConsent: false, contactChannel: 'none',
@@ -85,6 +86,7 @@ export default function BrokerageCRMPage() {
   const [caseForm, setCaseForm] = useState({
     category: 'customer_support', title: '', summary: '', partnerReference: '', priority: 'normal',
   });
+  const [partnerForm, setPartnerForm] = useState({ displayName: '', partnerType: 'technology_provider', countryCode: '', notes: '' });
 
   const refresh = useCallback(async () => {
     setError('');
@@ -101,7 +103,7 @@ export default function BrokerageCRMPage() {
     }
   }, []);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => { void Promise.resolve().then(() => refresh()); }, [refresh]);
 
   const metrics = useMemo(() => ({
     leads: data.leads.length,
@@ -110,6 +112,17 @@ export default function BrokerageCRMPage() {
     openCases: data.cases.length,
     partnerResearch: data.partners.filter((item) => item.status !== 'approved').length,
   }), [data]);
+
+  const sourceBreakdown = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const lead of data.leads) counts.set(lead.source, (counts.get(lead.source) ?? 0) + 1);
+    return [...counts.entries()].sort((a,b) => b[1] - a[1]).slice(0,5);
+  }, [data.leads]);
+  const marketBreakdown = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const lead of data.leads) counts.set(lead.country_code, (counts.get(lead.country_code) ?? 0) + 1);
+    return [...counts.entries()].sort((a,b) => b[1] - a[1]).slice(0,5);
+  }, [data.leads]);
 
   const filteredLeads = useMemo(() => data.leads.filter((item) => {
     const term = search.trim().toLowerCase();
@@ -167,6 +180,15 @@ export default function BrokerageCRMPage() {
     }
   }
 
+  async function createPartner(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const saved = await mutate({ kind: 'partner', ...partnerForm }, 'Research-only partner record added.');
+    if (saved) {
+      setPartnerForm({ displayName: '', partnerType: 'technology_provider', countryCode: '', notes: '' });
+      setShowPartnerForm(false);
+    }
+  }
+
   const tabs = [
     { id: 'leads', name: 'Leads', icon: Users, count: metrics.leads },
     { id: 'tasks', name: 'Tasks', icon: ListTodo, count: metrics.openTasks },
@@ -208,6 +230,15 @@ export default function BrokerageCRMPage() {
         <article><span>Partner reviews</span><strong>{loading ? '—' : metrics.partnerResearch}</strong><small>Not yet fully approved</small></article>
       </div>
 
+      <div className="crmAnalyticsStrip">
+        <article><h3>Acquisition sources</h3><p>Prospect records by captured first source</p>
+          {sourceBreakdown.length ? sourceBreakdown.map(([name,count]) => <div className="crmBarRow" key={name}><span>{label(name)}</span><div><i style={{ width: (count / Math.max(1, metrics.leads) * 100) + '%' }}/></div><b>{count}</b></div>) : <small>No source data yet</small>}
+        </article>
+        <article><h3>Market pipeline</h3><p>Prospect volume by country code</p>
+          {marketBreakdown.length ? marketBreakdown.map(([name,count]) => <div className="crmBarRow" key={name}><span>{name}</span><div><i style={{ width: (count / Math.max(1, metrics.leads) * 100) + '%' }}/></div><b>{count}</b></div>) : <small>No market data yet</small>}
+        </article>
+      </div>
+
       <div className="crmWorkspace">
         <nav className="crmTabs" aria-label="CRM sections">
           {tabs.map((item) => <button key={item.id} className={tab === item.id ? 'active' : ''} onClick={() => { setTab(item.id); setSearch(''); }}>
@@ -220,8 +251,9 @@ export default function BrokerageCRMPage() {
             <div className="crmHeadActions">
               {tab !== 'audit' && <label className="crmSearch"><Search size={15}/><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search this queue"/></label>}
               {tab === 'leads' && role && ['admin','sales'].includes(role) && <button className="crmPrimary" onClick={() => setShowLeadForm((value) => !value)}><Plus size={15}/> Add prospect</button>}
-              {tab === 'tasks' && role && ['admin','sales','support','compliance','operations'].includes(role) && <button className="crmPrimary" onClick={() => setShowTaskForm((value) => !value)}><Plus size={15}/> Add task</button>}
+              {tab === 'tasks' && role && ['admin','sales','support','compliance','finance','dealing','operations','partner_manager'].includes(role) && <button className="crmPrimary" onClick={() => setShowTaskForm((value) => !value)}><Plus size={15}/> Add task</button>}
               {tab === 'cases' && (caseRoles[role]?.length ?? 0) > 0 && <button className="crmPrimary" onClick={() => { setCaseForm((current) => ({ ...current, category: caseRoles[role]?.[0] ?? 'customer_support' })); setShowCaseForm((value) => !value); }}><Plus size={15}/> Open case</button>}
+              {tab === 'partners' && role && ['admin','partner_manager'].includes(role) && <button className="crmPrimary" onClick={() => setShowPartnerForm((value) => !value)}><Plus size={15}/> Add partner</button>}
             </div>
           </div>
 
@@ -252,6 +284,18 @@ export default function BrokerageCRMPage() {
               <label>Description<input maxLength={500} value={taskForm.description} onChange={(event) => setTaskForm({ ...taskForm, description: event.target.value })}/></label>
             </div>
             <button className="crmPrimary" disabled={busy} type="submit">{busy ? 'Saving…' : 'Create task'}</button>
+          </form>}
+
+          {showPartnerForm && tab === 'partners' && <form className="crmForm" onSubmit={createPartner}>
+            <div className="crmFormTitle"><strong>New partner research record</strong><button type="button" onClick={() => setShowPartnerForm(false)} aria-label="Close"><X size={16}/></button></div>
+            <div className="crmFormGrid">
+              <label>Organisation / partner name<input required minLength={2} maxLength={120} value={partnerForm.displayName} onChange={(event) => setPartnerForm({ ...partnerForm, displayName: event.target.value })}/></label>
+              <label>Partner category<select value={partnerForm.partnerType} onChange={(event) => setPartnerForm({ ...partnerForm, partnerType: event.target.value })}>{['affiliate','introducing_broker','community','technology_provider','regulated_principal','other'].map((value) => <option key={value} value={value}>{label(value)}</option>)}</select></label>
+              <label>Country code (optional)<input maxLength={2} value={partnerForm.countryCode} onChange={(event) => setPartnerForm({ ...partnerForm, countryCode: event.target.value.toUpperCase() })} placeholder="KE"/></label>
+              <label className="wide">Research notes only<input maxLength={600} value={partnerForm.notes} onChange={(event) => setPartnerForm({ ...partnerForm, notes: event.target.value })}/></label>
+            </div>
+            <small className="crmFormHint">Every new record is automatically marked RESEARCH ONLY. Staff cannot self-certify licences, agreements or market permissions here.</small>
+            <button className="crmPrimary" disabled={busy} type="submit">{busy ? 'Saving…' : 'Save research partner'}</button>
           </form>}
 
           {showCaseForm && tab === 'cases' && <form className="crmForm" onSubmit={createCase}>

@@ -111,8 +111,11 @@ VYRA is being developed first as a **partner-led market-access platform**, not a
 - [Neon migration runbook](docs/NEON_MIGRATION_RUNBOOK.md) — provisioned Neon infrastructure, SQL migration, app integration, security boundaries and remaining tests.
 - [Provider brokerage launch checklist](docs/PROVIDER_BROKERAGE_LAUNCH_CHECKLIST.md) — maps the supplied white-label brokerage checklist to VYRA's real state and launch evidence.
 - [CRM and brokerage operations](docs/CRM_AND_BROKERAGE_OPERATIONS.md) — CRM vendor shortlist, operating queues, launch waves, acquisition/retention analytics and the staff-only CRM foundation.
+- [Forex & CFD product architecture](docs/CFD_PRODUCT_AND_EXECUTION_ARCHITECTURE.md) — CFD contract/margin engine, A-Book/B-Book/Hybrid dealing, Kenya licensing research, CRM/back office, PSP, KYC and provider diligence.
 - [App Store listing draft](docs/APP_STORE_LISTING_DRAFT.md) — truthful paper-prototype listing copy and the missing store-eligibility evidence.
 - [GitHub implementation issues](https://github.com/Alitiora-Initiative/VYRA/issues) — trackable delivery backlog.
+
+**Product focus:** VYRA's first brokerage product family is Forex/CFDs. The current work adds CFD reference data and deterministic paper risk calculations; it does not add live market execution or real-money CFD accounts.
 
 **CRM implementation status:** the staff-only CRM page and API are being introduced on `feat/brokerage-crm-operations-desk`; the additive CRM migrations have been exercised on an isolated Neon review branch only. The main Neon branch does not yet contain the CRM schema. Staff memberships are not seeded; a database administrator must provision explicit roles after reviewing the PR.
 
