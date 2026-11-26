@@ -18,7 +18,7 @@ VYRA is a Forex and CFD brokerage technology foundation designed for regulated p
 - VYRA Access Graph: versioned country × investor type × product × activity evaluator with source-linked Kenya rules, explicit unassessed markets and twelve default-deny evidence gates.
 - VYRA Provider Graph: eleven accountability roles with source/evidence requirements; current provider candidates remain research-only, uncontracted and disconnected.
 - Read-only Forex/CFD traderoom at /cfd, backed by an enabled-contract registry and fresh source-labelled bid/ask quotes; no sample contracts, spot-price substitution or CFD order submission.
-- A paper-only CFD account and order-lifecycle domain module for synthetic opening balances, idempotent acceptance, margin reservations, partial fills, fee journals, cancellation, expiry, rejection, hash-linked events and reconciliation. This is not yet connected to the CFD API or traderoom.
+- A paper-only CFD account and order-lifecycle domain module for synthetic opening balances, idempotent acceptance, margin reservations, partial fills, fill fees, cancellation, expiry, rejection, partial/full position closes, realised P&L journals, margin release, hash-linked events and reconciliation. The module and private schema are not yet connected to the CFD API or traderoom.
 - Interactive route simulator at /access-graph, provider map at /provider-graph, and public APIs at GET /api/access-graph and GET /api/provider-graph. These are evidence controls, not legal advice or authorisation.
 
 ## Not yet live
