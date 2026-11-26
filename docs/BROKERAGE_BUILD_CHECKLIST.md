@@ -35,9 +35,9 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [x] Create a dedicated quote-ingestion PostgreSQL role; it cannot modify customer accounts, orders, positions or ledger records.
 - [x] Enforce email verification for new Neon Auth accounts and enable the shared Neon email provider; delivery/reset still require end-to-end test.
 - [x] Add VYRA favicon, installable-web-app manifest, legal-document status pages and analytics consent gate.
-- [~] GitHub CI: 16 unit tests and TypeScript passed on the Neon migration commits; native ESLint flat-config replacement is being checked after the former legacy-compat configuration failed. Production build remains unverified.
-- [ ] Finish CI with clean unit tests, typecheck, lint and production Next.js build on one current main commit.
-- [ ] Verify Neon sign-up, verification email, sign-in, session refresh, sign-out and password reset end-to-end using a test mailbox.
+- [x] Run GitHub Actions on main: all 16 unit tests, TypeScript, ESLint and the production Next.js build passed on commit `9f0e6d65ceed9a53fdf5457f600d5a67adc37783` (26 Nov 2026).
+- [~] Re-run the full workflow after the latest documentation-only Neon runbook correction; do not treat an in-progress run as completed.
+- [ ] Verify Neon sign-up, OTP verification email delivery, sign-in, session refresh, sign-out and password reset end-to-end using a test mailbox. Neon is configured to require verification; delivery and reset completion are not yet certified.
 - [ ] Add the exact deployed staging origin to Neon Auth trusted domains after the Render service URL is known.
 - [ ] Provision the free Render paper-demo web service and set the four Neon environment variables securely; do not deploy as a live brokerage.
 - [ ] Configure an approved custom domain and business mailboxes when domain/ownership and email provider are selected.
@@ -229,15 +229,19 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [x] Record why Firebase Firestore is not a fit for the current relational double-entry ledger and PL/pgSQL design.
 - [x] Record Aiven as a genuine PostgreSQL fallback.
 - [x] Commit the Neon Managed Better Auth and Data API migration runbook.
-- [ ] Connect Neon so its provisioning and database inspection tools become available.
-- [ ] Create the dedicated Neon project vyra-markets on the Free plan, confirming $0 ongoing cost before provisioning.
-- [ ] Enable Managed Better Auth and the PostgreSQL Data API.
-- [ ] Create a development branch and inspect actual roles, grants, auth schema and user ID types.
-- [ ] Adapt user identity columns from Supabase UUID IDs to Neon Better Auth text IDs where required.
-- [ ] Replace Supabase auth.users trigger and auth.uid() policy/functions with the supported Neon Auth schema and auth.user_id().
-- [ ] Replace Supabase service_role assumptions with separate server-only Neon database privileges.
-- [ ] Apply migration to development branch only; do not apply unverified SQL to the main branch.
-- [ ] Run two-user RLS isolation tests for profiles, watchlists, accounts, orders, positions, ledger and provider connections.
+- [x] Connect Neon and provision the dedicated `vyra-markets` project in Frankfurt (`dawn-wind-08199003`).
+- [x] Create the `vyra` database and verify the main branch.
+- [x] Enable Neon Managed Better Auth and the Neon Data API.
+- [x] Create `vyra-dev` as an isolated branch from main for validation.
+- [x] Inspect actual Better Auth UUID identity, roles, grants and Data API behavior; keep UUID references and use `auth.uid()`.
+- [x] Replace the active Supabase runtime path with Neon Auth, Neon Data API and the server-only restricted quote writer.
+- [x] Apply the Neon-native migration to the main branch and validate it on `vyra-dev`; never apply the legacy Supabase migration to Neon.
+- [x] Enable RLS on all 14 public application tables and verify 19 policies.
+- [x] Restrict quote-ingestion to `vyra_quote_ingest`; it cannot mutate customer accounts, orders or ledgers.
+- [x] Verify anonymous roles cannot read accounts/orders, cannot open paper accounts, and cannot execute the global order matcher.
+- [ ] Run real JWT-backed cross-user isolation tests with two synthetic users across profiles, watchlists, accounts, orders, positions, fills and ledger.
+- [ ] Test paper-account opening, market/limit order, duplicate idempotency, cancellation, quote freshness, concurrency, rollback and journal balance using synthetic users.
+- [ ] Complete backup export and restore test; Neon Free is for demo/paper only, not a live brokerage book of record.
 - [ ] Run paper order, fill, cancellation, journal balance, idempotency, stale quote and immutable audit tests against Neon.
 - [ ] Implement and end-to-end test sign-up, sign-in, session refresh, sign-out, email confirmation and password recovery.
 - [ ] Verify all server-side credentials are absent from browser bundles, Git history and API responses.
