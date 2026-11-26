@@ -123,7 +123,13 @@ export default function Home() {
 
   useEffect(() => {
     let mounted = true;
-    Promise.all([loadMarkets(), loadAccount()]).finally(() => { if (mounted) setLoading(false); });
+    void (async () => {
+      // Yield before invoking callbacks that update React state.
+      await Promise.resolve();
+      if (!mounted) return;
+      await Promise.all([loadMarkets(), loadAccount()]);
+      if (mounted) setLoading(false);
+    })();
     const timer = window.setInterval(() => { void loadMarkets(); }, 60000);
     return () => { mounted = false; window.clearInterval(timer); };
   }, [loadMarkets, loadAccount]);
