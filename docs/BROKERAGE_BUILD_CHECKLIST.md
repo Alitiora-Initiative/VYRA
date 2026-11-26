@@ -98,6 +98,8 @@ A completed document or software task does not mean VYRA is authorised to conduc
 
 - [x] Build the first AccessGraph jurisdiction/customer-type/product/activity evaluator with versioned evidence, default-deny for unknown jurisdictions and twelve incomplete release gates.
 - [x] Add the Provider Graph with eleven distinct supplier/accountability roles and default `not_verified` state for all research candidates.
+- [x] Join AccessGraph and Provider Graph through a composite route evaluator and API; only activity-required provider roles with current, reviewer-attributed source evidence can pass, and a fully evidenced route still requires human review.
+- [ ] Build persistent, privileged-admin-controlled partner evidence records, evidence-document storage and a complete review/change audit trail; current candidate records remain static and research-only.
 - [ ] Build a partner capability registry for market data, onboarding, accounts, KYC status, deposits, withdrawals, balances, positions, orders, statements and support.
 - [ ] Build a partner directory with legal entity, regulator, licence, category, scope, official register link and evidence date.
 - [ ] Build a product catalogue with identifier, legal provider, asset class, issuer/manager, currency, domicile, customer restrictions, fees and risks.
