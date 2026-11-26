@@ -152,6 +152,7 @@ test('separates a technology partner from a regulated execution model', async ()
   const policy = {
     status: 'approved', policyId: 'policy-kenya-demo', policyVersion: '1.0',
     jurisdictionCode: 'KE', clientType: 'retail',
+    evidenceUrl: 'https://example.test/kenya-policy', evidenceReference: 'Kenya policy fixture', reviewedAt: new Date(now - 1000).toISOString(),
     effectiveFrom: new Date(now - 1000).toISOString(),
     operatingModel: 'technology_partner', permissions: {},
   };
@@ -166,6 +167,7 @@ test('requires explicit principal permissions for matched principal', async () =
   const policy = {
     status: 'approved', policyId: 'policy-demo', policyVersion: '1',
     jurisdictionCode: 'GB', clientType: 'retail',
+    evidenceUrl: 'https://example.test/uk-policy', evidenceReference: 'UK policy fixture', reviewedAt: new Date(now - 1000).toISOString(),
     effectiveFrom: new Date(now - 1000).toISOString(),
     operatingModel: 'matched_principal',
     permissions: { principal: true, matchedPrincipal: true, bestExecution: true, conflictsControls: false },
@@ -178,6 +180,7 @@ test('hybrid operating model retains only the approved exposure amount and route
   const policy = {
     status: 'approved', policyId: 'policy-hybrid', policyVersion: '2',
     jurisdictionCode: 'GB', clientType: 'professional',
+    evidenceUrl: 'https://example.test/hybrid-policy', evidenceReference: 'Hybrid policy fixture', reviewedAt: new Date(now - 1000).toISOString(),
     effectiveFrom: new Date(now - 1000).toISOString(),
     operatingModel: 'hybrid', maxRetainedExposure: 1000,
     permissions: {
@@ -197,9 +200,10 @@ test('blocks an expired operating policy', async () => {
   const policy = {
     status: 'approved', policyId: 'policy-expired', policyVersion: '1',
     jurisdictionCode: 'KE', clientType: 'retail',
+    evidenceUrl: 'https://example.test/expired-policy', evidenceReference: 'Expired policy fixture', reviewedAt: new Date(now - 10000).toISOString(),
     effectiveFrom: new Date(now - 10000).toISOString(),
     effectiveUntil: new Date(now - 1000).toISOString(),
-    operatingModel: 'agency_routed', permissions: { agencyRouted: true, externalVenueApproved: true },
+    operatingModel: 'agency_routed', permissions: { agencyRouted: true, externalVenueApproved: true, bestExecution: true, conflictsControls: true },
   };
   assert.equal(resolvePaperBrokerageOperatingModel({ policy, now }).code, 'EXECUTION_POLICY_OUT_OF_DATE');
 });
