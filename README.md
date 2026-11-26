@@ -18,6 +18,7 @@ VYRA is a Forex and CFD brokerage technology foundation designed for regulated p
 - VYRA Access Graph: versioned country × investor type × product × activity evaluator with source-linked Kenya rules, explicit unassessed markets and twelve default-deny evidence gates.
 - VYRA Provider Graph: eleven accountability roles with source/evidence requirements; current provider candidates remain research-only, uncontracted and disconnected.
 - Read-only Forex/CFD traderoom at /cfd, backed by an enabled-contract registry and fresh source-labelled bid/ask quotes; no sample contracts, spot-price substitution or CFD order submission.
+- A paper-only CFD account and order-lifecycle domain module for synthetic opening balances, idempotent acceptance, margin reservations, partial fills, fee journals, cancellation, expiry, rejection, hash-linked events and reconciliation. This is not yet connected to the CFD API or traderoom.
 - Interactive route simulator at /access-graph, provider map at /provider-graph, and public APIs at GET /api/access-graph and GET /api/provider-graph. These are evidence controls, not legal advice or authorisation.
 
 ## Not yet live
@@ -116,11 +117,12 @@ VYRA is being developed first as a **partner-led market-access platform**, not a
 - [Forex & CFD product architecture](docs/CFD_PRODUCT_AND_EXECUTION_ARCHITECTURE.md) — CFD contract/margin engine, A-Book/B-Book/Hybrid dealing, Kenya licensing research, CRM/back office, PSP, KYC and provider diligence.
 - [Brokerage operating-model research](docs/BROKERAGE_OPERATING_MODEL_RESEARCH.md) — technology partner, agency/non-dealing, matched principal, market maker, hybrid, STP and newer hedging models.
 - [CFD execution router](docs/CFD_EXECUTION_ROUTER.md) — total-cost venue ranking, progressive margin tiers, systematic hedging, partial internalisation and release controls.
+- [Paper CFD ledger and order lifecycle](docs/PAPER_CFD_LEDGER_AND_ORDER_LIFECYCLE.md) — paper account journal, idempotent order states, reservations, fills, cancellation, expiry, event integrity and reconciliation.
 - [CFD traderoom implementation](docs/CFD_TRADEROOM_IMPLEMENTATION.md) — current read-only contract/quote room, empty-data truth and required controls before paper CFD orders.
 - [App Store listing draft](docs/APP_STORE_LISTING_DRAFT.md) — truthful paper-prototype listing copy and the missing store-eligibility evidence.
 - [GitHub implementation issues](https://github.com/Alitiora-Initiative/VYRA/issues) — trackable delivery backlog.
 
-**Product focus:** VYRA's first brokerage product family is Forex/CFDs. The current branch adds CFD reference data, deterministic paper risk calculations and a read-only CFD traderoom; it does not yet submit paper CFD orders or enable live execution or real-money CFD accounts.
+**Product focus:** VYRA's first brokerage product family is Forex/CFDs. The current branch adds CFD reference data, deterministic paper risk calculations, a read-only CFD traderoom and a paper-only order-lifecycle domain engine. Paper CFD orders are not yet submitted from an API or UI; live execution and real-money CFD accounts remain disabled.
 
 **CRM implementation status:** the staff-only CRM page and API were merged to main in PR #20. The additive CRM and CFD migrations, including role hardening, have been exercised on an isolated Neon review branch only; the main Neon branch does not yet contain those schemas. Staff memberships are not seeded; a database administrator must provision explicit roles after review.
 
