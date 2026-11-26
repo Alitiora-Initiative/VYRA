@@ -599,3 +599,34 @@ test('tampered closed-position lot history fails reconciliation', () => {
   changed.positions[0].remainingLots = 0.25;
   assert.equal(reconcilePaperCfdState(changed).code, 'POSITION_CLOSE_RECONCILIATION_FAILED');
 });
+
+
+test('opens and closes a short CFD position using ask-side close pricing', () => {
+  const account = makeState();
+  const accepted = submit(account, {
+    orderId: 'order-short-001', eventId: 'event-short-submit-001',
+    idempotencyKey: 'idem-short-submit-001', side: 'sell',
+  });
+  assert.equal(accepted.ok, true);
+  const opened = fillPaperCfdOrder({
+    state: accepted.state, orderId: 'order-short-001', fillId: 'fill-short-001',
+    eventId: 'event-short-fill-001', idempotencyKey: 'idem-short-fill-001',
+    positionId: 'position-short-001', feeJournalId: 'journal-short-open-fee',
+    lots: 1, execution: execution({ price: 1.1001, feeAmount: 2 }), now: NOW,
+  });
+  assert.equal(opened.ok, true);
+  assert.equal(opened.position.side, 'short');
+
+  const closed = closePaperCfdPosition({
+    state: opened.state, positionId: 'position-short-001',
+    closeId: 'position-short-close-001', eventId: 'event-short-close-001',
+    idempotencyKey: 'idem-short-close-001', lots: 1,
+    pnlJournalId: 'journal-short-realised-001',
+    execution: closeExecution({ bid: 1.0999, ask: 1.1000, price: 1.1000, feeAmount: 0 }),
+    now: NOW + 100,
+  });
+  assert.equal(closed.ok, true);
+  assert.equal(closed.positionClose.realisedPnl, 10);
+  assert.equal(closed.position.status, 'closed');
+  assert.equal(reconcilePaperCfdState(closed.state).ok, true);
+});
