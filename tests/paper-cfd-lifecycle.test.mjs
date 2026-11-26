@@ -413,3 +413,34 @@ test('event chain remains valid after accept, partial fill and cancel', () => {
   assert.equal(verifyPaperCfdEventChain(cancelled.state.events).ok, true);
   assert.equal(reconcilePaperCfdState(cancelled.state).ok, true);
 });
+
+test('fill quantities must respect the contract lot step', () => {
+  const accepted = createAndSubmit();
+  const result = fillPaperCfdOrder({
+    state: accepted.state, orderId: 'order-001', fillId: 'fill-off-step',
+    eventId: 'event-fill-off-step', idempotencyKey: 'idem-fill-off-step',
+    positionId: 'position-off-step', lots: 0.015, execution: execution(), now: NOW,
+  });
+  assert.equal(result.code, 'FILL_QUANTITY_INVALID');
+});
+
+test('fill prices and quote prices must respect the CFD contract tick size', () => {
+  const accepted = createAndSubmit();
+  const result = fillPaperCfdOrder({
+    state: accepted.state, orderId: 'order-001', fillId: 'fill-off-tick',
+    eventId: 'event-fill-off-tick', idempotencyKey: 'idem-fill-off-tick',
+    positionId: 'position-off-tick', lots: 0.5,
+    execution: execution({ price: 1.100255 }), now: NOW,
+  });
+  assert.equal(result.code, 'EXECUTION_TICK_SIZE_INVALID');
+  assert.equal(result.state.positions.length, 0);
+});
+
+test('limit price must respect the enabled contract tick size', () => {
+  const result = submit(makeState(), {
+    orderType: 'limit', limitPrice: 1.100205,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'LIMIT_PRICE_TICK_INVALID');
+  assert.equal(result.order.status, 'rejected');
+});
