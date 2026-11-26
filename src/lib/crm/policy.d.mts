@@ -1,0 +1,10 @@
+export const CRM_ROLES: readonly string[];
+export const LEAD_STAGES: readonly string[];
+export const CASE_CATEGORIES: readonly string[];
+export function canCreateLead(role: string): boolean;
+export function canManagePartners(role: string): boolean;
+export function canAccessCase(role: string, category: string): boolean;
+export function canCreateTask(role: string): boolean;
+export function canChangeLeadStage(role: string, stage: string): boolean;
+export function canUpdateTask(role: string, assignedTo: string, actorId: string): boolean;
+export function isSafeCrmText(value: unknown, max?: number): value is string;

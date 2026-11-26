@@ -6,7 +6,7 @@ import {
   Activity, ArrowUpRight, Bell, BriefcaseBusiness,
   ChartNoAxesCombined, CircleHelp, Command, CreditCard, Globe2,
   LayoutDashboard, LogIn, Menu, Plus, Settings, ShieldCheck,
-  Star, RefreshCw, ExternalLink, X, Network,
+  Star, RefreshCw, ExternalLink, X, Network, Users,
 } from 'lucide-react';
 
 type Quote = {
@@ -233,6 +233,7 @@ export default function Home() {
       <Link href="/access-graph" className="navitem"><Network size={18}/>Access Graph</Link>
       <Link href="/provider-graph" className="navitem"><BriefcaseBusiness size={18}/>Provider Graph</Link>
       <Link href="/partners" className="navitem"><BriefcaseBusiness size={18}/>Brokerage partners</Link>
+      <Link href="/crm" className="navitem"><Users size={18}/>Brokerage CRM</Link>
       <div className="navlabel">PREFERENCES</div>
       <button className="navitem"><Settings size={18}/>Settings</button>
       <button className="navitem"><CircleHelp size={18}/>Help centre</button>
