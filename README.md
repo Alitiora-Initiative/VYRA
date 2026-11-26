@@ -61,3 +61,16 @@ The SQL migration sets the current paper defaults to USD 100,000 starting cash, 
 ## Architecture and launch gates
 
 See `docs/ARCHITECTURE.md`, `docs/PRODUCT.md`, `docs/SECURITY.md`, `docs/LEDGER.md`, `docs/PROVIDERS.md` and `docs/REGULATORY.md`. Live execution must stay disabled until jurisdiction-specific legal review, broker/provider due diligence and approval, client asset/custody design, KYC/AML/sanctions controls, independent security review, reconciliation, monitoring, incident procedures and production certification are complete.
+
+
+## Brokerage master plan and execution backlog
+
+VYRA is being developed first as a **partner-led market-access platform**, not as an unlicensed broker. The intended first model is for regulated partners to own the customer brokerage/fund account, onboarding and KYC decisions, customer money, custody and execution, while VYRA provides approved software, discovery and hand-off functions. This is a target model, not a signed agreement or regulatory approval.
+
+- [Brokerage master plan](docs/BROKERAGE_MASTER_PLAN.md) — detailed operating model, Kenya and international regulatory analysis, partner comparisons, architecture, document pack, risk register and phased roadmap.
+- [Brokerage flowcharts](docs/BROKERAGE_FLOWCHARTS.md) — regulatory gates, customer hand-off, future order lifecycle, data/privacy boundary, reconciliation and deployment.
+- [Brokerage build checklist](docs/BROKERAGE_BUILD_CHECKLIST.md) — staged engineering, legal, partner and launch tasks.
+- [Partner and regulation research register](docs/BROKERAGE_RESEARCH_REGISTER.md) — primary-source links, due-diligence questions and known evidence gaps.
+- [GitHub implementation issues](https://github.com/Alitiora-Initiative/VYRA/issues) — trackable delivery backlog.
+
+**Current infrastructure blocker:** a dedicated VYRA Supabase project could not be created because the only available organisation reached its two-active-free-project limit. Existing projects 9N8 and Space Ledger were left untouched. VYRA must remain isolated; do not apply its migration to either unrelated project. A Render demo service also awaits the owner's workspace selection. Real-money features remain disabled.
