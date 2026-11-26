@@ -31,11 +31,26 @@ export function rankPaperExecutionVenues({
     return fail('BENCHMARK_INPUT_INVALID', 'A positive order quantity and independent benchmark price are required.');
   }
   if (!policy || policy.status !== 'approved' || !policy.version ||
+      typeof policy.jurisdictionCode !== 'string' || !/^[A-Z]{2}$/.test(policy.jurisdictionCode) ||
+      typeof policy.clientType !== 'string' || !policy.clientType.trim() ||
+      typeof policy.evidenceUrl !== 'string' || !policy.evidenceUrl.startsWith('https://') ||
+      typeof policy.evidenceReference !== 'string' || policy.evidenceReference.trim().length < 2 ||
       !POSITIVE(policy.maxQuoteAgeMs) || !POSITIVE(policy.maxBenchmarkAgeMs) ||
       !POSITIVE(policy.maxLatencyMs) ||
       !Number.isFinite(policy.nonFillPenaltyBps) || policy.nonFillPenaltyBps < 0 ||
       !Number.isFinite(policy.latencyPenaltyBps) || policy.latencyPenaltyBps < 0) {
-    return fail('BEST_EXECUTION_POLICY_MISSING', 'A versioned, approved paper best-execution scoring policy is required.');
+    return fail('BEST_EXECUTION_POLICY_MISSING', 'A versioned, approved and evidence-backed country/client best-execution policy is required.');
+  }
+  const reviewedAt = Date.parse(policy.reviewedAt);
+  if (!Number.isFinite(reviewedAt) || reviewedAt > now) {
+    return fail('BEST_EXECUTION_POLICY_EVIDENCE_INVALID', 'Best-execution policy review timestamp is invalid or in the future.');
+  }
+  const policyStart = Date.parse(policy.effectiveFrom);
+  const hasPolicyEnd = policy.effectiveUntil !== undefined && policy.effectiveUntil !== null;
+  const policyEnd = hasPolicyEnd ? Date.parse(policy.effectiveUntil) : Number.POSITIVE_INFINITY;
+  if (!Number.isFinite(policyStart) || (hasPolicyEnd && !Number.isFinite(policyEnd)) ||
+      policyStart > now || policyEnd <= now) {
+    return fail('BEST_EXECUTION_POLICY_OUT_OF_DATE', 'Best-execution policy is outside its effective period.');
   }
   if (!benchmarkSource || typeof benchmarkSource !== 'string') {
     return fail('BENCHMARK_SOURCE_MISSING', 'An independent benchmark source is required.');
@@ -149,8 +164,16 @@ export function resolvePaperHedgePlan({
   now = Date.now(),
 }) {
   if (!policy || policy.status !== 'approved' || !policy.version ||
-      !policy.mode || !policy.permissions || typeof policy.permissions !== 'object') {
-    return fail('HEDGE_POLICY_MISSING', 'An approved, versioned hedge policy is required.');
+      !policy.mode || !policy.permissions || typeof policy.permissions !== 'object' ||
+      typeof policy.jurisdictionCode !== 'string' || !/^[A-Z]{2}$/.test(policy.jurisdictionCode) ||
+      typeof policy.clientType !== 'string' || !policy.clientType.trim() ||
+      typeof policy.evidenceUrl !== 'string' || !policy.evidenceUrl.startsWith('https://') ||
+      typeof policy.evidenceReference !== 'string' || policy.evidenceReference.trim().length < 2) {
+    return fail('HEDGE_POLICY_MISSING', 'An approved, versioned country/client hedge policy with source evidence is required.');
+  }
+  const reviewedAt = Date.parse(policy.reviewedAt);
+  if (!Number.isFinite(reviewedAt) || reviewedAt > now) {
+    return fail('HEDGE_POLICY_EVIDENCE_INVALID', 'Hedge policy review timestamp is invalid or in the future.');
   }
   const starts = Date.parse(policy.effectiveFrom);
   const hasEffectiveUntil = policy.effectiveUntil !== undefined && policy.effectiveUntil !== null;
@@ -165,8 +188,9 @@ export function resolvePaperHedgePlan({
   const permissions = policy.permissions;
 
   if (policy.mode === 'straight_through') {
-    if (permissions.externalRouting !== true) {
-      return fail('EXTERNAL_ROUTING_NOT_APPROVED', 'Straight-through routing requires an approved external route.');
+    if (permissions.externalRouting !== true || permissions.bestExecution !== true ||
+        permissions.conflictsControls !== true) {
+      return fail('EXTERNAL_ROUTING_NOT_APPROVED', 'Straight-through routing requires an approved external route, best-execution and conflicts controls.');
     }
     return {
       ok: true, paperOnly: true, mode: policy.mode,
@@ -176,8 +200,9 @@ export function resolvePaperHedgePlan({
   }
 
   if (policy.mode === 'systematic_net_residual') {
-    if (permissions.dealingPrincipal !== true || permissions.externalHedging !== true) {
-      return fail('SYSTEMATIC_HEDGE_PERMISSION_MISSING', 'Systematic residual hedging requires approved principal-risk and external-hedging controls.');
+    if (permissions.dealingPrincipal !== true || permissions.externalHedging !== true ||
+        permissions.bestExecution !== true || permissions.conflictsControls !== true) {
+      return fail('SYSTEMATIC_HEDGE_PERMISSION_MISSING', 'Systematic residual hedging requires principal-risk, external-hedging, best-execution and conflicts controls.');
     }
     const triggerExposure = Number(policy.triggerExposure);
     const hedgeRatio = Number(policy.hedgeRatio);
@@ -201,8 +226,9 @@ export function resolvePaperHedgePlan({
   }
 
   if (policy.mode === 'partial_internalisation') {
-    if (permissions.dealingPrincipal !== true || permissions.externalHedging !== true) {
-      return fail('PARTIAL_INTERNALISATION_PERMISSION_MISSING', 'Partial internalisation requires approved principal-risk and external-hedging controls.');
+    if (permissions.dealingPrincipal !== true || permissions.externalHedging !== true ||
+        permissions.bestExecution !== true || permissions.conflictsControls !== true) {
+      return fail('PARTIAL_INTERNALISATION_PERMISSION_MISSING', 'Partial internalisation requires principal-risk, external-hedging, best-execution and conflicts controls.');
     }
     const internalisationRatio = Number(policy.internalisationRatio);
     const maxRetainedExposure = Number(policy.maxRetainedExposure);
@@ -226,8 +252,9 @@ export function resolvePaperHedgePlan({
   }
 
   if (policy.mode === 'risk_warehousing') {
-    if (permissions.dealingPrincipal !== true || permissions.conflictsControls !== true) {
-      return fail('RISK_WAREHOUSING_PERMISSION_MISSING', 'Internal risk warehousing requires approved dealing-principal and conflicts controls.');
+    if (permissions.dealingPrincipal !== true || permissions.bestExecution !== true ||
+        permissions.conflictsControls !== true) {
+      return fail('RISK_WAREHOUSING_PERMISSION_MISSING', 'Internal risk warehousing requires dealing-principal, best-execution and conflicts controls.');
     }
     const maxRetainedExposure = Number(policy.maxRetainedExposure);
     if (!POSITIVE(maxRetainedExposure)) {
