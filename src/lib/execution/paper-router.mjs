@@ -153,8 +153,9 @@ export function resolvePaperHedgePlan({
     return fail('HEDGE_POLICY_MISSING', 'An approved, versioned hedge policy is required.');
   }
   const starts = Date.parse(policy.effectiveFrom);
-  const ends = policy.effectiveUntil ? Date.parse(policy.effectiveUntil) : Number.POSITIVE_INFINITY;
-  if (!Number.isFinite(starts) || !Number.isFinite(ends) || starts > now || ends <= now) {
+  const hasEffectiveUntil = policy.effectiveUntil !== undefined && policy.effectiveUntil !== null;
+  const ends = hasEffectiveUntil ? Date.parse(policy.effectiveUntil) : Number.POSITIVE_INFINITY;
+  if (!Number.isFinite(starts) || (hasEffectiveUntil && !Number.isFinite(ends)) || starts > now || ends <= now) {
     return fail('HEDGE_POLICY_OUT_OF_DATE', 'The hedge policy is outside its effective period.');
   }
   if (!Number.isFinite(aggregateNetExposure)) {
