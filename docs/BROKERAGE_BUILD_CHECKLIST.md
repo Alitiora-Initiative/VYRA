@@ -209,3 +209,27 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [ ] Validate all vendor legal entities, country coverage, permissions, security, data roles, commercial costs and exit terms.
 - [ ] Select a chart library only after reviewing licence terms; current default candidate is Lightweight Charts, with no market-data entitlement implied.
 - [ ] Keep KYC and money movement within the licensed partner's approved infrastructure unless counsel/regulator authorises another model.
+
+
+## P0 — Database provider resolution (updated 26 Nov 2026)
+
+- [x] Research PostgreSQL and managed database alternatives, including Neon, Supabase, Aiven, Firebase Firestore, Firebase SQL Connect, Render Postgres, Railway and Turso.
+- [x] Select Neon Postgres Free as the preferred isolated development/paper database.
+- [x] Record why Firebase Firestore is not a fit for the current relational double-entry ledger and PL/pgSQL design.
+- [x] Record Aiven as a genuine PostgreSQL fallback.
+- [x] Commit the Neon Managed Better Auth and Data API migration runbook.
+- [ ] Connect Neon so its provisioning and database inspection tools become available.
+- [ ] Create the dedicated Neon project vyra-markets on the Free plan, confirming $0 ongoing cost before provisioning.
+- [ ] Enable Managed Better Auth and the PostgreSQL Data API.
+- [ ] Create a development branch and inspect actual roles, grants, auth schema and user ID types.
+- [ ] Adapt user identity columns from Supabase UUID IDs to Neon Better Auth text IDs where required.
+- [ ] Replace Supabase auth.users trigger and auth.uid() policy/functions with the supported Neon Auth schema and auth.user_id().
+- [ ] Replace Supabase service_role assumptions with separate server-only Neon database privileges.
+- [ ] Apply migration to development branch only; do not apply unverified SQL to the main branch.
+- [ ] Run two-user RLS isolation tests for profiles, watchlists, accounts, orders, positions, ledger and provider connections.
+- [ ] Run paper order, fill, cancellation, journal balance, idempotency, stale quote and immutable audit tests against Neon.
+- [ ] Implement and end-to-end test sign-up, sign-in, session refresh, sign-out, email confirmation and password recovery.
+- [ ] Verify all server-side credentials are absent from browser bundles, Git history and API responses.
+- [ ] Run unit tests, typecheck, lint and production build; require green CI before promoting schema.
+- [ ] Keep Neon Free for synthetic paper data and integration testing only; do not use it as a live regulated brokerage book of record.
+- [ ] Leave Supabase projects 9N8 and Space Ledger completely untouched.
