@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { evaluateAccess, ACCESS_GRAPH_VERSION } from '../src/lib/access-graph/rules.mjs';
 
 const BASELINE_GATES = {
-  legalOpinion: true, principalIdentified: true, partnerAgreement: true, countryApproval: true,
+  legalOpinion: true, customerTypeApproval: true, principalIdentified: true, partnerAgreement: true, countryApproval: true,
   productApproval: true, marketingApproval: true, dataRights: true, kycAllocation: true,
   custodyAllocation: true, executionAllocation: true, operationalReadiness: true,
 };
