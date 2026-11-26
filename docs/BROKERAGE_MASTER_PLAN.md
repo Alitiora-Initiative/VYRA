@@ -626,3 +626,68 @@ The Act's First Schedule assigns custodial wallet and virtual-asset payment proc
 The VASP Regulations' Fifth Schedule requires a VASP broker to hold KSh 10 million paid-up capital and liquid capital of KSh 2 million or 8% of total liabilities, whichever is higher. A virtual-asset exchange has KSh 100 million paid-up capital and KSh 20 million or 8% of liabilities as liquid capital, whichever is higher. The schedule also gives wallet-provider requirements of KSh 150 million paid-up and KSh 30 million or 100% of current liabilities for at least 30 days. A multi-activity licensee may need the highest activity's capital plus 50% of paid-up capital for every additional activity. These figures make an owned Kenyan VASP broker/exchange unrealistic for the current zero-capital VYRA project.
 
 Accordingly, crypto must remain a separate, disabled regulatory regime. VYRA must not assume that a securities/ISPP partner agreement or a general referral model authorises crypto referral or promotions. Obtain a Kenyan legal classification and regulator guidance for the precise referral, marketing, wallet-link, exchange-routing and order journey. The detailed addendum, source links and implementation consequences are in [Kenya VASP 2026 Addendum](KENYA_VASP_2026_ADDENDUM.md). This update is part of the 26 November 2026 research baseline and should be reviewed before any crypto-related feature or marketing work.
+
+
+## 21. Institutional fund-distribution and hedge-fund channels
+
+The "bridge to large funds" concept needs a second partner category beyond brokerage APIs. Some platforms connect authorised wealth managers, investment advisers and institutional distributors to fund managers and alternative investment products. They are generally B2B distribution and operations networks, not consumer affiliate programmes. VYRA should investigate them only through an eligible regulated institution and only after the target country, investor category, fund approval and marketing rules are established.
+
+### 21.1 iCapital Marketplace
+
+iCapital describes its Marketplace as a platform connecting wealth managers with alternative investments from asset managers. On its public page, it reported 1,358+ asset managers, 60 integrated platform/service partners, 2,644 funds supported and $1.2 trillion+ in global platform assets as of 31 July 2026 (provider-published figures). This makes it an important discovery target for private markets, private equity/debt and hedge fund distribution infrastructure.
+
+The key distinction is that iCapital is describing a wealth-manager and asset-manager ecosystem. It does not mean a new software start-up can embed the catalogue as a retail referral feed or obtain access to institutional funds. VYRA would need to determine whether it can participate as a technology vendor, regulated distributor, wealth platform supplier or through a partner institution. It must confirm investor eligibility, country availability, fund-specific offer restrictions, due diligence responsibilities, client account ownership, subscription processing, minimums, reporting, data rights and commercial terms.
+
+Official source: https://marketplace.icapital.com/
+
+### 21.2 CAIS
+
+CAIS publicly positions its platform for independent financial advisers and the wealth-management ecosystem. The CAIS platform page describes access to private-market funds, hedge funds and structured notes, plus pre-trade education, due diligence material and operational support. Its alternatives page describes coverage across private debt, private equity, real estate, infrastructure and hedge funds. The public materials indicate an adviser-oriented offering, not an open public retail marketplace.
+
+VYRA should approach CAIS only after it can explain its regulated distributor/adviser partner, investor qualification model and jurisdiction. Questions: whether the prospective distributor must be a US registered investment adviser or another eligible firm; whether non-US advisers/platforms can participate; what entity contracts with investors; which qualified purchaser/accredited investor tests apply; who approves marketing; and whether VYRA can supply technology without becoming an unregistered solicitor or adviser. Do not build a fund-subscription or recommendation feature against the public website alone.
+
+Official sources:
+- https://www.caisgroup.com/financial-advisor/cais-platform
+- https://www.caisgroup.com/investment-solutions/alternative-investments
+
+### 21.3 Allfunds
+
+Allfunds presents itself as a global fund-distribution and wealth-technology ecosystem for fund houses and distributors. Its fund-house page states that one agreement can provide access to a broad network of institutions and digital distribution tools. It reports €1.97 trillion in assets under administration, more than 19,000 active professional users on Allfunds Connect, more than 900 distributor contracts and more than 200,000 funds and ETFs including alternatives, with headline statistics dated 30 September 2026 on its public site.
+
+Allfunds could be more relevant for the mutual-fund/ETF and regulated distributor side of VYRA than for a direct-to-consumer trading API. It describes services for banks, wealth managers, insurers, pension funds, custodians, investment banks and fund houses. VYRA must ask whether it could become a technology provider to an existing eligible distributor, what distributor status and permissions are required, what countries and fund domicile combinations are supported, how fund dealing/settlement occurs, what omnibus/nominee structures apply, and what minimum scale, fees and due diligence are required.
+
+Official sources:
+- https://allfunds.com/en/fund-houses/
+- https://allfunds.com/en/about
+- https://allfunds.com/en/annual-report-2025/
+
+### 21.4 Interactive Brokers Capital Introduction
+
+IBKR's public Hedge Fund Capital Introduction page describes an online capital-introduction programme for hedge funds using IBKR as their principal prime broker. It says eligible funds must have at least $3 million in assets under management and an audited track record of at least one year, or have traded through IBKR for the last year. The programme connects those funds with IBKR clients who are Accredited Investors and Qualified Purchasers through its Investors' Marketplace.
+
+This is a significant example of how an established broker can connect eligible funds with eligible investors without VYRA itself becoming the fund manager. However, the programme is not a general referral network for retail customers or a free distribution API that VYRA can copy. The official eligibility, customer categories and IBKR's own brokerage relationship control. VYRA should ask IBKR whether an authorised introducing or wealth partner could use or refer to this programme and whether any third-party technology participation is allowed.
+
+Official source: https://portal.interactivebrokers.com/en/accounts/hedge-fund-onboarding.php
+
+### 21.5 FNZ — institutional wealth infrastructure, not a simple referral channel
+
+FNZ describes an end-to-end wealth platform for financial institutions, wealth managers and advisers, integrating technology with investment operations, administration, custody, clearing, execution, reporting and multi-asset capabilities. This is relevant if VYRA eventually licenses its software or becomes a front-end/vendor to an established institution. It is not a consumer fund marketplace or a zero-cost broker API.
+
+VYRA should treat FNZ as an enterprise infrastructure benchmark and possible long-term technology/outsourcing conversation after it has a regulated institutional partner, demonstrated demand and the necessary procurement readiness. Verify legal entity, country, service scope, custody model, integration architecture, minimum scale and commercial costs.
+
+Official sources:
+- https://www.fnz.com/wealth-platform
+- https://www.fnz.com/wealth-management-platforms
+
+### 21.6 How to approach these fund channels
+
+The sequence should be:
+1. Identify a CMA-licensed Kenyan investment bank, fund manager or appropriately licensed ISPP that is willing to be the regulated distributor for the target Kenyan CIS product.
+2. Ask counsel whether the structure permits VYRA to provide neutral technology, referral or outsourced platform functionality, and whether separate ISPP authorisation is required.
+3. If the goal is non-public hedge funds/alternatives, identify the investor category (professional, qualified, accredited or other locally defined category) and the legal distribution entity in each country.
+4. Ask iCapital and CAIS whether any route exists for an Africa/Kenya-based platform or eligible institutional distributor. Do not claim they accept VYRA until written confirmation is obtained.
+5. Ask Allfunds whether its fund distribution and dealing capabilities can be supplied through an existing local regulated distributor or technology-vendor relationship.
+6. Ask IBKR whether its Capital Introduction Programme can be used by the relevant partner and what investor/fund eligibility conditions apply.
+7. Use a data-only, education-only product directory until the relevant institution and regulator approve the exact activity.
+
+These providers should be added to the research register and partner scorecard as a distinct **fund distribution / alternatives marketplace** category. They must not be conflated with executing brokers, prime brokers, fund managers, custodians or fund administrators. A platform that introduces investors to a fund is not necessarily the legal distributor; a prime broker does not necessarily manage or guarantee the fund; and a fund manager does not necessarily custody all fund assets.
