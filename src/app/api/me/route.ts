@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getSupabaseServer } from '@/lib/supabase/server';
+import { getNeonServer } from '@/lib/neon/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const supabase = await getSupabaseServer();
-  if (!supabase) {
+  const neon = await getNeonServer();
+  if (!neon) {
     return NextResponse.json({ authenticated: false, configured: false }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
   }
 
-  const { data, error } = await supabase.auth.getUser();
+  const { data, error } = await neon.auth.getUser();
   if (error || !data.user) {
     return NextResponse.json({ authenticated: false, configured: true }, {
       status: 401,

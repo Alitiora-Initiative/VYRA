@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
-import { getSupabaseBrowser } from '@/lib/supabase/browser';
+import { authClient } from '@/lib/auth/client';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -14,12 +14,11 @@ export default function ForgotPasswordPage() {
     setBusy(true);
     setMessage('');
     try {
-      const supabase = getSupabaseBrowser();
-      if (!supabase) throw new Error('Authentication is not configured. Connect the VYRA database first.');
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+      const { error } = await authClient.requestPasswordReset({
+        email,
+        redirectTo: `${window.location.origin}/reset-password`,
       });
-      if (error) throw error;
+      if (error) throw new Error(error.message || 'Could not request a password reset.');
       setMessage('If the address is registered, a password reset link will be sent. Check your inbox.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not request a password reset.');

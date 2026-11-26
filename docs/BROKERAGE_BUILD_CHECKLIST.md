@@ -23,7 +23,7 @@ A completed document or software task does not mean VYRA is authorised to conduc
 
 ## P0 — Infrastructure and deployment
 
-- [!] Provision a dedicated VYRA Supabase project. Current organisation is at its two-active-free-project limit.
+- [x] Confirm Supabase Free project quota prevents a new VYRA project; do not pause/delete or reuse unrelated Supabase projects.
 - [ ] Find another approved organisation with free project capacity, or separately approve a specific project lifecycle change. Never reuse another product database by assumption.
 - [ ] Apply the reviewed VYRA database migration only after isolated project provisioning.
 - [ ] Verify tables, grants, RLS, RPC permissions, triggers and ownership.
@@ -211,25 +211,25 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [ ] Keep KYC and money movement within the licensed partner's approved infrastructure unless counsel/regulator authorises another model.
 
 
-## P0 — Database provider resolution (updated 26 Nov 2026)
+## P0 — Neon database and application migration (updated 26 Nov 2026)
 
 - [x] Research PostgreSQL and managed database alternatives, including Neon, Supabase, Aiven, Firebase Firestore, Firebase SQL Connect, Render Postgres, Railway and Turso.
-- [x] Select Neon Postgres Free as the preferred isolated development/paper database.
-- [x] Record why Firebase Firestore is not a fit for the current relational double-entry ledger and PL/pgSQL design.
-- [x] Record Aiven as a genuine PostgreSQL fallback.
-- [x] Commit the Neon Managed Better Auth and Data API migration runbook.
-- [ ] Connect Neon so its provisioning and database inspection tools become available.
-- [ ] Create the dedicated Neon project vyra-markets on the Free plan, confirming $0 ongoing cost before provisioning.
-- [ ] Enable Managed Better Auth and the PostgreSQL Data API.
-- [ ] Create a development branch and inspect actual roles, grants, auth schema and user ID types.
-- [ ] Adapt user identity columns from Supabase UUID IDs to Neon Better Auth text IDs where required.
-- [ ] Replace Supabase auth.users trigger and auth.uid() policy/functions with the supported Neon Auth schema and auth.user_id().
-- [ ] Replace Supabase service_role assumptions with separate server-only Neon database privileges.
-- [ ] Apply migration to development branch only; do not apply unverified SQL to the main branch.
+- [x] Select Neon Postgres Free for isolated development and synthetic paper trading.
+- [x] Connect the Neon integration and provision the dedicated `vyra-markets` project on the Free plan in Frankfurt.
+- [x] Enable Neon Managed Better Auth (email/password) and the PostgreSQL Data API for the VYRA database.
+- [x] Inspect the actual PostgreSQL 17 schema, roles, grants, auth helpers and Neon Auth UUID user-ID type.
+- [x] Create the isolated `vyra-neon-migration-test` branch.
+- [x] Apply and inspect the VYRA schema on the isolated test branch: 14 application tables, 20 foreign keys, 18 RLS policies and immutable/balanced-ledger triggers.
+- [x] Preserve UUID user references to `neon_auth."user"(id)`; use the verified `auth.uid()` UUID helper rather than converting the existing identity model to TEXT.
+- [x] Remove the unsupported Supabase `auth.users` trigger assumption; Neon owns its Auth schema, so VYRA profiles are provisioned lazily through the authenticated application route.
+- [x] Replace Supabase `anon` with Neon Data API's `anonymous` role and remove the `service_role` dependency.
+- [x] Keep the private SQL schema unexposed and disable the global market-order matching function; user paper-order matching remains scoped to the authenticated user's active paper account.
+- [ ] Complete the application adapter migration in the isolated GitHub branch and review its draft pull request.
+- [ ] Pass GitHub Actions tests, typecheck, lint and production build on the migration branch.
+- [ ] Configure branch-matched Neon Auth URL, cookie secret, Data API URL and server-only PostgreSQL URL in the deployment secret store; do not add values to Git.
+- [ ] End-to-end test sign-up, sign-in, session persistence, sign-out and email password recovery using the actual app origin.
 - [ ] Run two-user RLS isolation tests for profiles, watchlists, accounts, orders, positions, ledger and provider connections.
-- [ ] Run paper order, fill, cancellation, journal balance, idempotency, stale quote and immutable audit tests against Neon.
-- [ ] Implement and end-to-end test sign-up, sign-in, session refresh, sign-out, email confirmation and password recovery.
-- [ ] Verify all server-side credentials are absent from browser bundles, Git history and API responses.
-- [ ] Run unit tests, typecheck, lint and production build; require green CI before promoting schema.
-- [ ] Keep Neon Free for synthetic paper data and integration testing only; do not use it as a live regulated brokerage book of record.
-- [ ] Leave Supabase projects 9N8 and Space Ledger completely untouched.
+- [ ] Run paper account/order/fill/cancel/idempotency/stale-quote/journal-balance/immutability tests against Neon.
+- [ ] Promote the reviewed schema and app only after all checks pass; do not use the Neon Free project as a live regulated brokerage book of record.
+- [x] Leave Supabase projects 9N8 and Space Ledger completely untouched.
+

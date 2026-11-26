@@ -1,16 +1,16 @@
 import type { NextRequest } from 'next/server';
-import { getSupabaseServer } from '@/lib/supabase/server';
+import { getNeonServer } from '@/lib/neon/server';
 import { isRecord, isSameOriginRequest, jsonError, privateJson } from '@/lib/http';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const supabase = await getSupabaseServer();
-  if (!supabase) return jsonError('Authentication is not configured.', 503, 'AUTH_NOT_CONFIGURED');
-  const { data: auth, error: authError } = await supabase.auth.getUser();
+  const neon = await getNeonServer();
+  if (!neon) return jsonError('Authentication is not configured.', 503, 'AUTH_NOT_CONFIGURED');
+  const { data: auth, error: authError } = await neon.auth.getUser();
   if (authError || !auth.user) return jsonError('Sign in to read your watchlist.', 401, 'UNAUTHENTICATED');
 
-  const { data, error } = await supabase
+  const { data, error } = await neon
     .from('user_watchlist')
     .select('id,instrument_id,created_at,instrument_catalog(symbol,name,asset_class)')
     .eq('user_id', auth.user.id)
@@ -21,9 +21,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   if (!isSameOriginRequest(request)) return jsonError('Cross-origin mutation rejected.', 403, 'ORIGIN_REJECTED');
-  const supabase = await getSupabaseServer();
-  if (!supabase) return jsonError('Authentication is not configured.', 503, 'AUTH_NOT_CONFIGURED');
-  const { data: auth, error: authError } = await supabase.auth.getUser();
+  const neon = await getNeonServer();
+  if (!neon) return jsonError('Authentication is not configured.', 503, 'AUTH_NOT_CONFIGURED');
+  const { data: auth, error: authError } = await neon.auth.getUser();
   if (authError || !auth.user) return jsonError('Sign in to update your watchlist.', 401, 'UNAUTHENTICATED');
 
   let payload: unknown;
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     return jsonError('A valid instrument symbol is required.');
   }
 
-  const { data: instrument, error: instrumentError } = await supabase
+  const { data: instrument, error: instrumentError } = await neon
     .from('instrument_catalog')
     .select('id')
     .eq('symbol', payload.symbol)
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
   if (instrumentError || !instrument) return jsonError('Instrument is unavailable.', 404, 'INSTRUMENT_NOT_FOUND');
 
-  const { error } = await supabase
+  const { error } = await neon
     .from('user_watchlist')
     .upsert({ user_id: auth.user.id, instrument_id: instrument.id }, {
       onConflict: 'user_id,instrument_id',
@@ -52,9 +52,9 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   if (!isSameOriginRequest(request)) return jsonError('Cross-origin mutation rejected.', 403, 'ORIGIN_REJECTED');
-  const supabase = await getSupabaseServer();
-  if (!supabase) return jsonError('Authentication is not configured.', 503, 'AUTH_NOT_CONFIGURED');
-  const { data: auth, error: authError } = await supabase.auth.getUser();
+  const neon = await getNeonServer();
+  if (!neon) return jsonError('Authentication is not configured.', 503, 'AUTH_NOT_CONFIGURED');
+  const { data: auth, error: authError } = await neon.auth.getUser();
   if (authError || !auth.user) return jsonError('Sign in to update your watchlist.', 401, 'UNAUTHENTICATED');
 
   let payload: unknown;
@@ -63,14 +63,14 @@ export async function DELETE(request: NextRequest) {
     return jsonError('A valid instrument symbol is required.');
   }
 
-  const { data: instrument } = await supabase
+  const { data: instrument } = await neon
     .from('instrument_catalog')
     .select('id')
     .eq('symbol', payload.symbol)
     .maybeSingle();
   if (!instrument) return privateJson({ ok: true, symbol: payload.symbol, saved: false });
 
-  const { error } = await supabase
+  const { error } = await neon
     .from('user_watchlist')
     .delete()
     .eq('user_id', auth.user.id)

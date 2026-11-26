@@ -1,19 +1,19 @@
 import type { NextRequest } from 'next/server';
-import { getSupabaseServer } from '@/lib/supabase/server';
+import { getNeonServer } from '@/lib/neon/server';
 import { isRecord, isSameOriginRequest, jsonError, privateJson } from '@/lib/http';
 import { validatePaperOrder } from '@/lib/trading/paper-risk.mjs';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  const supabase = await getSupabaseServer();
-  if (!supabase) return jsonError('Authentication database is not configured.', 503, 'AUTH_NOT_CONFIGURED');
-  const { data: userData, error: authError } = await supabase.auth.getUser();
+  const neon = await getNeonServer();
+  if (!neon) return jsonError('Authentication database is not configured.', 503, 'AUTH_NOT_CONFIGURED');
+  const { data: userData, error: authError } = await neon.auth.getUser();
   if (authError || !userData.user) return jsonError('Sign in to view orders.', 401, 'UNAUTHENTICATED');
 
   const accountId = request.nextUrl.searchParams.get('accountId');
   if (!accountId || !/^[0-9a-f-]{36}$/i.test(accountId)) return jsonError('A valid accountId is required.');
-  const { data, error } = await supabase
+  const { data, error } = await neon
     .from('orders')
     .select('id,instrument_id,side,order_type,quantity,limit_price,status,filled_quantity,average_fill_price,rejection_reason,created_at,updated_at,instrument_catalog(symbol,name,asset_class),fills(id,quantity,price,notional,liquidity,filled_at)')
     .eq('trading_account_id', accountId)
@@ -25,9 +25,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   if (!isSameOriginRequest(request)) return jsonError('Cross-origin mutation rejected.', 403, 'ORIGIN_REJECTED');
-  const supabase = await getSupabaseServer();
-  if (!supabase) return jsonError('Authentication database is not configured.', 503, 'AUTH_NOT_CONFIGURED');
-  const { data: userData, error: authError } = await supabase.auth.getUser();
+  const neon = await getNeonServer();
+  if (!neon) return jsonError('Authentication database is not configured.', 503, 'AUTH_NOT_CONFIGURED');
+  const { data: userData, error: authError } = await neon.auth.getUser();
   if (authError || !userData.user) return jsonError('Sign in before submitting a paper order.', 401, 'UNAUTHENTICATED');
 
   let payload: unknown;
@@ -49,14 +49,14 @@ export async function POST(request: NextRequest) {
   }
   if (type === 'limit' && typeof limitPrice !== 'number') return jsonError('Limit orders require a numeric limitPrice.');
 
-  const { data: instrument, error: instrumentError } = await supabase
+  const { data: instrument, error: instrumentError } = await neon
     .from('instrument_catalog').select('id,symbol,quote_currency').eq('symbol', symbol).eq('is_enabled', true).maybeSingle();
   if (instrumentError || !instrument) return jsonError('Instrument is unavailable or not listed.', 404, 'INSTRUMENT_NOT_FOUND');
   if (instrument.quote_currency !== 'USD') return jsonError('Paper execution is currently limited to USD-quoted instruments. Cross-currency conversion is not implemented.', 422, 'CURRENCY_NOT_SUPPORTED');
 
-  const { data: quote } = await supabase
+  const { data: quote } = await neon
     .from('market_quotes').select('last_price,observed_at,source').eq('instrument_id', instrument.id).maybeSingle();
-  const { data: limits } = await supabase
+  const { data: limits } = await neon
     .from('risk_limits').select('max_order_notional').eq('trading_account_id', accountId).maybeSingle();
 
   const referencePrice = quote ? Number(quote.last_price) : Number.NaN;
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
   }, { maxOrderNotional: Number(limits?.max_order_notional) });
   if (!risk.ok) return jsonError(risk.errors.join(' '), 422, 'RISK_CHECK_FAILED');
 
-  const { data, error } = await supabase.rpc('submit_paper_order', {
+  const { data, error } = await neon.rpc('submit_paper_order', {
     p_account_id: accountId,
     p_instrument_id: instrument.id,
     p_side: side,

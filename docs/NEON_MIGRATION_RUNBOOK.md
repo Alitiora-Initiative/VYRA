@@ -1,6 +1,6 @@
 # VYRA — Neon Postgres + Managed Better Auth Migration Runbook
 
-**Status:** Planned; not complete until Neon is provisioned and actual database/CI tests pass.  
+**Status (26 Nov 2026):** Neon Free project and Managed Auth/Data API are provisioned. The PostgreSQL schema has been applied and inspected on an isolated test branch. Application migration is in GitHub branch `feat/neon-backend`; it is not yet merged, CI-green or deployed.  
 **Chosen provider:** Neon Postgres Free for development and paper trading.  
 **Source:** existing Supabase-oriented VYRA application and SQL migration.
 
@@ -65,33 +65,24 @@ Never expose DATABASE_URL, Neon API keys, database-owner credentials or server-s
 
 ## 5. SQL identity and RLS conversion
 
-Neon Managed Better Auth stores user records in neon_auth user. Its documented helper auth.user_id() returns the JWT subject as TEXT. Use it for owner policies and security-sensitive functions.
+Neon Managed Better Auth stores users in `neon_auth."user"`. Inspection of this project confirms UUID user IDs and a UUID-returning `auth.uid()` helper (the separate `auth.user_id()` helper returns TEXT). Preserve the existing VYRA identity model: `profiles.id`, `user_watchlist.user_id`, `trading_accounts.user_id`, `audit_events.actor_id` and `provider_connections.user_id` remain UUID foreign keys to `neon_auth."user"(id). Keep business resource IDs as UUID.
 
-Change these identity columns to TEXT in a Neon-only migration:
-- profiles.id references neon_auth user (id).
-- user_watchlist.user_id.
-- trading_accounts.user_id.
-- audit_events.actor_id.
-- provider_connections.user_id.
+Use `auth.uid()` for RLS and security-sensitive functions so existing UUID ownership checks remain type-safe. Do not change the user IDs to TEXT for this inspected project.
 
-Keep VYRA's business resource IDs (account, order, instrument, ledger, transaction and position IDs) as UUID. Only user identity references become TEXT.
-
-Replace owner checks from auth.uid() to auth.user_id(), and update PL/pgSQL local user-ID variables to TEXT. Preserve auth.jwt() only where verified by the Neon Data API's supported JWT helper and role semantics.
-
-Replace the trigger on Supabase auth.users with a trigger on neon_auth user. Before writing the trigger, inspect the actual Managed Better Auth schema and verify exact column names and ID types. Use the verified id, name, email, createdAt and updatedAt fields as appropriate.
+The `neon_auth` schema and `neon_auth."user"` table are owned by Neon; the VYRA database role cannot create a trigger on that table. Do not attach triggers to Managed Auth tables. Instead, provision the VYRA profile with a self-scoped insert/upsert on the authenticated profile endpoint, protected by the profile INSERT policy and grants.
 
 Do not overwrite Neon's auth helper schema or invent a custom identity claim. Apply GRANTs and RLS for the exact roles used by the Neon Data API. Unknown or missing JWT roles must not gain authenticated privileges.
 
 ## 6. Privileged server operations
 
-The current Supabase service-role client is used to list instruments, persist market quotes and perform selected privileged reads/writes. Neon does not automatically provide a Supabase service_role equivalent.
+The prior application used a Supabase service-role client to list instruments and persist market quotes. Neon has no Supabase `service_role` equivalent in this project; use the dedicated server-only PostgreSQL owner connection for the narrowly defined instrument read and quote-write tasks only.
 
 Create a dedicated server-only Neon PostgreSQL module for privileged jobs:
 - use a pooled connection string only on server code;
 - separate read-only catalogue tasks from quote persistence and maintenance;
 - use database roles with only required privileges;
 - do not make an owner/BYPASSRLS key available to generic user-facing routes;
-- replace the old auth.jwt() role equals service_role assumption with an explicitly reviewed server-only permission boundary;
+- do not create or grant a synthetic `service_role`; revoke Data API execution of the global order-matching function;
 - ensure public quote refresh cannot match or execute another user's orders;
 - keep user paper-order matching scoped to the user's own active account.
 
@@ -171,13 +162,12 @@ If production VYRA customers or real partner records are ever added, provider ch
 
 ## 10. External blockers
 
-- [ ] Connect the Neon service so provisioning and database inspection can be performed.
-- [ ] Create the isolated Neon Free project vyra-markets.
-- [ ] Enable Managed Better Auth and the Data API.
-- [ ] Capture the Auth URL, Data API URL and pooled PostgreSQL URL in a secure secret store.
-- [ ] Inspect actual Neon Auth schemas, role configuration and helper functions.
-- [ ] Finalise and apply the Neon-specific SQL migration on a development branch.
-- [ ] Complete RLS, ledger, authentication and full CI test suites.
-- [ ] Promote to the paper environment only after all checks pass.
+- [x] Connect the Neon service and provision the isolated Free project `vyra-markets`.
+- [x] Enable Managed Better Auth and the Data API.
+- [x] Inspect actual Neon Auth schema, role configuration and helper functions.
+- [x] Apply and inspect the SQL schema on the isolated Neon development branch.
+- [ ] Store branch-matched Auth URL, Data API URL, pooled PostgreSQL URL and app cookie secret in the deployment secret store.
+- [ ] Complete the application migration, CI and end-to-end RLS/auth/ledger tests.
+- [ ] Apply the approved schema to the default paper branch only after the migration PR passes.
 
-**Current truth:** no Neon project, credentials or migration are active. The previous Supabase projects 9N8 and Space Ledger remain untouched.
+**Current truth (26 Nov 2026):** the Neon project `vyra-markets` is active on Free, and its VYRA test branch has the schema applied and introspected. The repository app migration is under review in `feat/neon-backend`; it has not been merged or deployed. No production environment secrets have been set. Supabase projects 9N8 and Space Ledger remain untouched.

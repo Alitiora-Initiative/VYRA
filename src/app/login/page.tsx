@@ -1,15 +1,14 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getSupabaseBrowser } from '@/lib/supabase/browser';
+import { authClient } from '@/lib/auth/client';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [callbackError, setCallbackError] = useState(false);
-  useEffect(() => { setCallbackError(new URLSearchParams(window.location.search).get('error') === 'callback_failed'); }, []);
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -20,17 +19,24 @@ export default function LoginPage() {
     setBusy(true);
     setMessage('');
     try {
-      const supabase = getSupabaseBrowser();
-      if (!supabase) throw new Error('Authentication is not configured yet. Connect the VYRA Supabase project first.');
-      const result = mode === 'signin'
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/` } });
-      if (result.error) throw result.error;
-      if (mode === 'signup' && !result.data.session) {
-        setMessage('Account created. Check your email to confirm the address, then sign in.');
-      } else {
+      if (mode === 'signin') {
+        const result = await authClient.signIn.email({ email, password });
+        if (result.error) throw new Error(result.error.message || 'Sign in failed.');
         router.replace('/');
         router.refresh();
+      } else {
+        const result = await authClient.signUp.email({
+          email,
+          password,
+          name: name.trim(),
+        });
+        if (result.error) throw new Error(result.error.message || 'Account creation failed.');
+        if (!result.data?.token) {
+          setMessage('Account created. Check your email for the verification step, then sign in.');
+        } else {
+          router.replace('/');
+          router.refresh();
+        }
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Authentication failed.');
@@ -45,10 +51,10 @@ export default function LoginPage() {
       <div className="authEyebrow">SECURE ACCOUNT ACCESS</div>
       <h1>{mode === 'signin' ? 'Welcome back.' : 'Create your account.'}</h1>
       <p className="authLead">Access your multi-asset workspace. Live trading is not enabled.</p>
-      {callbackError && <p className="authMessage" role="alert">Authentication callback failed. Please sign in again.</p>}
       <form onSubmit={submit} className="authForm">
-        <label>Email address<input type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" /></label>
-        <label>Password<input type="password" autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} minLength={8} required value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 8 characters" /></label>
+        {mode === 'signup' && <label>Full name<input type="text" autoComplete="name" minLength={2} maxLength={80} required value={name} onChange={event => setName(event.target.value)} placeholder="Your name" /></label>}
+        <label>Email address<input type="email" autoComplete="email" required value={email} onChange={event => setEmail(event.target.value)} placeholder="you@example.com" /></label>
+        <label>Password<input type="password" autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} minLength={8} required value={password} onChange={event => setPassword(event.target.value)} placeholder="At least 8 characters" /></label>
         <button className="authSubmit" disabled={busy}>{busy ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}</button>
       </form>
       {message && <p className="authMessage" role="status">{message}</p>}

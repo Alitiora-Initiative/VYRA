@@ -4,14 +4,14 @@ VYRA is a multi-asset brokerage software foundation designed around distinct mar
 
 ## Current build
 
-- Next.js application with Supabase SSR email/password authentication.
+- Next.js 16 application using Neon Managed Better Auth for email/password sessions.
 - Provider-backed market-data adapters: CoinGecko for crypto spot snapshots and Twelve Data for equities, FX and commodities, with free-tier-aware batching/caching.
 - Quote API that reports provider errors and does not fall back to invented market values.
 - Database-backed instrument catalogue and market-quote persistence.
 - Paper account opening with an illustrative USD 100,000 balance.
 - Server-side market/limit paper order lifecycle, UUID idempotency, quote-age checks, cash/share reservations for open limit orders, maximum order/position/daily-realized-loss limits and 5 bps adverse-slippage assumption.
 - Immutable double-entry paper ledger with deferred journal-balance checks and realized P&L posting.
-- Row Level Security on user-owned records.
+- Neon Data API with PostgreSQL Row Level Security on user-owned records; server-only PostgreSQL access is isolated for provider quote persistence.
 - Live execution adapter contracts with a hard-disabled implementation for each asset class.
 
 ## Not yet live
@@ -26,15 +26,14 @@ A free Render Node web-service blueprint is included in `render.yaml` (Frankfurt
 
 1. Install Node.js 22 or later and npm.
 2. Copy `.env.example` to `.env.local`.
-3. Configure the VYRA Supabase URL and publishable key, plus the server-only service role key.
-4. Apply `supabase/migrations/20261126000100_vyra_core.sql` to the dedicated VYRA Supabase project.
-5. In Supabase API settings, expose the `public` schema to PostgREST. The 2026 default no longer automatically exposes new public tables; keep RLS enabled and preserve the grants/policies in this migration.
+3. Configure `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`, `NEON_DATA_API_URL` and the server-only `NEON_DATABASE_URL` for the same VYRA Neon branch/database. Keep the database URL and cookie secret out of browser variables and Git.
+4. Apply `neon/migrations/20261126000100_vyra_core.sql` to the isolated VYRA development branch first. Do not apply it to the default paper branch until the migration PR and CI checks pass.
+5. Ensure the Neon Data API exposes only the `public` schema, uses Managed Better Auth, and has the `anonymous` and `authenticated` grants/RLS policies from the migration. The `private` schema must remain unexposed.
 6. Configure `TWELVEDATA_API_KEY` to enable shares, FX and metals quotes. Crypto spot quotes use CoinGecko and may require `COINGECKO_DEMO_API_KEY` if rate-limited.
-7. Set the Supabase Auth site URL and allowed redirect URLs to include `/auth/callback` and `/reset-password` on your local/deployed origin.
+7. Add the local application origin to Neon Auth trusted domains if it is not already allowed. Test sign-up, sign-in, session persistence, sign-out and password recovery before inviting users.
 8. Install dependencies and run `npm run dev`.
 
-The SQL migration sets the current paper defaults to USD 100,000 starting cash, $10,000 maximum order notional, $25,000 maximum position notional, $1,000 daily realised-loss stop and 5 basis points assumed adverse slippage. Passwords can be recovered with the email reset flow once Supabase email delivery and redirect URLs are configured. The service role key must remain server-side and must never use a `NEXT_PUBLIC_` prefix. Keep secrets in your hosting provider's environment-variable store, not Git.
-
+The SQL migration sets the current paper defaults to USD 100,000 starting cash, $10,000 maximum order notional, $25,000 maximum position notional, $1,000 daily realised-loss stop and 5 basis points assumed adverse slippage. The Neon owner connection is used only in server-side routes for catalogue reads and market-quote persistence; it is never passed to the browser or user-scoped query client. The user-scoped Data API requests carry the Managed Better Auth JWT and remain subject to RLS. Keep all secrets in your hosting provider's environment-variable store, not Git.
 ## Main endpoints
 
 | Endpoint | Purpose |
@@ -81,4 +80,4 @@ VYRA is being developed first as a **partner-led market-access platform**, not a
 - [Neon migration runbook](docs/NEON_MIGRATION_RUNBOOK.md) — step-by-step authentication, identity, RLS, data-access and migration test plan.
 - [GitHub implementation issues](https://github.com/Alitiora-Initiative/VYRA/issues) — trackable delivery backlog.
 
-**Current database decision:** Supabase project creation was blocked by the available account's two-active-free-project limit. Neon Postgres Free is now the selected alternative, but the Neon service still needs to be connected and a dedicated project provisioned. Existing Supabase projects 9N8 and Space Ledger remain untouched. See the database decision and migration runbook. A Render demo service also awaits workspace selection. Real-money features remain disabled.
+**Current database status (26 Nov 2026):** Neon is connected and the dedicated `vyra-markets` Free project is provisioned in Frankfurt, with PostgreSQL 17, database `vyra`, Managed Better Auth and the PostgreSQL Data API enabled. The Neon-specific schema has been applied and inspected on an isolated test branch. The application migration is being developed in the separate `feat/neon-backend` branch; CI and end-to-end auth/RLS checks must pass before promoting the schema to the default paper branch. Supabase projects 9N8 and Space Ledger remain untouched. A Render demo service still awaits workspace selection. Real-money features remain disabled.

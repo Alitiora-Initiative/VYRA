@@ -1,27 +1,34 @@
 import { NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { getNeonAdminPool } from '@/lib/neon/admin';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET() {
   const authConfigured = Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    process.env.NEON_AUTH_BASE_URL && process.env.NEON_AUTH_COOKIE_SECRET,
   );
-  const serviceKeyConfigured = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const dataApiConfigured = Boolean(process.env.NEON_DATA_API_URL);
   const twelveDataConfigured = Boolean(process.env.TWELVEDATA_API_KEY);
-  const admin = getSupabaseAdmin();
+  const admin = getNeonAdminPool();
+
   let database = 'not_configured';
   if (admin) {
-    const { error } = await admin.from('instrument_catalog').select('id', { head: true, count: 'exact' }).limit(1);
-    database = !error ? 'connected' : error.code === 'PGRST106' ? 'public_schema_not_exposed' : 'migration_or_api_not_ready';
+    try {
+      await admin.query('select 1 from public.instrument_catalog limit 1');
+      database = 'connected';
+    } catch {
+      database = 'migration_or_connection_not_ready';
+    }
   }
-  const paperReady = authConfigured && serviceKeyConfigured && database === 'connected';
+
+  const paperReady = authConfigured && dataApiConfigured && database === 'connected';
   return NextResponse.json({
     service: 'vyra-api',
     status: 'ok',
     mode: 'paper-first',
     authentication: authConfigured ? 'env_configured' : 'not_configured',
+    dataApi: dataApiConfigured ? 'env_configured' : 'not_configured',
     database,
     marketData: {
       crypto: 'coingecko_adapter_enabled',

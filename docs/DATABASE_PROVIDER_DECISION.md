@@ -161,8 +161,8 @@ Before any future regulated production use, VYRA and its licensed partner must e
 - Supabase project provisioning was blocked by the account's two active Free project limit.
 - Existing projects 9N8 and Space Ledger remain untouched.
 - No VYRA Supabase project exists; no VYRA migration has been applied.
-- Neon is the chosen alternative, but no Neon project exists yet.
-- The Neon connection must be completed before provisioning tools and project secrets are available.
-- The database migration has not been applied or verified.
+- Neon is connected and the dedicated `vyra-markets` Free project is provisioned in Frankfurt (PostgreSQL 17, database `vyra`).
+- Managed Better Auth and the Data API are enabled; the VYRA schema is applied and introspected on a separate test branch.
+- The GitHub application migration is in progress on `feat/neon-backend`; no deployment secrets or production deployment have been configured.
 
 **Decision:** choose Neon Postgres Free for isolated development/paper trading. Keep Aiven as a fallback. Do not use Firestore as the core ledger. Do not use temporary Firebase SQL Connect or Render Postgres trials as the permanent database.

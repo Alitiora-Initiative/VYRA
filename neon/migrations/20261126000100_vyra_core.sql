@@ -224,6 +224,10 @@ create policy "profile owner inserts own profile" on public.profiles for insert 
   with check (id = (select auth.uid()));
 drop policy if exists "profile owner updates own profile" on public.profiles;
 create policy "profile owner updates own profile" on public.profiles for update to authenticated using (id = (select auth.uid())) with check (id = (select auth.uid()));
+drop policy if exists "profile owner creates own profile" on public.profiles;
+create policy "profile owner creates own profile" on public.profiles for insert to authenticated
+with check (id = (select auth.uid()));
+
 
 drop policy if exists "enabled instruments are readable" on public.instrument_catalog;
 create policy "enabled instruments are readable" on public.instrument_catalog for select to anonymous, authenticated using (is_enabled = true);
@@ -875,11 +879,11 @@ returns integer
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $vyra$
 begin
-    return private.match_open_orders(p_instrument_id);
+  raise exception 'SERVER_ONLY_DISABLED';
 end;
-$$;
+$vyra$;
 
 revoke all on function private.open_paper_account() from public, anonymous;
 revoke all on function private.submit_paper_order(uuid,uuid,text,text,numeric,numeric,uuid) from public, anonymous;

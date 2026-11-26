@@ -1,11 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getMarketSnapshot } from '@/lib/market-data';
-import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { getSupabaseServer } from '@/lib/supabase/server';
+import { getNeonAdminPool } from '@/lib/neon/admin';
+import { getNeonServer } from '@/lib/neon/server';
 import type { AssetClass } from '@/lib/market-data/types';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+export const runtime = 'nodejs';
 
 const ALLOWED = new Set<AssetClass>(['crypto', 'equity', 'forex', 'commodity']);
 
@@ -20,37 +21,60 @@ export async function GET(request: NextRequest) {
     ? snapshot.quotes.filter((quote) => quote.assetClass === requested)
     : snapshot.quotes;
 
-  // Persist quotes only when VYRA's own database has been configured and migrated.
-  // Failure to persist never turns a provider failure into a fabricated quote.
   let persistence: 'saved' | 'not_configured' | 'not_migrated' = 'not_configured';
   let matching: 'account_scoped' | 'requires_signed_in_paper_account' | 'not_configured' | 'not_migrated' = 'not_configured';
-  const admin = getSupabaseAdmin();
+  const admin = getNeonAdminPool();
+
   if (admin && quotes.length) {
-    const { data: instruments, error: catalogError } = await admin
-      .from('instrument_catalog')
-      .select('id,symbol')
-      .in('symbol', quotes.map((quote) => quote.symbol));
-    if (catalogError) {
-      persistence = 'not_migrated';
-    } else {
-      const ids = new Map((instruments ?? []).map((row) => [row.symbol, row.id]));
+    try {
+      const catalog = await admin.query<{ id: string; symbol: string }>(
+        'select id, symbol from public.instrument_catalog where symbol = any($1::text[]) and is_enabled = true',
+        [quotes.map((quote) => quote.symbol)],
+      );
+      const ids = new Map(catalog.rows.map((row) => [row.symbol, row.id]));
       const rows = quotes.flatMap((quote) => {
         const instrumentId = ids.get(quote.symbol);
         return instrumentId ? [{
-          instrument_id: instrumentId,
-          last_price: quote.price,
+          instrumentId,
+          price: quote.price,
           source: quote.source,
-          observed_at: quote.asOf,
+          observedAt: quote.asOf,
         }] : [];
       });
+
       if (rows.length) {
-        const { error } = await admin.from('market_quotes').upsert(rows, { onConflict: 'instrument_id' });
-        persistence = error ? 'not_migrated' : 'saved';
-        if (!error) {
-          // Public quote refreshes must never execute another user's paper orders.
-          // A signed-in user can only match orders belonging to their own paper account.
-          const userClient = await getSupabaseServer();
-          const { data: userData } = userClient ? await userClient.auth.getUser() : { data: { user: null } };
+        const connection = await admin.connect();
+        try {
+          await connection.query('begin');
+          for (const row of rows) {
+            await connection.query(
+              `insert into public.market_quotes (instrument_id, last_price, source, observed_at)
+               values ($1, $2, $3, $4)
+               on conflict (instrument_id) do update
+               set last_price = excluded.last_price,
+                   source = excluded.source,
+                   observed_at = excluded.observed_at`,
+              [row.instrumentId, row.price, row.source, row.observedAt],
+            );
+          }
+          await connection.query('commit');
+          persistence = 'saved';
+        } catch (error) {
+          await connection.query('rollback').catch(() => undefined);
+          persistence = 'not_migrated';
+          console.error('VYRA quote persistence failed:', error instanceof Error ? error.message : 'Unknown database error');
+        } finally {
+          connection.release();
+        }
+
+        if (persistence === 'saved') {
+          // Quotes may be globally visible, but order matching is strictly scoped
+          // to the current user's active paper account and enforced again in SQL.
+          const userClient = await getNeonServer();
+          const { data: userData } = userClient
+            ? await userClient.auth.getUser()
+            : { data: { user: null } };
+
           if (userClient && userData.user) {
             const { data: accounts, error: accountsError } = await userClient
               .from('trading_accounts')
@@ -59,12 +83,13 @@ export async function GET(request: NextRequest) {
               .eq('account_type', 'paper')
               .eq('status', 'active')
               .limit(1);
+
             if (accountsError) {
               matching = 'not_migrated';
             } else if (!accounts?.[0]) {
               matching = 'requires_signed_in_paper_account';
             } else {
-              const results = await Promise.all((instruments ?? []).map((instrument) =>
+              const results = await Promise.all(catalog.rows.map((instrument) =>
                 userClient.rpc('process_my_paper_quote', {
                   p_instrument_id: instrument.id,
                   p_account_id: accounts[0].id,
@@ -77,6 +102,9 @@ export async function GET(request: NextRequest) {
           }
         }
       }
+    } catch (error) {
+      persistence = 'not_migrated';
+      console.error('VYRA market database unavailable:', error instanceof Error ? error.message : 'Unknown database error');
     }
   }
 
