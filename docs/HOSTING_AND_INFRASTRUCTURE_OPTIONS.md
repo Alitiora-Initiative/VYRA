@@ -89,31 +89,31 @@ Vercel pricing lists Hobby at $0 and identifies the intended use as personal, no
 
 ## 4. Database and data-service decision
 
-The existing code uses Supabase Auth and Postgres functions, including row-level security, paper ledger, orders and account snapshots. Changing the database would require deliberate migration and rework of auth, SSR session refresh, RPC calls, policies and migrations.
+VYRA's core database is now a dedicated Neon PostgreSQL project, not Supabase or Firestore. The project `vyra-markets` is provisioned in Frankfurt, with a `vyra` database, Neon Managed Better Auth and the Neon Data API. The Neon-native migration is applied to the main branch. The active application uses Neon Auth, the Neon Data API and a server-only quote-ingestion connection with the restricted `vyra_quote_ingest` role.
 
-The Supabase project attempt failed because the only available organisation already has two active free projects. Do not connect VYRA to 9N8 or Space Ledger. The best next step is to obtain a separate organisation with free project capacity and provision an isolated VYRA project there. Keep the SQL migration in Git until that project exists.
+The earlier Supabase project attempt was blocked by the account's two active Free project limit. Do not connect VYRA to 9N8 or Space Ledger; both remain untouched. The old Supabase SQL migration is history/reference only and must not be applied to Neon.
 
-Do not substitute a free hosting platform's temporary database for the VYRA Postgres database. A broker-grade book of record needs durability, backup/restore tests, audited access, reconciliation, retention and controlled change management. A free demo database can be used for synthetic data only.
+Do not substitute a hosting platform's temporary database for VYRA Postgres. Neon Free is a development/paper environment only. Before any production financial book, require supported backups, tested restores, defined RPO/RTO, operational monitoring, audit evidence, capacity and contractual support.
 
-## 5. Proposed zero-cost environment layout
+## 5. Environment layout
 
 | Environment | Hosting | Database | Secrets/data |
 |---|---|---|---|
-| Local development | Developer laptop | local test DB or test Supabase project | synthetic data, local environment file ignored by Git |
-| Pull-request preview | Render/Netlify preview or CI build | no real DB, or isolated disposable synthetic DB | no production secrets |
-| Paper demo | Render Free initially, or Netlify Free after verification | dedicated free VYRA Supabase project when capacity exists | paper data only, server-side demo secrets |
-| Partner sandbox | Same architecture but isolated environment | separate staging DB after capacity is available | sandbox-only provider keys |
-| Production brokerage | Not selected; must be jointly agreed with authorised partner and counsel | durable, supported database with contractual backups and recovery | production secrets in managed secret store; least privilege and monitored rotation |
+| Local development | Developer laptop / Node.js | Neon `vyra-dev` or isolated local test DB | synthetic users/data; local secret file ignored by Git |
+| Pull-request preview | CI build or isolated preview host | no production DB; synthetic/disposable test branch only | no production secrets |
+| Paper demo | Render Free initially, or Netlify after verification | dedicated Neon `vyra` project | synthetic paper data only; server-side Neon secrets |
+| Partner sandbox | Separate environment agreed with the authorised partner | isolated Neon branch/project or partner-approved test environment | sandbox credentials only, scoped to approved API permissions |
+| Production brokerage | Not selected; must be jointly agreed with authorised partner and counsel | durable supported database with contractual backup/recovery and operating commitments | production secrets in managed secret store; least privilege, MFA and monitored rotation |
 
 A later production architecture will likely need multiple isolated services or modules: web app, identity, partner API gateway, policy engine, market-data service, async job/queue worker, webhook receiver, audit store, reconciliation worker, monitoring and immutable backup. Do not overbuild these paid services before partner selection; the interface contracts and security boundaries can be designed now and deployed only when funded and permitted.
 
 ## 6. Infrastructure decision log
 
 - VYRA remains on private GitHub.
-- The Next.js build has passed GitHub Actions on commit 15527e3c3dc2f66314db6c8dcf54c6d0a261b03f; subsequent docs and navigation changes have their own CI runs.
+- Full GitHub Actions passed on commit `9f0e6d65ceed9a53fdf5457f600d5a67adc37783` (16 tests, typecheck, lint and production build); a later documentation-only run is being checked.
 - render.yaml is present for a free Node demo service.
 - Render service creation is pending owner selection between My Workspace and JOJO.
-- Supabase VYRA project creation is blocked by free-project quota. Existing projects were not changed.
+- Neon VYRA project is provisioned and the native migration is applied; Supabase projects 9N8 and Space Ledger remain untouched.
 - Vercel Hobby deployment is not selected.
 - Netlify and Cloudflare Workers remain researched alternatives, not connected deployments.
 - No actual public deployment is represented as active.
