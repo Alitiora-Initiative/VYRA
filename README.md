@@ -15,8 +15,9 @@ VYRA is a multi-asset brokerage software foundation designed around distinct mar
 - Immutable double-entry paper ledger with deferred journal-balance checks and realized P&L posting.
 - Row Level Security on user-owned records.
 - Live execution adapter contracts with a hard-disabled implementation for each asset class.
-- VYRA Access Graph: versioned country × product × activity policy evaluator with source-linked Kenya rules, explicit unassessed markets and twelve default-deny launch evidence gates including customer classification.
-- Interactive route simulator at /access-graph and public source/evidence API at GET /api/access-graph. The rulepack is a product-control aid, not legal advice or an authorisation.
+- VYRA Access Graph: versioned country × investor type × product × activity evaluator with source-linked Kenya rules, explicit unassessed markets and twelve default-deny evidence gates.
+- VYRA Provider Graph: eleven accountability roles with source/evidence requirements; current provider candidates remain research-only, uncontracted and disconnected.
+- Interactive route simulator at /access-graph, provider map at /provider-graph, and public APIs at GET /api/access-graph and GET /api/provider-graph. These are evidence controls, not legal advice or authorisation.
 
 ## Not yet live
 
@@ -81,7 +82,7 @@ The SQL migration sets current paper defaults to USD 100,000 starting cash, $10,
 
 ## Development checks
 
-- `npm test` — paper-risk, partner-eligibility and AccessGraph default-deny/source-mapping unit tests.
+- `npm test` — paper-risk, partner-eligibility, AccessGraph and Provider Graph default-deny/source-mapping unit tests.
 - `npm run typecheck` — TypeScript check.
 - `npm run lint` — lint.
 - `npm run build` — production Next.js build.
@@ -94,7 +95,8 @@ See `docs/ARCHITECTURE.md`, `docs/PRODUCT.md`, `docs/SECURITY.md`, `docs/LEDGER.
 
 VYRA is being developed first as a **partner-led market-access platform**, not as an unlicensed broker. The intended first model is for regulated partners to own the customer brokerage/fund account, onboarding and KYC decisions, customer money, custody and execution, while VYRA provides approved software, discovery and hand-off functions. This is a target model, not a signed agreement or regulatory approval.
 
-- [Hackathon and investor thesis](docs/HACKATHON_AND_INVESTOR_THESIS.md) — product wedge, AccessGraph and Provider Graph, five-minute demo script, customer model, investor proof points and roadmap. — product wedge, AccessGraph moat, five-minute demo script, customer model, investor proof points and roadmap.
+- [Hackathon and investor thesis](docs/HACKATHON_AND_INVESTOR_THESIS.md) — AccessGraph and Provider Graph competitive wedge, demo script, customer model, investor proof points and roadmap.
+- [VYRA Sentinel finance agents](hackathons/vyra-risk-review/README.md) — Mozaik-powered concurrent evidence scout, route analyst and independent auditor; offline demo runs with no API key, live model mode is opt-in.
 - [Brokerage master plan](docs/BROKERAGE_MASTER_PLAN.md) — detailed operating model, Kenya and international regulatory analysis, broker and institutional fund-platform comparisons (including alternatives/hedge funds), architecture, document pack, risk register and phased roadmap.
 - [Brokerage flowcharts](docs/BROKERAGE_FLOWCHARTS.md) — regulatory gates, customer hand-off, future order lifecycle, data/privacy boundary, reconciliation and deployment.
 - [Brokerage build checklist](docs/BROKERAGE_BUILD_CHECKLIST.md) — staged engineering, legal, partner and launch tasks.
