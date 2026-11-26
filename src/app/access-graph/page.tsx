@@ -33,6 +33,11 @@ export default function AccessGraphPage() {
   );
   const selectedProvider = PROVIDER_CANDIDATES.find((item) => item.id === providerId);
   const matchedEvidenceIds = new Set(result.evidence.map((item) => item.id));
+  const visibleBlockers = [
+    ...routeDecision.blockers.filter((item) => item.startsWith('Access Graph:')).slice(0, 3),
+    ...routeDecision.blockers.filter((item) => item.startsWith('Provider Graph:')).slice(0, 3),
+  ];
+  const hiddenBlockerCount = Math.max(0, routeDecision.blockers.length - visibleBlockers.length);
 
   return (
     <main className="accessShell">
@@ -110,13 +115,28 @@ export default function AccessGraphPage() {
             </div>
             <p>{selectedProvider?.name ?? providerId} is evaluated against the same country, investor type, product and activity as AccessGraph. Both graphs must pass before a route can even be escalated for human review.</p>
             <div className="accessRouteBlockers">
-              {routeDecision.blockers.slice(0, 6).map((blocker, index) => (
+              {visibleBlockers.map((blocker, index) => (
                 <div className="accessRouteBlocker" key={blocker}>
                   <span>{String(index + 1).padStart(2, '0')}</span>
                   <p>{blocker}</p>
                 </div>
               ))}
-              {routeDecision.blockers.length > 6 && <div className="accessRouteMore">+ {routeDecision.blockers.length - 6} more blockers in the composite decision</div>}
+              {routeDecision.provider.missingCapabilities.length > 0 && (
+                <div className="accessCapabilityGaps">
+                  <strong>Activity-specific provider evidence gaps</strong>
+                  {routeDecision.provider.missingCapabilities.slice(0, 3).map((gap) => (
+                    <article key={gap.id}>
+                      <b>{gap.label}</b>
+                      <p>{gap.reason}</p>
+                      <small>Evidence required: {gap.requiredEvidence.join(' · ')}</small>
+                    </article>
+                  ))}
+                  {routeDecision.provider.missingCapabilities.length > 3 && (
+                    <small>+ {routeDecision.provider.missingCapabilities.length - 3} additional capability gaps</small>
+                  )}
+                </div>
+              )}
+              {hiddenBlockerCount > 0 && <div className="accessRouteMore">+ {hiddenBlockerCount} additional blockers in the composite decision</div>}
               {routeDecision.blockers.length === 0 && <div className="accessRouteMore">No recorded blockers. This outcome is still not an approval.</div>}
             </div>
             <div className="accessDecisionFooter">
