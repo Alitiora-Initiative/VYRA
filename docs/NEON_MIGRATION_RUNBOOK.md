@@ -1,183 +1,143 @@
 # VYRA — Neon Postgres + Managed Better Auth Migration Runbook
 
-**Status:** Planned; not complete until Neon is provisioned and actual database/CI tests pass.  
-**Chosen provider:** Neon Postgres Free for development and paper trading.  
-**Source:** existing Supabase-oriented VYRA application and SQL migration.
+**Status:** Database provisioned and migrated; app port committed; end-to-end auth/provider tests and final CI remain open.  
+**Provider:** Neon Postgres Free for synthetic development and paper trading only.  
+**Project:** `vyra-markets`, Frankfurt (`aws-eu-central-1`).  
+**Database:** `vyra`; main branch `br-tiny-lake-bhoos1ij`.  
+**Main migration:** `neon/migrations/20261126000100_vyra_core.sql`.
 
-## 1. Why this migration is viable
+## 1. Current infrastructure state
 
-VYRA uses Supabase Auth and PostgREST-style queries. Neon provides a PostgREST-compatible Data API plus Managed Better Auth and a Supabase-compatible auth adapter. The existing query-builder style can largely remain, while the actual authentication, session and database configuration changes.
+Neon is connected and a dedicated project has been created. Neon Managed Better Auth and the Neon Data API are enabled. The adapted core SQL migration was applied to both an isolated validation branch and the main branch. The validation branch was deleted after successful testing.
 
-This is not a base-URL swap. The user identifier type, auth schema references, RLS helpers, cookie/session integration, password-recovery flow and privileged server role must all be adapted and tested.
+The main branch currently contains:
+- 14 VYRA public tables, with RLS enabled on all 14;
+- 19 public row-level security policies;
+- 69 validated database constraints;
+- UUID business identifiers and UUID user references to Neon Managed Auth;
+- paper order, fill, ledger, risk-limit, audit and quote routines;
+- enabled-instrument catalogue rows, but no test/customer accounts, orders, fills or market-quote rows.
 
-## 2. Current data/user situation
+All unrelated Supabase projects remain untouched. The original Supabase SQL file remains only as a migration-history reference. Never apply it to Neon.
 
-No dedicated VYRA Supabase project has been created, and the VYRA migration has never been applied. No production VYRA users, passwords, orders or paper ledgers are known to exist. There is therefore no VYRA database to dump or migrate and no existing password hashes to carry over.
+## 2. Verified auth schema and RLS contract
 
-Neon states that password hashes cannot be transferred into Managed Better Auth. If users had already existed, they would need to re-register or use an approved social sign-in transition. This is the cleanest point to choose Neon before any VYRA accounts exist.
+The inspected Neon Managed Auth table `neon_auth."user"` has a UUID primary key (`id`), text name/email and Better Auth timestamp fields. Neon also exposes `auth.uid()` returning UUID, `auth.user_id()` returning text and `auth.jwt()` returning JSONB. The VYRA user references therefore remain UUID; the earlier generic runbook assumption that all Better Auth IDs would be text is not used in the applied migration.
 
-## 3. Supabase-specific code inventory
+The Neon migration:
+- references `neon_auth."user"(id)` for user-owned records;
+- does not install triggers on Neon-managed auth tables;
+- uses `auth.uid()` for user-ownership checks;
+- creates profiles lazily through the authenticated profile API;
+- preserves UUID account/order/instrument/ledger identifiers;
+- retains RLS on all VYRA public tables.
 
-Current modules requiring migration:
-- src/lib/supabase/browser.ts — browser auth/data client.
-- src/lib/supabase/server.ts — server cookie client.
-- src/lib/supabase/admin.ts — privileged service-role client.
-- middleware.ts — Supabase claims refresh and cookies.
-- src/app/api/me/route.ts — getUser().
-- src/app/api/account/profile/route.ts — profile access.
-- src/app/login/page.tsx — email/password register and sign-in.
-- src/app/forgot-password/page.tsx — request reset link.
-- src/app/reset-password/page.tsx — password update.
-- src/app/auth/callback/route.ts — Supabase PKCE callback.
-- src/app/auth/signout/route.ts — sign out.
-- Paper account, paper order, ledger and watchlist routes — auth plus PostgREST / RPC.
-- src/app/api/instruments/route.ts and src/app/api/markets/route.ts — privileged DB operations.
-- supabase/migrations/20261126000100_vyra_core.sql — Supabase auth.users, auth.uid(), auth.jwt() and service_role assumptions.
+The managed roles `anonymous` and `authenticated` are non-login roles with RLS enabled. Owner policies are scoped to `auth.uid()`. The global matcher is deliberately non-executable by anonymous and authenticated roles. Public market matching is a disabled server-only stub; `process_my_paper_quote` validates ownership of an active paper account before processing that user's orders.
 
-## 4. Target SDK and environment layout
+## 3. Privileged quote ingestion
 
-The Neon SDK documents a Supabase-compatible adapter. The pattern below is illustrative and must be checked against the connected Neon SDK version:
+A dedicated `vyra_quote_ingest` PostgreSQL login role was created for the quote writer. It is not a superuser and does not bypass RLS. Its grants are limited to quote ingestion; it has no permission to mutate orders, trading accounts, positions, balances, ledger entries or auth records. This role is the only account to use in `NEON_MARKET_DATA_DATABASE_URL`.
 
-    import { createClient, SupabaseAuthAdapter } from '@neondatabase/neon-js';
+Never place the database owner connection string, Neon API key, Auth server secret or this quote-writer password in Git, browser bundles, `NEXT_PUBLIC_*` variables or generic user-facing API code. The quote writer uses a pooled connection and prepared parameters, validates positive prices and timestamps, and only overwrites a stored quote with an equal/newer observation.
 
-    export const neon = createClient({
-      auth: {
-        adapter: SupabaseAuthAdapter(),
-        url: process.env.NEXT_PUBLIC_NEON_AUTH_URL!,
-      },
-      dataApi: {
-        url: process.env.NEON_DATA_API_URL!,
-      },
-    });
+## 4. Application migration status
 
-For Next.js server-side authentication use the documented Neon Next.js server integration. Use a server-only pooled Postgres URL for privileged database operations and migrations.
+The active Next.js app has been moved from Supabase SSR to Neon:
+- `src/lib/neon/auth.ts`: Neon Managed Better Auth server integration and signed session cookies.
+- `src/lib/neon/auth-client.ts`: Neon Auth browser client.
+- `src/lib/neon/server.ts`: request-scoped Neon Data API client using the validated Neon Auth session token.
+- `src/lib/neon/market-writer.ts`: server-only pooled quote writer using the restricted role.
+- `src/app/api/auth/[...path]/route.ts`: Neon Auth request handler with Next.js route context.
+- `src/app/auth/[path]/page.tsx`: Neon Auth UI routes.
+- `src/app/api/me`, profile, watchlist, paper account, paper order, order cancellation and ledger routes: Neon Data API.
+- `src/app/api/markets` and `src/app/api/instruments`: Neon-backed catalogue and quote persistence.
+- `proxy.ts`: Neon middleware integration for protected settings.
+- The old `src/lib/supabase/*`, Supabase middleware and Supabase PKCE callback runtime files have been removed.
 
-Required secrets/settings once provisioned:
-- NEON_AUTH_BASE_URL
-- NEON_AUTH_COOKIE_SECRET (random 32+ character secret)
-- NEXT_PUBLIC_NEON_AUTH_URL only if the selected client adapter requires it
-- NEON_DATA_API_URL
-- DATABASE_URL (server-only pooled database connection)
-- NEON_API_KEY (administration/provisioning only, never browser)
-- existing market-data API keys
+The app uses pinned Next.js 16 and the Neon SDK packages. Neon Auth UI `0.4.0-beta` publishes an exact `0.6.0-beta` peer dependency while VYRA uses Auth `0.7.0-beta`; the repository includes a package override to keep Auth UI on the app's Auth version instead of allowing a second nested SDK copy. This must be revisited when Neon republishes compatible package versions.
 
-Never expose DATABASE_URL, Neon API keys, database-owner credentials or server-side tokens in frontend bundles, NEXT_PUBLIC_ environment variables or GitHub commits.
+## 5. Environment variables
 
-## 5. SQL identity and RLS conversion
+Required for the web app:
+- `NEON_AUTH_BASE_URL` — Managed Better Auth base URL for this branch.
+- `NEON_AUTH_COOKIE_SECRET` — server-only random secret, minimum 32 characters.
+- `NEON_DATA_API_URL` — Neon Data API endpoint for the `vyra` database.
+- `NEON_MARKET_DATA_DATABASE_URL` — pooled PostgreSQL URL for the restricted `vyra_quote_ingest` role.
+- `TWELVEDATA_API_KEY` — optional provider key for shares/FX/commodities; without it those provider classes remain unavailable.
+- `COINGECKO_DEMO_API_KEY` — optional provider key if CoinGecko rate limits the demo.
+- `NEXT_PUBLIC_GTM_ID` — optional GTM container; no ID is currently configured and the script does not load until the visitor opts into analytics.
 
-Neon Managed Better Auth stores user records in neon_auth user. Its documented helper auth.user_id() returns the JWT subject as TEXT. Use it for owner policies and security-sensitive functions.
+The actual secrets belong in the target hosting provider's environment store. Never commit real values into `.env.example` or GitHub.
 
-Change these identity columns to TEXT in a Neon-only migration:
-- profiles.id references neon_auth user (id).
-- user_watchlist.user_id.
-- trading_accounts.user_id.
-- audit_events.actor_id.
-- provider_connections.user_id.
+## 6. Managed Auth settings
 
-Keep VYRA's business resource IDs (account, order, instrument, ledger, transaction and position IDs) as UUID. Only user identity references become TEXT.
+Neon Auth is branded as VYRA Markets. Email/password sign-up is enabled; new accounts must complete email verification using an OTP before sign-in. The shared Neon email provider is selected. The app's auth UI uses Neon Auth's supported sign-in, sign-up, forgot-password and reset-password views.
 
-Replace owner checks from auth.uid() to auth.user_id(), and update PL/pgSQL local user-ID variables to TEXT. Preserve auth.jwt() only where verified by the Neon Data API's supported JWT helper and role semantics.
+Not yet certified:
+- deliverability for verification emails;
+- end-to-end OTP confirmation;
+- password reset email receipt and completion;
+- session refresh across browser reloads and app restarts;
+- logout invalidation;
+- trusted-domain redirect behavior on the deployed host.
 
-Replace the trigger on Supabase auth.users with a trigger on neon_auth user. Before writing the trigger, inspect the actual Managed Better Auth schema and verify exact column names and ID types. Use the verified id, name, email, createdAt and updatedAt fields as appropriate.
+Localhost is allowed for development. Add the exact final staging/production origin to Neon Auth trusted domains when the host URL exists. Never use an open wildcard for production redirect origins.
 
-Do not overwrite Neon's auth helper schema or invent a custom identity claim. Apply GRANTs and RLS for the exact roles used by the Neon Data API. Unknown or missing JWT roles must not gain authenticated privileges.
+## 7. RLS, order and ledger verification
 
-## 6. Privileged server operations
+The applied schema was inspected directly. Verified facts:
+- RLS enabled on all 14 public tables.
+- 19 public RLS policies exist.
+- 69 constraints are validated.
+- authenticated/anonymous roles cannot execute the global `process_market_quote(uuid)` matcher.
+- authenticated users can call only the user-scoped `process_my_paper_quote(uuid,uuid)` flow, whose private function checks that the account belongs to the JWT user and is an active paper account.
+- unauthenticated paper-account opening is rejected with `AUTH_REQUIRED`.
+- `vyra_quote_ingest` cannot mutate orders/accounts/ledger records.
 
-The current Supabase service-role client is used to list instruments, persist market quotes and perform selected privileged reads/writes. Neon does not automatically provide a Supabase service_role equivalent.
+Still required using two synthetic signed-in users:
+1. Verify each can read only their own profile, accounts, positions, fills, orders, risk limits, watchlist and ledger.
+2. Attempt cross-account access by guessing a second user's UUIDs; every read/write must fail or return no rows.
+3. Verify anonymous users can only read enabled instruments and market quotes.
+4. Create paper account; check initial journal debits/credits balance.
+5. Submit market and non-marketable limit orders with unique client-order IDs.
+6. Verify matching, reservations, partial state if implemented, cancellation and duplicate idempotent retry.
+7. Verify no fill is written for stale/future quotes or rejected orders.
+8. Verify ledger updates are immutable and balance checks reject unbalanced journal transactions.
+9. Confirm failed RPCs roll back all side effects.
 
-Create a dedicated server-only Neon PostgreSQL module for privileged jobs:
-- use a pooled connection string only on server code;
-- separate read-only catalogue tasks from quote persistence and maintenance;
-- use database roles with only required privileges;
-- do not make an owner/BYPASSRLS key available to generic user-facing routes;
-- replace the old auth.jwt() role equals service_role assumption with an explicitly reviewed server-only permission boundary;
-- ensure public quote refresh cannot match or execute another user's orders;
-- keep user paper-order matching scoped to the user's own active account.
+## 8. CI and production-build status
 
-The user-scoped Data API client and the server-only administrative DB client must be separate modules with separate environment variables and tests.
+The repository's previous GitHub workflow runs recorded 16/16 unit tests passing and TypeScript passing after the auth-handler route signature was corrected. The old ESLint legacy compatibility wrapper then failed with a circular-configuration error; it has been replaced with Next.js's native flat configs at `eslint.config.mjs`.
 
-## 7. Authentication flows to re-implement and verify
+**Do not claim CI complete until one current main-branch run passes all four stages:** unit tests, TypeScript, lint and production build. The final build can still expose package/export/runtime issues that TypeScript alone does not catch.
 
-| Existing flow | Required Neon work |
-|---|---|
-| Email/password sign-up | Use the supported Supabase-compatible adapter or direct Managed Better Auth API |
-| Password sign-in | Verify signInWithPassword against actual Neon Auth |
-| Current user/session | Validate server-side; never trust client metadata |
-| Sign out | Clear Managed Better Auth session cookies |
-| Forgot password | Replace resetPasswordForEmail with the supported Managed Better Auth reset endpoint |
-| Reset password | Replace updateUser({ password }) with the supported Better Auth reset-password method |
-| OAuth | Configure provider in Neon Auth and test callback, redirect allow-list and cookie flow |
-| Middleware | Use Neon's documented Next.js middleware/server integration |
-| Protected API routes | Resolve a validated server session on each protected request; retain origin/CSRF protections |
+## 9. Deployment state
 
-Important: Neon docs warn that Supabase-style updateUser() is not a full replacement for Supabase password/email changes. Password reset must not be declared ready until the actual email and reset workflow succeeds end to end. Email confirmation and reset email delivery must also be tested against the active Neon Auth configuration.
+The Render account has two empty workspaces, `My Workspace` and `JOJO`; no VYRA Render service has been created. A free Render web service may host the paper demo once CI and runtime checks pass. It is not a suitable production brokerage host or production financial book of record.
 
-A cookie-presence-only check may be used for optimistic UI redirection; it is not sufficient authorisation. Every protected query and mutation must validate the user and rely on RLS.
+After creating the demo service:
+- set the four required Neon variables in Render's secret store;
+- add the exact `https://<service>.onrender.com` origin to Neon Auth trusted domains;
+- test sign-up, verification, sign-in, sign-out, API health, quote refresh, paper account, order and ledger flows;
+- do not use real customer information or money;
+- do not deploy a live trading interface.
 
-## 8. Development branch migration and test plan
+## 10. Rollback
 
-Apply the Neon migration to a development branch first. Use synthetic accounts only.
+If the Neon app integration fails:
+- keep the dedicated Neon project and migration intact for diagnosis;
+- revert the app commit to a known passing build;
+- keep live execution disabled;
+- do not use another product's Supabase database as a fallback;
+- preserve the original Supabase migration only for historical reference.
 
-### Authentication tests
-- Create a new test user.
-- Confirm email verification behavior.
-- Sign in and retrieve a server-side session.
-- Refresh the browser and verify session persistence.
-- Sign out and verify session invalidation.
-- Request a password reset, complete it, and verify the new password.
-- Reject unapproved redirects.
-- Reject invalid, expired or replayed session/callback state.
-- Confirm secrets and token payloads are absent from logs and browser bundles.
+## 11. Remaining launch blockers
 
-### RLS / tenant isolation tests
-Use two test users, A and B, and an anonymous client:
-- A can read only A's profile, watchlist, account, orders, positions and ledger.
-- A cannot read/update/delete B's records by guessing IDs.
-- B cannot access A's data.
-- Anonymous can only read explicitly granted instrument catalogue and market data.
-- Missing, expired, malformed or wrong-role JWTs are denied.
-- Verify Data API role claims and GRANTs, not merely the validity of JWT signature.
-
-### Ledger and order tests
-- Opening paper balance posts balanced journal entries.
-- Buy fill debits position and credits cash.
-- Sell fill releases basis and posts correct realised P&L.
-- A failure mid-fill rolls back all related changes.
-- Idempotent order retry cannot create a duplicate order or journal.
-- Order, position and daily-loss risk limits are enforced.
-- Cash/share reservations and cancellation remain balanced.
-- Immutable ledger/audit triggers reject mutation.
-- Stale and future quote timestamps are rejected.
-- Limit order matching is scoped to the authenticated user's own paper account.
-
-### Full application tests
-- Unit tests.
-- TypeScript typecheck.
-- ESLint.
-- Next.js production build.
-- E2E sign-up/sign-in/sign-out/reset.
-- Watchlist isolation.
-- Paper account creation.
-- Paper market/limit order, fill, cancel and ledger flows.
-- Verify exact runtime/browser bundle contains no admin credentials.
-- All GitHub Actions green on the intended release commit.
-
-## 9. Cutover and rollback
-
-There is no production VYRA Supabase database to cut over. Keep current Supabase files until the Neon implementation passes tests. Migrate the code and environment as one reviewed release. If Neon provisioning or integration fails, revert the application commit; do not use another product's Supabase database as a fallback.
-
-If production VYRA customers or real partner records are ever added, provider changes require a proper data export, schema and ID mapping, downtime/dual-run plan, reconciliation and tested restore. Never switch a live financial book casually.
-
-## 10. External blockers
-
-- [ ] Connect the Neon service so provisioning and database inspection can be performed.
-- [ ] Create the isolated Neon Free project vyra-markets.
-- [ ] Enable Managed Better Auth and the Data API.
-- [ ] Capture the Auth URL, Data API URL and pooled PostgreSQL URL in a secure secret store.
-- [ ] Inspect actual Neon Auth schemas, role configuration and helper functions.
-- [ ] Finalise and apply the Neon-specific SQL migration on a development branch.
-- [ ] Complete RLS, ledger, authentication and full CI test suites.
-- [ ] Promote to the paper environment only after all checks pass.
-
-**Current truth:** no Neon project, credentials or migration are active. The previous Supabase projects 9N8 and Space Ledger remain untouched.
+- [ ] Complete CI: tests, typecheck, lint and Next.js production build on one current commit.
+- [ ] End-to-end Neon Auth email verification/reset and session tests.
+- [ ] Two-user RLS and complete paper order/ledger integration tests.
+- [ ] Verify live quote API against each provider; obtain commercial market-data rights before any public redistribution.
+- [ ] Provision a Render paper-demo service and set Neon secrets securely.
+- [ ] Confirm staging trusted origin and verify security headers, logs and backup restore.
+- [ ] Choose one provider, one first market/jurisdiction and one operating model; obtain written partner and legal approvals.
+- [ ] Keep all live brokerage activity disabled until regulated partner integration and formal certification.
