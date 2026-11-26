@@ -1,4 +1,4 @@
-export const ACCESS_GRAPH_VERSION = 'KE-2026.11.26.1';
+export const ACCESS_GRAPH_VERSION = 'KE-2026.11.26.2';
 export const ACCESS_GRAPH_REVIEW_DATE = '2026-11-26';
 
 export const ACCESS_EVIDENCE = [
@@ -60,6 +60,12 @@ export const ACCESS_COUNTRIES = [
   { code: 'US', name: 'United States', rulePack: null, assessed: false },
   { code: 'EU', name: 'European Union', rulePack: null, assessed: false },
   { code: 'AE', name: 'United Arab Emirates', rulePack: null, assessed: false },
+];
+
+export const ACCESS_CUSTOMER_TYPES = [
+  { id: 'retail', label: 'Retail investor' },
+  { id: 'professional', label: 'Professional investor' },
+  { id: 'institutional', label: 'Institutional client' },
 ];
 
 export const ACCESS_PRODUCTS = [
@@ -147,6 +153,7 @@ const RULES = [
 
 const BASELINE_GATES = [
   ['legalOpinion', 'Activity-specific written legal classification'],
+  ['customerTypeApproval', 'Customer / investor classification and eligibility'],
   ['principalIdentified', 'Named regulated principal and responsibility matrix'],
   ['partnerAgreement', 'Executed partner agreement and permitted VYRA role'],
   ['countryApproval', 'Written customer-country approval'],
@@ -162,6 +169,7 @@ const BASELINE_GATES = [
 export function evaluateAccess(input = {}) {
   const country = String(input.country ?? '').toUpperCase();
   const product = String(input.product ?? '');
+  const customerType = String(input.customerType ?? 'unspecified');
   const activity = String(input.activity ?? '');
   const countryInfo = ACCESS_COUNTRIES.find((entry) => entry.code === country);
   const matchingRules = RULES.filter((rule) =>
@@ -206,6 +214,9 @@ export function evaluateAccess(input = {}) {
     country,
     countryAssessed: Boolean(countryInfo?.assessed),
     product,
+    customerType,
+    customerTypeSpecificReviewRequired: true,
+    customerTypeNote: 'The Kenya rule pack does not yet differentiate every requirement by retail, professional and institutional client type. Explicit classification and a customer-category review are required.',
     activity,
     regulatorySignal,
     headline,
@@ -240,6 +251,7 @@ export function getAccessGraphSnapshot() {
     reviewedAt: ACCESS_GRAPH_REVIEW_DATE,
     jurisdictionCoverage: ACCESS_COUNTRIES,
     products: ACCESS_PRODUCTS,
+    customerTypes: ACCESS_CUSTOMER_TYPES,
     activities: ACCESS_ACTIVITIES,
     evidence: ACCESS_EVIDENCE,
     rules: RULES.map(({ id, country, products, activities, signal, severity, title, evidenceIds }) => ({
