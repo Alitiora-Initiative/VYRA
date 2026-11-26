@@ -4,9 +4,12 @@
   "private": true,
   "description": "Concurrent evidence-first finance and regulatory route review using Mozaik.",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "start": "node src/cli.mjs",
+    "start": "node src/cli.mjs --offline",
+    "start:live": "node src/cli.mjs --live",
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
