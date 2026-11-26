@@ -60,7 +60,7 @@ test('information-only is never confused with a permission to trade or refer', (
 test('a partner name or link does not waive missing launch evidence', () => {
   const result = evaluateAccess({ country: 'KE', product: 'securities', activity: 'partner_referral', gates: {} });
   assert.equal(result.launchStatus, 'blocked_pending_evidence');
-  assert.equal(result.missingGates.length, 11);
+  assert.equal(result.missingGates.length, 12);
   assert.equal(result.customerMoneyEnabled, false);
 });
 
@@ -69,6 +69,16 @@ test('even a fully completed evidence checklist requires a human go/no-go', () =
   assert.equal(result.launchStatus, 'manual_go_no_go_required');
   assert.equal(result.customerActionsEnabled, false);
   assert.equal(result.liveExecutionEnabled, false);
+});
+
+test('records investor type but still requires a category-specific legal review', () => {
+  const retail = evaluateAccess({ country: 'KE', product: 'securities', customerType: 'retail', activity: 'market_information' });
+  const institutional = evaluateAccess({ country: 'KE', product: 'securities', customerType: 'institutional', activity: 'market_information' });
+  assert.equal(retail.customerType, 'retail');
+  assert.equal(institutional.customerType, 'institutional');
+  assert.equal(retail.customerTypeSpecificReviewRequired, true);
+  assert.notEqual(retail.launchStatus, 'authorised');
+  assert.ok(retail.missingGates.some((gate) => gate.key === 'customerTypeApproval'));
 });
 
 test('empty or invalid combinations do not inherit a permissive default', () => {
