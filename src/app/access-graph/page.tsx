@@ -7,19 +7,20 @@ import {
   Database, FileSearch, LockKeyhole, Network, ShieldCheck,
 } from 'lucide-react';
 import {
-  ACCESS_ACTIVITIES, ACCESS_COUNTRIES, ACCESS_EVIDENCE, ACCESS_PRODUCTS,
+  ACCESS_ACTIVITIES, ACCESS_COUNTRIES, ACCESS_CUSTOMER_TYPES, ACCESS_EVIDENCE, ACCESS_PRODUCTS,
   ACCESS_GRAPH_REVIEW_DATE, ACCESS_GRAPH_VERSION, evaluateAccess,
   type AccessDecision,
 } from '@/lib/access-graph/rules.mjs';
 
 export default function AccessGraphPage() {
   const [country, setCountry] = useState('KE');
+  const [customerType, setCustomerType] = useState('retail');
   const [product, setProduct] = useState('virtual_asset');
   const [activity, setActivity] = useState('virtual_asset_service');
 
   const result = useMemo<AccessDecision>(
-    () => evaluateAccess({ country, product, activity }),
-    [country, product, activity]
+    () => evaluateAccess({ country, customerType, product, activity }),
+    [country, customerType, product, activity]
   );
   const matchedEvidenceIds = new Set(result.evidence.map((item) => item.id));
 
@@ -55,6 +56,11 @@ export default function AccessGraphPage() {
                 {ACCESS_COUNTRIES.map((item) => <option key={item.code} value={item.code}>{item.name}{item.assessed ? ' · rule pack available' : ' · not yet assessed'}</option>)}
               </select>
             </label>
+            <label>Customer / investor type
+              <select value={customerType} onChange={(event) => setCustomerType(event.target.value)}>
+                {ACCESS_CUSTOMER_TYPES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+              </select>
+            </label>
             <label>Product class
               <select value={product} onChange={(event) => setProduct(event.target.value)}>
                 {ACCESS_PRODUCTS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
@@ -83,6 +89,7 @@ export default function AccessGraphPage() {
             <div><small>VYRA launch status</small><strong>{result.launchStatus === 'blocked_pending_evidence' ? 'Blocked pending evidence' : 'Manual go / no-go required'}</strong></div>
             <p>{result.message}</p>
           </div>
+          <div className="accessCustomerNote"><strong>Customer-type coverage:</strong> {result.customerTypeNote}</div>
         </div>
 
         <div className="accessCard accessFlowCard">
