@@ -21,7 +21,10 @@ export type PaperCfdOrder = {
 export type PaperCfdPosition = {
   positionId: string; accountId: string; orderId: string; fillId: string;
   contractCode: string; contractSize: number; side: 'long' | 'short';
-  lots: number; entryPrice: number; marginRequired: number;
+  lots: number; remainingLots: number; closedLots: number;
+  lotStep: number; minLots: number; tickSize: number;
+  accountCurrencyRate: number; maxExecutionDeviationBps: number; maxQuoteAgeMs: number;
+  entryPrice: number; marginRequired: number; marginReleased: number;
   unrealizedPnl: number; status: 'open' | 'closed'; openedAt: string; paperOnly: true;
 };
 
@@ -32,6 +35,7 @@ export type PaperCfdAccountState = {
   };
   orders: PaperCfdOrder[];
   positions: PaperCfdPosition[];
+  positionCloses: Array<Record<string, unknown> & { closeId: string; positionId: string; lots: number; realisedPnl: number }>;
   reservations: Array<Record<string, unknown> & {
     orderId: string; remainingAmount: number; status: 'active' | 'released' | 'consumed';
   }>;
@@ -99,3 +103,19 @@ export function rejectPaperCfdOrder(input: {
 export function verifyPaperCfdEventChain(events?: PaperCfdEvent[]): Record<string, unknown>;
 export function verifyPaperCfdJournals(state: PaperCfdAccountState): Record<string, unknown>;
 export function reconcilePaperCfdState(state: PaperCfdAccountState): Record<string, unknown>;
+
+
+export function closePaperCfdPosition(input: {
+  state: PaperCfdAccountState; positionId: string; closeId: string;
+  eventId: string; idempotencyKey: string; lots: number;
+  pnlJournalId?: string; feeJournalId?: string;
+  execution: {
+    price: number; source: string; observedAt: string;
+    quote: { bid: number; ask: number; source: string; observedAt: string };
+    feeAmount?: number; externalExecutionId?: string; venueId?: string;
+  };
+  now?: number;
+}): Record<string, unknown> & {
+  state?: PaperCfdAccountState; position?: PaperCfdPosition;
+  positionClose?: Record<string, unknown>;
+};
