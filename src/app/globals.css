@@ -167,3 +167,60 @@
 
 .accessCustomerNote{margin-top:11px;padding:10px 12px;border-left:2px solid #9e7b47;background:#19180f;color:#b8ae94;font-size:10px;line-height:1.6}
 .accessCustomerNote strong{color:#e0ca9e}
+
+
+/* VYRA Provider Graph — accountable role-by-role supplier evidence */
+.providerGraphShell{min-height:100vh;padding:24px clamp(15px,3vw,42px) 40px;background:radial-gradient(ellipse at 16% 0%,#123226 0,transparent 33%),radial-gradient(ellipse at 90% 35%,#162332 0,transparent 40%),#080c11;color:#edf2f7}
+.providerGraphTop,.providerGraphHero,.providerGraphSection,.providerGraphInvariant,.providerGraphControls,.providerGraphFooter{width:min(1220px,100%);margin-left:auto;margin-right:auto}
+.providerGraphTop{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:5px 0 25px;border-bottom:1px solid #202b35}
+.providerGraphTop>a{display:flex;align-items:center;gap:8px;color:#9cacba;text-decoration:none;font-size:12px}
+.providerGraphTop>div{display:flex;align-items:center;gap:9px;font-family:Manrope,sans-serif;font-size:13px;font-weight:800;letter-spacing:1px}
+.providerGraphTop small{display:block;margin-top:3px;color:#8293a0;font-size:8px;letter-spacing:2px}
+.providerGraphLogo{display:grid;place-items:center;width:31px;height:31px;border-radius:9px;background:#36d399;color:#07140e;font-size:17px}
+.providerGraphHero{padding:49px 0 28px}
+.providerGraphEyebrow{display:flex;align-items:center;gap:8px;color:#70d9ab;font-size:9px;font-weight:800;letter-spacing:1.5px}
+.providerGraphHero h1{font-family:Manrope,sans-serif;font-size:clamp(38px,5vw,60px);line-height:1.02;letter-spacing:-2.5px;margin:15px 0}
+.providerGraphHero h1 span{color:#77dfb1}
+.providerGraphHero>p{max-width:770px;margin:0;color:#a6b4c0;font-size:14px;line-height:1.7}
+.providerGraphProof{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin-top:24px}
+.providerGraphProof>div{padding:14px;border:1px solid #293640;border-radius:10px;background:#101820}
+.providerGraphProof strong{display:block;color:#7fe2b3;font-family:Manrope,sans-serif;font-size:26px}
+.providerGraphProof small{display:block;margin-top:4px;color:#8d9ca8;font-size:9px;line-height:1.4}
+.providerGraphInvariant{display:flex;gap:12px;align-items:flex-start;padding:15px 17px;border:1px solid #695633;border-radius:12px;background:#201d15;color:#e9c987}
+.providerGraphInvariant>svg{flex-shrink:0;margin-top:1px}
+.providerGraphInvariant strong{display:block;font-size:12px}
+.providerGraphInvariant p{margin:6px 0 0;color:#c6b998;font-size:10px;line-height:1.6}
+.providerGraphSection{margin-top:31px}
+.providerGraphSectionHead{margin-bottom:16px}
+.providerGraphSectionHead h2{margin:8px 0 5px;font-family:Manrope,sans-serif;font-size:20px;letter-spacing:-.6px}
+.providerGraphSectionHead>p{margin:0;color:#8f9eaa;font-size:11px;line-height:1.65}
+.providerGraphCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:12px}
+.providerGraphCard{min-width:0;padding:17px;border:1px solid #293640;border-radius:13px;background:linear-gradient(145deg,#111a23,#0d141a)}
+.providerGraphCardHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.providerGraphCardHead h3{margin:0;font-family:Manrope,sans-serif;font-size:15px}
+.providerGraphCardHead small{display:block;margin-top:5px;color:#8898a5;font-size:9px}
+.providerGraphCardHead>span{flex-shrink:0;padding:5px 7px;border:1px solid #625637;border-radius:6px;color:#d9bb77;font-size:8px;font-weight:800;letter-spacing:.7px}
+.providerGraphStates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:14px}
+.providerGraphStates>div{padding:9px;border:1px solid #26333d;border-radius:8px;background:#0a1117}
+.providerGraphStates small{display:block;color:#7f8e9b;font-size:8px}
+.providerGraphStates strong{display:block;margin-top:5px;color:#d5b879;font-size:10px}
+.providerGraphLinks{display:flex;gap:14px;flex-wrap:wrap;margin-top:13px}
+.providerGraphLinks a{display:inline-flex;align-items:center;gap:5px;color:#7cdbad;text-decoration:none;font-size:9px;font-weight:700}
+.providerGraphCardFoot{display:flex;align-items:center;gap:7px;margin-top:13px;padding-top:11px;border-top:1px solid #26333d;color:#b7a67f;font-size:9px}
+.providerGraphCapabilityGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.providerGraphCapability{padding:14px;border:1px solid #293640;border-radius:11px;background:#0f171e}
+.providerGraphCapability>div:first-child{display:grid;grid-template-columns:25px 1fr;gap:8px;align-items:center}
+.providerGraphCapability>div:first-child>span{color:#71828f;font-size:9px}
+.providerGraphCapability h3{margin:0;color:#e2eaf0;font-size:11px}
+.providerGraphCapability>div:first-child>small{grid-column:2;color:#d0ae6e;font-size:8px;letter-spacing:.8px}
+.providerGraphCapability p{margin:12px 0 9px;color:#9eacb8;font-size:10px;line-height:1.55}
+.providerGraphCapability ul{display:grid;gap:6px;margin:0;padding-left:17px;color:#778894;font-size:9px;line-height:1.5}
+.providerGraphControls{margin-top:25px;padding:19px;border:1px solid #31503e;border-radius:14px;background:linear-gradient(145deg,#12231c,#10181b)}
+.providerGraphControls>div{display:flex;align-items:center;gap:9px;color:#82dfb1}
+.providerGraphControls>div strong{color:#e0eee6;font-size:13px}
+.providerGraphControls ol{display:grid;gap:8px;padding-left:23px;margin:17px 0;color:#b4c4bc;font-size:10px;line-height:1.6}
+.providerGraphControls>p{margin:0;padding-top:12px;border-top:1px solid #294838;color:#82988c;font-size:9px;line-height:1.6}
+.providerGraphFooter{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:25px;padding-top:17px;border-top:1px solid #202b35;color:#6e7e8b;font-size:9px;letter-spacing:.8px}
+.providerGraphFooter a{display:flex;align-items:center;gap:6px;color:#7cdbad;text-decoration:none}
+@media(max-width:760px){.providerGraphProof{grid-template-columns:repeat(3,minmax(0,1fr))}.providerGraphCapabilityGrid{grid-template-columns:1fr}}
+@media(max-width:540px){.providerGraphShell{padding:15px 12px 28px}.providerGraphTop{flex-direction:column;align-items:flex-start}.providerGraphHero{padding:34px 0 22px}.providerGraphHero h1{letter-spacing:-1.4px}.providerGraphProof{grid-template-columns:repeat(2,minmax(0,1fr))}.providerGraphProof>div:last-child{grid-column:1/-1}.providerGraphCards{grid-template-columns:1fr}.providerGraphFooter{flex-direction:column;align-items:flex-start}}
