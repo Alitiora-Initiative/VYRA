@@ -233,3 +233,11 @@
 .accessRouteBlocker p{margin:0;color:#c8bda8;font-size:10px;line-height:1.55;overflow-wrap:anywhere}
 .accessRouteMore{padding:9px 10px;border:1px dashed #5c513d;border-radius:8px;color:#c1ad82;font-size:10px;line-height:1.5}
 @media(max-width:620px){.accessRouteBlocker{grid-template-columns:20px minmax(0,1fr)}}
+
+
+.accessCapabilityGaps{display:grid;gap:8px;margin-top:12px;padding:11px;border:1px solid #3c4a3d;border-radius:9px;background:#101a16}
+.accessCapabilityGaps>strong{color:#a8d8bb;font-size:10px;letter-spacing:.3px}
+.accessCapabilityGaps article{padding:8px 0;border-top:1px solid #283b31}
+.accessCapabilityGaps article b{display:block;color:#e0eadf;font-size:10px}
+.accessCapabilityGaps article p{margin:4px 0;color:#b5c4b7;font-size:9px;line-height:1.5}
+.accessCapabilityGaps article small,.accessCapabilityGaps>small{color:#83998b;font-size:8px;line-height:1.5}
