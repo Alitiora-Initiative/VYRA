@@ -84,7 +84,21 @@ The rejectPaperCfdOrder function requires a reason and applies only to a still-o
 
 All three terminal events are distinct and have independent idempotency keys. There is no ambiguous "cancel requested therefore cancelled" shortcut.
 
-## 7. Audit, idempotency and reconciliation
+## 7. Position closure and realised P&L
+
+The closePaperCfdPosition function supports partial and full closure of an open paper position.
+
+- It uses the bid side to close a long and the ask side to close a short.
+- It requires a fresh quote, execution timestamp and named source.
+- It enforces contract tick size, lot step, minimum partial-close quantity and maximum adverse close-price deviation.
+- It calculates realised P&L using the stored contract size and account-currency conversion rate.
+- It releases a proportional share of used margin and keeps the remainder marked against the close quote.
+- It posts realised profit or loss using a balanced journal and records close fees in a separate balanced fee journal.
+- It creates a close slice and an append-only POSITION_PARTIALLY_CLOSED or POSITION_CLOSED event.
+
+A closed slice never deletes the original fill or position. The position retains its original opening volume and separately records cumulative closed and remaining lots. The reconciliation function checks that the remaining volume plus all close slices equals the original filled volume. Tests cover both long and short close-side pricing, partial/full closure, realised gains/losses, journal posting, idempotency, adverse price checks and tamper detection.
+
+## 8. Audit, idempotency and reconciliation
 
 The domain module includes:
 
@@ -95,7 +109,7 @@ The domain module includes:
 - reconciliation across event-chain hashes, journal lines, filled/remaining lots, positions and reservations; and
 - account snapshots derived from posted paper cash, open-position margin and remaining order reservations.
 
-The new SQL migration 20261126000700_vyra_paper_cfd_ledger.sql adds private paper account, order, position, reservation, journal, order-event, idempotency and reconciliation tables. It enables RLS, revokes client-role access, prevents edits to events/idempotency records and posted ledger entries, and defers the double-entry balance check until journal posting.
+Migration 20261126000700_vyra_paper_cfd_ledger.sql adds private paper account, order, position, reservation, journal, order-event, idempotency and reconciliation tables. Migration 20261126000800_vyra_paper_cfd_position_close.sql adds contract sizing and tick metadata to order/position records, remaining and cumulative closed lot balances, and immutable position-close slices with evidence and journal references. Both migrations enable RLS and revoke client-role access. Triggers protect event/idempotency/close records and posted ledger entries; the journal guard requires new journals to start as draft and checks debit/credit balance at posting.
 
 The JavaScript module is a deterministic paper domain layer. Production integration must use server-side database transactions, row locks (or equivalent concurrency control), the database uniqueness constraints and a trusted execution adapter. An in-memory state object is not a substitute for concurrency-safe persistence.
 
@@ -105,13 +119,15 @@ This increment does not provide:
 
 - an authenticated CFD paper-order API or traderoom submit/cancel buttons;
 - a transactionally integrated Neon repository/service layer;
-- position close/partial-close workflows;
-- account mark-to-market refresh, realised P&L, swaps/financing, dividends or corporate actions;
+- authenticated API/UI integration for paper position closing;
+- persistent transactional Neon repositories for opening, filling, cancelling and closing orders/positions;
+- database-backed concurrency, crash/restart replay and duplicate-event tests;
+- full account mark-to-market refresh, financing/swaps, dividends or corporate actions;
 - margin-call and iterative stop-out liquidation;
 - feed ingestion, FIX connectivity, LP venue execution, live order submission or real account balances; or
 - a legal opinion, broker licence, best-execution certification, vendor conformance certificate or live-trading approval.
 
-Those are the next required increments. In particular, the CFD traderoom must remain read-only until these database transactions and the close/valuation lifecycle have been implemented and tested together.
+Those are the next required increments. The in-memory domain engine is not a transactional persistence layer. The CFD traderoom must remain read-only until a database-backed service atomically persists order, fill, reservation, journal, position and close state; database concurrency/replay tests pass; and valuation/financing/close-out have been integrated.
 
 ## Sources
 
