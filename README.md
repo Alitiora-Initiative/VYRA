@@ -67,6 +67,7 @@ The SQL migration sets current paper defaults to USD 100,000 starting cash, $10,
 | `GET /api/execution/readiness` | Provider slots and live execution lock |
 | `GET /api/access-graph` | Versioned public jurisdiction/product/activity rulepack and evidence sources |
 | `GET /api/provider-graph` | Provider-role requirements and verified/unverified relationship state |
+| `POST /api/access-graph/route-check` | Composite country/customer/product/activity/provider decision; returns blockers or escalates for human review, never enables actions |
 | `GET /api/partners` | Research-only broker candidates; referrals remain disabled |
 | `GET /api/markets` | Provider quotes, timestamps, quote persistence and scoped limit matching |
 | `GET /api/instruments` | Neon-backed instrument catalogue |
