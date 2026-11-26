@@ -794,6 +794,11 @@ export function closePaperCfdPosition({
   const positionClose = {
     closeId, positionId, accountId: state.account.accountId,
     orderId: position.orderId,
+    eventId,
+    idempotencyKey,
+    requestFingerprint: fingerprint,
+    pnlJournalId: Math.abs(realisedPnl) > EPSILON ? pnlJournalId : null,
+    feeJournalId: feeAmount > 0 ? feeJournalId : null,
     lots: closeLots,
     price: round8(execution.price),
     closeReferencePrice: round8(closeReferencePrice),
