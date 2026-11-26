@@ -25,6 +25,7 @@ export async function GET() {
     .from('cfd_contracts')
     .select('id,contract_code,display_name,underlying_symbol,asset_class,contract_size,min_lots,max_lots,lot_step,tick_size,tick_value,quote_currency,margin_currency,provider_symbol,provider_name,contract_source_url')
     .eq('is_enabled', true)
+    .in('asset_class', ['forex', 'index', 'equity', 'commodity'])
     .order('asset_class', { ascending: true })
     .order('contract_code', { ascending: true });
 
