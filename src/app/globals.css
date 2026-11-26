@@ -52,3 +52,17 @@
 .neonAuthCard{width:min(100%,480px);}
 .neonAuthCard>.authBrand{margin:0 0 24px;text-decoration:none;}
 .neonAuthCard .authFoot{margin-top:20px;text-align:center;font-size:10px;color:#8291a0;}
+
+/* VYRA provider/onboarding support */
+.consentBanner{position:fixed;z-index:60;left:18px;right:18px;bottom:18px;max-width:980px;margin:0 auto;padding:15px 18px;display:flex;align-items:center;justify-content:space-between;gap:18px;background:#101a20;border:1px solid #34463f;border-radius:13px;box-shadow:0 18px 60px #000b}
+.consentBanner strong{font-size:12px;color:#f1f6f5}.consentBanner p{font-size:11px;line-height:1.6;color:#9eafa9;margin:5px 0 0}.consentBanner a{color:#7de5b6}
+.consentActions{display:flex;gap:8px;flex-shrink:0}.consentActions button{border-radius:8px;padding:9px 12px;font-size:11px;font-weight:700;cursor:pointer}
+.consentSecondary{background:transparent;border:1px solid #3b4a54;color:#c5d0d9}.consentPrimary{background:#36d399;border:1px solid #36d399;color:#06140e}
+.legalStatusShell{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 15% 10%,#143127 0,transparent 34%),var(--bg)}
+.legalStatusCard{width:min(100%,680px);padding:34px;background:var(--panel);border:1px solid var(--line);border-radius:18px}
+.legalStatusBrand{display:inline-flex;gap:8px;align-items:center;text-decoration:none;color:var(--text);font-weight:800;letter-spacing:1.4px;margin-bottom:30px}.legalStatusBrand span{color:var(--muted);font-size:9px;letter-spacing:2.5px}
+.legalStatusCard h1{font-family:Manrope;font-size:28px;margin:10px 0 16px}.legalStatusCard p{color:#aab8c4;line-height:1.7;font-size:13px}
+.legalPending{display:inline-flex;border:1px solid #6b5631;background:#2b2417;color:#efc87f;padding:8px 11px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase}
+.legalFinePrint{border-top:1px solid var(--line);padding-top:16px;margin-top:24px;font-size:11px!important;color:#7f909e!important}
+.legalBack{display:inline-flex;margin-top:15px;color:#7de5b6;text-decoration:none;font-size:12px}
+@media(max-width:650px){.consentBanner{left:10px;right:10px;bottom:10px;align-items:stretch;flex-direction:column}.consentActions{justify-content:flex-end}.legalStatusCard{padding:24px 19px}}
