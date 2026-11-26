@@ -58,7 +58,7 @@ export default function ProviderGraphPage() {
       </section>
 
       <section className="providerGraphSection">
-        <div className="providerGraphSectionHead"><div className="providerGraphEyebrow">02 / CAPABILITY MATRIX</div><h2>Eleven roles. Eleven evidence trails.</h2><p>One provider may handle several roles, or none. VYRA records the accountable legal entity and evidence for each function separately.</p></div>
+        <div className="providerGraphSectionHead"><div className="providerGraphEyebrow">02 / CAPABILITY MATRIX</div><h2>Eleven roles. Eleven evidence trails.</h2><p>The route evaluator now checks the roles actually required by the selected activity. Each verified role must have reviewer-attributed, in-date evidence; an API connection alone cannot satisfy a capability.</p></div>
         <div className="providerGraphCapabilityGrid">
           {graph.capabilityRequirements.map((capability,index) => (
             <article className="providerGraphCapability" key={capability.id}>
@@ -75,6 +75,7 @@ export default function ProviderGraphPage() {
         <ol>
           <li>Verify the legal entity and current licence directly against the regulator register.</li>
           <li>Record country, customer category and product permissions for VYRA&apos;s exact activity.</li>
+          <li>Attach a source reference, verification date, accountable reviewer and re-verification deadline to every required capability.</li>
           <li>Obtain signed agreements and responsibility allocation for accounts, KYC, assets, execution, complaints and data.</li>
           <li>Connect a sandbox using scoped secrets, signed events, idempotency and failure handling.</li>
           <li>Complete conformance, security, reconciliation and legal/compliance review.</li>
