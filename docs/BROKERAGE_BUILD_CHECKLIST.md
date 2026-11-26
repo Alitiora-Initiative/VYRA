@@ -190,3 +190,12 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [ ] Keep crypto referrals, promotion, wallet custody, exchange routing and live order features disabled until permissions and partner approvals are documented.
 - [ ] Do not plan an owned Kenyan VASP broker/exchange licence under the current zero-capital constraint: the published minimum paid-up capital is KSh 10m for a virtual-asset broker and KSh 100m for an exchange, plus required liquid capital and other costs.
 - [ ] If a licensed partner model is viable, document marketing responsibility, outsourcing approval, customer asset ownership, KYC/AML, custody, reconciliation, data-sharing, fees and exit arrangements.
+
+
+## P0 — Hosting decision and safe demo environment
+
+- [x] Research and commit a current zero-cost hosting comparison for Render, Netlify, Cloudflare Workers, Railway, Vercel and Supabase.
+- [ ] Select the Render workspace (My Workspace or JOJO) before creating the current demo blueprint.
+- [ ] Keep demo traffic paper-only and synthetic; do not host real customer data or live broker credentials on free services.
+- [ ] Assess Netlify as an alternate Next.js preview host if Render cannot be used.
+- [ ] Assess Cloudflare vinext in a non-destructive branch only; require auth, middleware, API and build compatibility tests before adopting it.
