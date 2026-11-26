@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getSupabaseServer } from '@/lib/supabase/server';
+import { getNeonServer } from '@/lib/neon/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const supabase = await getSupabaseServer();
+  const supabase = await getNeonServer();
   if (!supabase) {
     return NextResponse.json({ authenticated: false, configured: false }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
   }
