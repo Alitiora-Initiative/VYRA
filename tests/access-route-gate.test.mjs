@@ -107,6 +107,20 @@ test('a fully evidenced mapped route is escalated to humans but never auto-appro
   assert.equal(result.actions.custody, false);
 });
 
+test('caller-supplied approval gates are ignored by the composite evaluator', () => {
+  const result = evaluateMarketAccessRoute({
+    country: 'KE',
+    customerType: 'retail',
+    product: 'securities',
+    activity: 'market_information',
+    providerId: 'interactive-brokers',
+    gates: COMPLETE_GATES,
+  });
+  assert.equal(result.status, 'blocked_pending_evidence');
+  assert.equal(result.access.missingGates.length, 12);
+  assert.ok(result.blockers.some((item) => item.includes('Activity-specific written legal classification')));
+});
+
 test('unmapped activities stay blocked even if all baseline evidence flags are complete', () => {
   const input = {
     country: 'KE',
