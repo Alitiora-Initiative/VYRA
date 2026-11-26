@@ -224,3 +224,12 @@
 .providerGraphFooter a{display:flex;align-items:center;gap:6px;color:#7cdbad;text-decoration:none}
 @media(max-width:760px){.providerGraphProof{grid-template-columns:repeat(3,minmax(0,1fr))}.providerGraphCapabilityGrid{grid-template-columns:1fr}}
 @media(max-width:540px){.providerGraphShell{padding:15px 12px 28px}.providerGraphTop{flex-direction:column;align-items:flex-start}.providerGraphHero{padding:34px 0 22px}.providerGraphHero h1{letter-spacing:-1.4px}.providerGraphProof{grid-template-columns:repeat(2,minmax(0,1fr))}.providerGraphProof>div:last-child{grid-column:1/-1}.providerGraphCards{grid-template-columns:1fr}.providerGraphFooter{flex-direction:column;align-items:flex-start}}
+
+
+/* Composite AccessGraph + Provider Graph decision detail */
+.accessRouteBlockers{display:grid;gap:7px;margin-top:12px}
+.accessRouteBlocker{display:grid;grid-template-columns:24px minmax(0,1fr);gap:9px;align-items:start;padding:9px 10px;border:1px solid #483c2d;border-radius:8px;background:#171610}
+.accessRouteBlocker>span{color:#d4ad69;font-size:9px;font-variant-numeric:tabular-nums}
+.accessRouteBlocker p{margin:0;color:#c8bda8;font-size:10px;line-height:1.55;overflow-wrap:anywhere}
+.accessRouteMore{padding:9px 10px;border:1px dashed #5c513d;border-radius:8px;color:#c1ad82;font-size:10px;line-height:1.5}
+@media(max-width:620px){.accessRouteBlocker{grid-template-columns:20px minmax(0,1fr)}}
