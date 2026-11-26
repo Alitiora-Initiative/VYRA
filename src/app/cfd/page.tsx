@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { evaluateCfdQuote } from '@/lib/cfd/market.mjs';
 
-type AssetClass = 'forex' | 'index' | 'equity' | 'commodity' | 'crypto';
+type AssetClass = 'forex' | 'index' | 'equity' | 'commodity';
 type CfdQuote = {
   bid: number | string;
   ask: number | string;
@@ -49,7 +49,6 @@ const filters = [
   { value: 'index', label: 'Indices' },
   { value: 'commodity', label: 'Commodities' },
   { value: 'equity', label: 'Shares' },
-  { value: 'crypto', label: 'Crypto CFDs' },
 ] as const;
 
 function price(value: number | string, currency: string) {
@@ -67,7 +66,7 @@ function time(value: string) {
 }
 
 function assetLabel(value: AssetClass) {
-  return ({ forex: 'Forex', index: 'Index CFD', equity: 'Share CFD', commodity: 'Commodity', crypto: 'Crypto CFD' })[value] ?? value;
+  return ({ forex: 'Forex', index: 'Index CFD', equity: 'Share CFD', commodity: 'Commodity' })[value] ?? value;
 }
 
 export default function CfdTraderoomPage() {
@@ -78,6 +77,7 @@ export default function CfdTraderoomPage() {
   const [filter, setFilter] = useState<(typeof filters)[number]['value']>('all');
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [refreshVersion, setRefreshVersion] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -113,7 +113,7 @@ export default function CfdTraderoomPage() {
       active = false;
       window.clearInterval(timer);
     };
-  }, []);
+  }, [refreshVersion]);
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -174,7 +174,7 @@ export default function CfdTraderoomPage() {
         <div className="cfdMarketPanel">
           <div className="cfdPanelHead">
             <div><h2>Contract market watch</h2><p>Only published instruments appear here.</p></div>
-            <button className="cfdRefresh" type="button" onClick={() => window.location.reload()} disabled={refreshing}><RefreshCw size={15}/> Refresh</button>
+            <button className="cfdRefresh" type="button" onClick={() => setRefreshVersion((value) => value + 1)} disabled={refreshing}><RefreshCw size={15}/> Refresh</button>
           </div>
 
           <div className="cfdFilters">
@@ -199,7 +199,7 @@ export default function CfdTraderoomPage() {
               const quote = contract.quote;
               return <article className="cfdContract" key={contract.id}>
                 <div className="cfdInstrument">
-                  <span className="cfdAssetIcon">{contract.asset_class === 'forex' ? 'FX' : contract.asset_class === 'index' ? 'IDX' : contract.asset_class === 'commodity' ? 'COM' : contract.asset_class === 'equity' ? 'EQ' : 'CRY'}</span>
+                  <span className="cfdAssetIcon">{contract.asset_class === 'forex' ? 'FX' : contract.asset_class === 'index' ? 'IDX' : contract.asset_class === 'commodity' ? 'COM' : contract.asset_class === 'equity' ? 'EQ' : 'COM'}</span>
                   <div><strong>{contract.contract_code}</strong><small>{contract.display_name} · {assetLabel(contract.asset_class)}</small></div>
                 </div>
                 <div className="cfdQuoteCell"><small>Bid</small><strong>{quoteState.available && quote ? price(quote.bid, contract.quote_currency) : 'Unavailable'}</strong></div>
