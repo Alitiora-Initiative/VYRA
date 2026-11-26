@@ -691,3 +691,8 @@ The sequence should be:
 7. Use a data-only, education-only product directory until the relevant institution and regulator approve the exact activity.
 
 These providers should be added to the research register and partner scorecard as a distinct **fund distribution / alternatives marketplace** category. They must not be conflated with executing brokers, prime brokers, fund managers, custodians or fund administrators. A platform that introduces investors to a fund is not necessarily the legal distributor; a prime broker does not necessarily manage or guarantee the fund; and a fund manager does not necessarily custody all fund assets.
+
+
+## 22. Hosting decision update
+
+The current zero-capital hosting comparison is recorded in [HOSTING_AND_INFRASTRUCTURE_OPTIONS.md](HOSTING_AND_INFRASTRUCTURE_OPTIONS.md). Render Free is the easiest current paper-demo target after workspace selection, but it sleeps after 15 minutes idle and its free Postgres expires after 30 days; Render explicitly says free services are not for production. Netlify Free supports current Next.js features through OpenNext and is an alternative preview host. Cloudflare recommends vinext for new Next.js projects on Workers and is worth a separate compatibility branch; it is not a direct deployment switch. Railway Free has only $1/month resource credit and sleeps. Vercel Hobby is for personal/non-commercial use and is not the right tier for this commercial concept. No free host is approved for live brokerage operations or real client records.
