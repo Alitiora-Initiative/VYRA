@@ -144,3 +144,45 @@ test('straight-through route cannot retain risk and requires external routing ap
     aggregateNetExposure: 250, now: NOW,
   }).code, 'EXTERNAL_ROUTING_NOT_APPROVED');
 });
+
+
+test('best-execution scorer rejects missing evidence, future review and expired policy', () => {
+  const input = {
+    side: 'buy', quantity: 100, benchmarkPrice: 1.1,
+    benchmarkSource: 'composite', benchmarkObservedAt: new Date(NOW).toISOString(),
+    now: NOW, candidates: [candidate()],
+  };
+  assert.equal(rankPaperExecutionVenues({
+    ...input, policy: { ...policy, evidenceReference: '' },
+  }).code, 'BEST_EXECUTION_POLICY_MISSING');
+  assert.equal(rankPaperExecutionVenues({
+    ...input, policy: { ...policy, reviewedAt: new Date(NOW + 1000).toISOString() },
+  }).code, 'BEST_EXECUTION_POLICY_EVIDENCE_INVALID');
+  assert.equal(rankPaperExecutionVenues({
+    ...input, policy: { ...policy, effectiveUntil: new Date(NOW - 1000).toISOString() },
+  }).code, 'BEST_EXECUTION_POLICY_OUT_OF_DATE');
+});
+
+test('hedge route requires policy evidence and best-execution/conflicts controls', () => {
+  const policy = {
+    status: 'approved', version: 'hedge-control-v1', mode: 'systematic_net_residual',
+    jurisdictionCode: 'GB', clientType: 'professional',
+    evidenceUrl: 'https://example.test/hedge', evidenceReference: 'Hedge review reference',
+    reviewedAt: new Date(NOW - 1000).toISOString(),
+    effectiveFrom: new Date(NOW - 1000).toISOString(),
+    triggerExposure: 1000, hedgeRatio: 0.5, maxRetainedExposure: 900,
+    permissions: { dealingPrincipal: true, externalHedging: true, bestExecution: true, conflictsControls: true },
+  };
+  assert.equal(resolvePaperHedgePlan({
+    policy: { ...policy, evidenceUrl: 'http://not-secure.test' },
+    aggregateNetExposure: 100, now: NOW,
+  }).code, 'HEDGE_POLICY_MISSING');
+  assert.equal(resolvePaperHedgePlan({
+    policy: { ...policy, permissions: { dealingPrincipal: true, externalHedging: true, bestExecution: false, conflictsControls: true } },
+    aggregateNetExposure: 100, now: NOW,
+  }).code, 'SYSTEMATIC_HEDGE_PERMISSION_MISSING');
+  assert.equal(resolvePaperHedgePlan({
+    policy: { ...policy, reviewedAt: new Date(NOW + 1000).toISOString() },
+    aggregateNetExposure: 100, now: NOW,
+  }).code, 'HEDGE_POLICY_EVIDENCE_INVALID');
+});
