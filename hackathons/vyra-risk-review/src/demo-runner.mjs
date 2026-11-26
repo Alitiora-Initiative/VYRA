@@ -100,7 +100,6 @@ export class VYRAOfflineInferenceRunner {
     return {
       mode: 'offline-scripted-demo',
       modelProviderCalls: 0,
-      mode: 'offline-scripted-demo',
       completedCalls: this.calls,
       maxConcurrentCalls: this.maxInFlight,
       timeline: [...this.timeline],
