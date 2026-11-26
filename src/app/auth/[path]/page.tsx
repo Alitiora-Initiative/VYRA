@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { AuthView } from '@neondatabase/auth-ui';
 import { authViewPaths } from '@neondatabase/auth-ui/server';
 
@@ -17,10 +18,10 @@ export default async function AuthPage({
   return (
     <main className="authShell neonAuthShell">
       <div className="neonAuthCard">
-        <a className="authBrand" href="/">
+        <Link className="authBrand" href="/">
           <span className="authMark">V</span>
           <span>VYRA<small>MARKETS</small></span>
-        </a>
+        </Link>
         <AuthView path={path} />
         <p className="authFoot">VYRA Markets · Paper trading only · Live execution is disabled.</p>
       </div>
