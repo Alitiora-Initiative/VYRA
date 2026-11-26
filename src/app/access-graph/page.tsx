@@ -124,7 +124,7 @@ export default function AccessGraphPage() {
               {routeDecision.provider.missingCapabilities.length > 0 && (
                 <div className="accessCapabilityGaps">
                   <strong>Activity-specific provider evidence gaps</strong>
-                  {routeDecision.provider.missingCapabilities.slice(0, 3).map((gap) => (
+                  {routeDecision.provider.missingCapabilities.slice(0, 3).map((gap: { id: string; label: string; reason: string; requiredEvidence: string[] }) => (
                     <article key={gap.id}>
                       <b>{gap.label}</b>
                       <p>{gap.reason}</p>
