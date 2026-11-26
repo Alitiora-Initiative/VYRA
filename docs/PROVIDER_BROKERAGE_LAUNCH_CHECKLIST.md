@@ -79,11 +79,24 @@ Do not select a provider because its sales page says “white label” or “glo
 | Currency | USD is the current illustrative paper-account currency only | Provider settlement currencies, FX conversion, disclosures, fees |
 | Minimum deposit | None; no deposits accepted | Partner funding policy and legal approval |
 | Minimum investment | None configured for a real product | Product-specific minimums and investor eligibility from provider |
-| Instruments | Development catalogue and provider feeds only | Final permitted product list, venue/exchange rights, restrictions |
+| Instruments | 11 seeded catalogue instruments across crypto, equities, FX and commodities; provider feeds are development-only. ETFs and options are not currently in the VYRA catalogue or approved scope. | Confirm the exact partner-supported instruments, identifiers, trading venues, country/product restrictions and commercial market-data rights |
 | Client apps | Responsive web only; no native desktop, Android or iOS apps | Partner SDK/white-label requirements and app-store evidence |
 | Visual style | Existing dark `#080c11`, green `#36d399`, VYRA mark | Final brand guidelines, logo rights, trademark clearance |
 
 A free host subdomain is a staging address, not a permanent brokerage domain. Do not collect personal or financial data on an unverified domain.
+
+### Product and marketing claims from the reference checklist
+
+The reference checklist advertises examples such as 300+ instruments, up to nine charts, seven timeframes, 100+ indicators, tutorials, 24/7 support, fast deposits and withdrawals, and cash-out-anytime. These are provider marketing claims, not current VYRA capabilities. VYRA must not copy them into its website, app-store listing or partner deck without a real provider contract, implemented capability, measured service level and evidence.
+
+Current VYRA has a responsive web dashboard and a small development catalogue. It does not provide nine simultaneous charts, seven certified chart timeframes, a 100-indicator library, a tutorial/education centre, 24/7 staffed support, deposits, withdrawals or payouts. No minimum deposit or investment is configured because no real-money account exists. The only balance is an illustrative simulated USD paper balance.
+
+Treat the following as separate implementation gates:
+- expand the product catalogue only after provider coverage, exchange identifiers and display/trading rights are verified;
+- add chart packages and timeframes only after checking chart-library licences and the provider's market-data entitlements;
+- add tutorials and customer support only with named owners, reviewed content and staffed service commitments;
+- add payment and withdrawal flows only through the authorised partner's approved funding and safeguarding arrangements;
+- never describe a paper fill or simulated balance as a real investment or customer account.
 
 ## Step 3 — Legal PDFs and email addresses
 
