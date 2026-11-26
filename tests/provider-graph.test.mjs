@@ -1,6 +1,41 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { evaluateProviderRoute, getProviderGraphSnapshot } from '../src/lib/provider-graph/capabilities.mjs';
+import {
+  evaluateProviderRoute,
+  getProviderGraphSnapshot,
+  PROVIDER_ACTIVITY_REQUIREMENTS,
+} from '../src/lib/provider-graph/capabilities.mjs';
+
+function addCurrentEvidence(record, capabilityId) {
+  const today = new Date().toISOString().slice(0, 10);
+  record.status = 'verified';
+  record.verifiedForVyra = true;
+  record.evidence = [{
+    evidenceId: 'test-' + capabilityId,
+    title: 'Synthetic test evidence for ' + capabilityId,
+    sourceUrl: 'https://evidence.example.test/' + capabilityId,
+    verifiedAt: today,
+    verifiedBy: 'automated-test-reviewer',
+    reverifyBy: '2099-12-31',
+  }];
+}
+
+function makeVerifiedGraph(input = {}) {
+  const graph = getProviderGraphSnapshot();
+  const provider = graph.providers.find((item) => item.id === (input.providerId ?? 'interactive-brokers'));
+  provider.legalEntityVerified = true;
+  provider.licenceEvidenceVerified = true;
+  provider.signedAgreement = true;
+  provider.approvedCountries = [input.country ?? 'KE'];
+  provider.approvedCustomerTypes = [input.customerType ?? 'retail'];
+  provider.approvedProducts = [input.product ?? 'securities'];
+  provider.connectedSandbox = true;
+  provider.productionApproved = true;
+  for (const capabilityId of PROVIDER_ACTIVITY_REQUIREMENTS[input.activity ?? 'market_information']) {
+    addCurrentEvidence(provider.capabilityStatus[capabilityId], capabilityId);
+  }
+  return graph;
+}
 
 test('keeps every researched provider disconnected and unapproved', () => {
   const graph = getProviderGraphSnapshot();
@@ -22,16 +57,19 @@ test('keeps every researched provider disconnected and unapproved', () => {
   }
 });
 
-test('requires legal entity, licence, agreement, country, client type, product and sandbox evidence', () => {
+test('requires top-level provider gates and activity-specific capability evidence', () => {
   const result = evaluateProviderRoute({
     providerId: 'interactive-brokers',
     country: 'KE',
     customerType: 'retail',
     product: 'securities',
+    activity: 'execute_orders',
   });
   assert.equal(result.ready, false);
   assert.equal(result.status, 'blocked_pending_provider_evidence');
-  assert.equal(result.blockers.length, 8);
+  assert.equal(result.blockers.length, 17);
+  assert.equal(result.requiredCapabilities.length, 9);
+  assert.equal(result.missingCapabilities.length, 9);
   assert.equal(result.liveExecutionEnabled, false);
   assert.equal(result.customerMoneyEnabled, false);
   assert.equal(result.referralEnabled, false);
@@ -43,8 +81,69 @@ test('unknown provider identifiers fail closed', () => {
     country: 'KE',
     customerType: 'retail',
     product: 'crypto',
+    activity: 'execute_orders',
   });
   assert.equal(result.providerFound, false);
   assert.equal(result.ready, false);
   assert.equal(result.status, 'provider_not_in_registry');
+});
+
+test('unknown activities require every provider capability rather than inheriting a smaller set', () => {
+  const result = evaluateProviderRoute({
+    providerId: 'interactive-brokers',
+    country: 'KE',
+    customerType: 'retail',
+    product: 'securities',
+    activity: 'unmapped_activity',
+  });
+  assert.equal(result.requiredCapabilities.length, 11);
+  assert.equal(result.missingCapabilities.length, 11);
+  assert.equal(result.ready, false);
+});
+
+test('a verified flag without dated, reviewer-attributed evidence is still blocked', () => {
+  const graph = getProviderGraphSnapshot();
+  const provider = graph.providers[0];
+  provider.legalEntityVerified = true;
+  provider.licenceEvidenceVerified = true;
+  provider.signedAgreement = true;
+  provider.approvedCountries = ['KE'];
+  provider.approvedCustomerTypes = ['retail'];
+  provider.approvedProducts = ['securities'];
+  provider.connectedSandbox = true;
+  provider.productionApproved = true;
+  provider.capabilityStatus.market_data.status = 'verified';
+  provider.capabilityStatus.market_data.verifiedForVyra = true;
+  provider.capabilityStatus.market_data.evidence = [{
+    evidenceId: 'missing-review-fields',
+    title: 'Incomplete evidence',
+    sourceUrl: 'https://evidence.example.test/incomplete',
+  }];
+  const result = evaluateProviderRoute({
+    providerId: provider.id,
+    country: 'KE',
+    customerType: 'retail',
+    product: 'securities',
+    activity: 'market_information',
+  }, graph);
+  assert.equal(result.ready, false);
+  assert.equal(result.missingCapabilities.length, 2);
+  assert.ok(result.missingCapabilities.some((item) => item.reason.includes('verification date')));
+});
+
+test('an unexpired, reviewed capability record can pass its provider-level checks but never enables an action', () => {
+  const input = {
+    providerId: 'interactive-brokers',
+    country: 'KE',
+    customerType: 'retail',
+    product: 'securities',
+    activity: 'market_information',
+  };
+  const graph = makeVerifiedGraph(input);
+  const result = evaluateProviderRoute(input, graph);
+  assert.equal(result.ready, true);
+  assert.equal(result.status, 'manual_go_no_go_required');
+  assert.equal(result.liveExecutionEnabled, false);
+  assert.equal(result.customerMoneyEnabled, false);
+  assert.equal(result.referralEnabled, false);
 });
