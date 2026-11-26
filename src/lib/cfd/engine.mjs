@@ -345,7 +345,8 @@ export function resolvePaperBrokerageOperatingModel({ policy, netExposureAfterTr
   if (model === 'hybrid') {
     if (permissions.principal !== true || permissions.dealing !== true ||
         permissions.agencyRouted !== true || permissions.externalVenueApproved !== true ||
-        permissions.bestExecution !== true || permissions.conflictsControls !== true) {
+        permissions.externalHedging !== true || permissions.bestExecution !== true ||
+        permissions.conflictsControls !== true) {
       return fail('HYBRID_PERMISSIONS_MISSING', 'Hybrid risk transfer requires approved principal, dealing, external-hedging, best-execution and conflicts controls.');
     }
     if (!Number.isFinite(netExposureAfterTrade)) {
