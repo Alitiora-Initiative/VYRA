@@ -1,7 +1,7 @@
 # VYRA Markets — Hosting and Infrastructure Options
 
 **Research cut-off:** 26 November 2026  
-**Constraint:** zero capital; private GitHub repository; Next.js application; Supabase Auth/Postgres code already in use.  
+**Constraint:** zero capital; private GitHub repository; Next.js 16 application; dedicated Neon Postgres and Neon Managed Better Auth already provisioned.  
 **Purpose:** choose a free development/demo host without pretending a free plan is suitable for regulated financial production.
 
 ## 1. Recommendation
@@ -13,7 +13,7 @@ Keep the committed Render blueprint as the first low-effort demo option, provide
 Netlify Free is a viable comparison option because Netlify documents support for modern Next.js features through its OpenNext adapter, including App Router, SSR, route handlers and middleware. Its public pricing page lists a $0 Free plan, but current account/usage/build-credit limits should be checked before deploy. It may be useful if Render workspace access is blocked; it is not a production brokerage infrastructure decision.
 
 ### Longer-term zero-cost experimentation
-Cloudflare Workers is an attractive future experiment. Cloudflare's documentation recommends **vinext** as its current Next.js-on-Workers route for new projects and documents a non-destructive migration workflow. The Workers Free plan includes 100,000 requests/day and 10ms CPU time per invocation. The existing VYRA app must pass compatibility checks before migration. This is a separate migration branch, not a drop-in one-click deployment; confirm the Supabase SSR/Auth cookie flows, middleware behaviour, Node package compatibility, image handling, scheduled work and secrets binding.
+Cloudflare Workers is an attractive future experiment. Cloudflare's documentation recommends **vinext** as its current Next.js-on-Workers route for new projects and documents a non-destructive migration workflow. The Workers Free plan includes 100,000 requests/day and 10ms CPU time per invocation. The existing VYRA app must pass compatibility checks before migration. This is a separate migration branch, not a drop-in one-click deployment; confirm Neon Managed Better Auth session/cookie flows, middleware/proxy behaviour, Node package compatibility, image handling, scheduled work and secrets binding.
 
 ### Do not choose as current production path
 - Vercel Hobby is for personal, non-commercial use according to Vercel's pricing page; VYRA is intended as a commercial financial platform. The private org repository link was also blocked by the current Vercel Hobby team. Do not pay for Pro or make the repository public just to deploy.
@@ -29,7 +29,8 @@ Cloudflare Workers is an attractive future experiment. Cloudflare's documentatio
 | Cloudflare Workers | Free Workers plan; Next.js supported via vinext (recommended in current docs) | Requires a compatibility/migration test; Free CPU 10ms/invocation and 100k requests/day; Workers runtime differs from Node | Strong future experiment for low-cost edge hosting, but not an untested production migration |
 | Railway | $0 Free plan, $1 resource credit/month; up to 3 services; serverless sleep | Sleeps after 5–10 min; no custom domains/cron/region choice on Free; when monthly credit is used, services stop | Small sandbox only; not primary broker demo |
 | Vercel | Hobby $0; Next.js native platform; automatic Git deployment | Hobby is for personal/non-commercial projects; current private organisation integration requires a paid plan in this account | Do not use for this commercial project under current zero-capital constraint |
-| Supabase | Existing VYRA code targets Supabase Auth/Postgres | Current organisation has reached the two active Free project limit; 9N8 and Space Ledger must remain untouched | Find a separate authorised free-capacity organisation or pause database provisioning; do not repurpose another project |
+| Neon | Selected VYRA Postgres/Auth/Data API project in Frankfurt | Free tier has constrained compute/restore and is not production-grade | **Current application database** for synthetic development/paper trading only |
+| Supabase | Historical migration reference and alternative platform | The available organisation's two Free projects are already used by 9N8 and Space Ledger | Not used by VYRA; keep both unrelated projects untouched |
 
 ## 3. Detailed evidence and source links
 
