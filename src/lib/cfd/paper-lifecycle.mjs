@@ -228,9 +228,9 @@ function rejectNewOrder(state, command, request, eventId, code, message, now, ri
     instrumentCode: request.contractCode,
     side: request.side,
     orderType: request.orderType,
-    lots: request.lots,
+    lots: Number.isFinite(request.lots) && request.lots > 0 ? round8(request.lots) : 0,
     filledLots: 0,
-    remainingLots: request.lots,
+    remainingLots: Number.isFinite(request.lots) && request.lots > 0 ? round8(request.lots) : 0,
     status: 'rejected',
     reservedAmountRemaining: 0,
     rejectionCode: code,
@@ -246,7 +246,21 @@ function rejectNewOrder(state, command, request, eventId, code, message, now, ri
     now,
   });
   if (!eventResult.ok) return eventResult;
-  let next = { ...state, orders: [...state.orders, order] };
+  let next = {
+    ...state,
+    orders: [...state.orders, order],
+    reservations: [...state.reservations, {
+      reservationId: 'RES:' + order.orderId,
+      accountId: state.account.accountId,
+      orderId: order.orderId,
+      currency: state.account.currency,
+      initialAmount: 0,
+      remainingAmount: 0,
+      status: 'released',
+      createdAt: new Date(now).toISOString(),
+      updatedAt: new Date(now).toISOString(),
+    }],
+  };
   next = addEvent(next, eventResult.event);
   return finishCommand(next, command, { ok: false, code, message, order, event: eventResult.event });
 }
@@ -553,7 +567,7 @@ export function fillPaperCfdOrder({ state, orderId, fillId, eventId, idempotency
   });
 }
 
-function closeRemainder({ state, orderId, eventId, idempotencyKey, operation, terminalStatus, reason, now }) {
+function closeRemainder({ state, orderId, eventId, idempotencyKey, operation, terminalStatus, reason, now = Date.now() }) {
   if (!state || state.account?.mode !== 'paper') return fail('PAPER_ACCOUNT_REQUIRED', 'A paper CFD account state is required.');
   if (!validId(orderId) || !validId(eventId)) return fail('ORDER_EVENT_IDENTIFIERS_REQUIRED', 'Order ID and event ID are required.');
   const fingerprint = digest({ orderId, eventId, terminalStatus, reason: reason ?? null });
@@ -608,11 +622,12 @@ export function cancelPaperCfdOrder(input) {
 
 export function expirePaperCfdOrder(input) {
   const state = input?.state;
+  const now = Number.isFinite(input?.now) ? input.now : Date.now();
   const order = state?.orders?.find((item) => item.orderId === input.orderId);
   if (!order) return fail('ORDER_NOT_FOUND', 'Paper order does not exist.');
   if (!order.expiresAt) return fail('ORDER_EXPIRY_NOT_SET', 'This order has no configured expiry timestamp.');
-  if (input.now < Date.parse(order.expiresAt)) return fail('ORDER_NOT_EXPIRED', 'Order cannot expire before its configured expiry time.');
-  return closeRemainder({ ...input, operation: 'expire_order', terminalStatus: 'expired' });
+  if (now < Date.parse(order.expiresAt)) return fail('ORDER_NOT_EXPIRED', 'Order cannot expire before its configured expiry time.');
+  return closeRemainder({ ...input, now, operation: 'expire_order', terminalStatus: 'expired' });
 }
 
 export function rejectPaperCfdOrder(input) {
