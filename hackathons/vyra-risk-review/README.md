@@ -21,17 +21,23 @@ The first two agents run concurrently through Mozaik. The auditor runs after bot
 
 ## Run locally
 
-Requires Node.js 20+ and one model provider API key.
+Requires Node.js 20+. The default is an offline scripted Mozaik run and requires no API key.
 
 ~~~bash
-cp .env.example .env
-# Add one of OPENAI_API_KEY, ANTHROPIC_API_KEY or GEMINI_API_KEY to .env
 npm install
 npm test
 npm start
 ~~~
 
-The default model is gpt-5.5; set MOZAIK_MODEL to a model supported by the installed Mozaik version if needed. API keys remain local and must never be committed.
+The offline run starts two analyst loops concurrently, waits for both answers, then runs the independent auditor. It uses scripted fixtures, does not call an LLM provider, and is clearly recorded as `offline-scripted-demo`.
+
+For live model-backed analysis, copy `.env.example` to `.env`, add one of `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` or `GEMINI_API_KEY`, then run:
+
+~~~bash
+npm run start:live
+~~~
+
+The default model is `gpt-5.5`; set `MOZAIK_MODEL` to another model supported by the installed Mozaik version if needed. Live inference can incur provider charges. API keys remain local and must never be committed.
 
 ## Agent architecture
 
@@ -49,7 +55,7 @@ flowchart TD
  H2 --> L[JSON audit artefact]
 ~~~
 
-Mozaik uses defineRuntime, RuntimeState, createAgent, createHuman, situation handlers and fire-and-forget runLoop calls. The first two analyst loops are launched from the same message.sent event and execute concurrently. The auditor reacts to analysis.ready after both analyst reports are committed.
+Mozaik uses defineRuntime, RuntimeState, createAgent, createHuman, situation handlers and fire-and-forget runLoop calls. The first two analyst loops are launched from the same message.sent event and execute concurrently. The auditor reacts to analysis.ready after both analyst reports are committed. The integration test verifies that at least two inference calls overlap and that the auditor starts only after both analyst completions.
 
 ## Scoring alignment
 
@@ -59,7 +65,7 @@ The current Black Friday AI Hackathon finance track publishes four scoring dimen
 - Runnable implementation (25)
 - Source/data care (15)
 
-This project is designed around those requirements. The actual inference run requires an operator-provided model key; no model call is made in CI.
+This project is designed around those requirements. CI runs the Mozaik runtime integration test using a custom offline inference runner; this proves the event and concurrency flow without paid model calls. The live model path is opt-in.
 
 ## Source register
 
