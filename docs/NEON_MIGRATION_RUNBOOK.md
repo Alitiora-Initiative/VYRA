@@ -1,6 +1,6 @@
 # VYRA — Neon Postgres + Managed Better Auth Migration Runbook
 
-**Status (26 Nov 2026):** Neon Free project and Managed Auth/Data API are provisioned. The PostgreSQL schema has been applied and inspected on an isolated test branch. Application migration is in GitHub branch `feat/neon-backend`; it is not yet merged, CI-green or deployed.  
+**Status (26 Nov 2026):** Neon Free project and Managed Auth/Data API are provisioned. The VYRA PostgreSQL schema has been applied and inspected on the dedicated project's default database branch (`main`): 14 VYRA tables, 20 foreign keys, 19 RLS policies and ledger safeguards are present. Neon Auth has 0 users. The app migration is in draft PR #18 (`feat/neon-backend`); it is not yet CI-green, merged or deployed.  
 **Chosen provider:** Neon Postgres Free for development and paper trading.  
 **Source:** existing Supabase-oriented VYRA application and SQL migration.
 
@@ -108,7 +108,7 @@ A cookie-presence-only check may be used for optimistic UI redirection; it is no
 
 ## 8. Development branch migration and test plan
 
-Apply the Neon migration to a development branch first. Use synthetic accounts only.
+The current VYRA schema is already on the dedicated Neon project's default `main` branch, before any user registration or live use. The previous branch-ID attempt did not remain visible in the branch listing, so do not assume a separate test branch exists. Before the next schema change, create and verify a disposable Neon branch in the control plane. Use synthetic accounts only.
 
 ### Authentication tests
 - Create a new test user.
@@ -156,7 +156,7 @@ Use two test users, A and B, and an anonymous client:
 
 ## 9. Cutover and rollback
 
-There is no production VYRA Supabase database to cut over. Keep current Supabase files until the Neon implementation passes tests. Migrate the code and environment as one reviewed release. If Neon provisioning or integration fails, revert the application commit; do not use another product's Supabase database as a fallback.
+There is no production VYRA Supabase database or customer data to cut over. The Neon schema is provisioned but the app migration is still under PR review. Deploy the code and matching environment as one reviewed release. If integration fails, revert the application commit; do not use another product's Supabase database as a fallback.
 
 If production VYRA customers or real partner records are ever added, provider changes require a proper data export, schema and ID mapping, downtime/dual-run plan, reconciliation and tested restore. Never switch a live financial book casually.
 
@@ -165,9 +165,10 @@ If production VYRA customers or real partner records are ever added, provider ch
 - [x] Connect the Neon service and provision the isolated Free project `vyra-markets`.
 - [x] Enable Managed Better Auth and the Data API.
 - [x] Inspect actual Neon Auth schema, role configuration and helper functions.
-- [x] Apply and inspect the SQL schema on the isolated Neon development branch.
+- [x] Apply and inspect the SQL schema on the dedicated Neon project's default `main` database branch.
+- [ ] Verify a disposable Neon branch exists before future schema changes.
 - [ ] Store branch-matched Auth URL, Data API URL, pooled PostgreSQL URL and app cookie secret in the deployment secret store.
 - [ ] Complete the application migration, CI and end-to-end RLS/auth/ledger tests.
 - [ ] Apply the approved schema to the default paper branch only after the migration PR passes.
 
-**Current truth (26 Nov 2026):** the Neon project `vyra-markets` is active on Free, and its VYRA test branch has the schema applied and introspected. The repository app migration is under review in `feat/neon-backend`; it has not been merged or deployed. No production environment secrets have been set. Supabase projects 9N8 and Space Ledger remain untouched.
+**Current truth (26 Nov 2026):** the Neon project `vyra-markets` is active on Free. The VYRA schema is on the project's default `main` database branch and the Auth user table is empty. The repository app migration is under review in draft PR #18 (`feat/neon-backend`); it has not been merged or deployed. No production environment secrets have been set. Supabase projects 9N8 and Space Ledger remain untouched.

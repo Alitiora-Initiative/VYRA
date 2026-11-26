@@ -8,8 +8,13 @@ const unavailable = () => Response.json(
   { status: 503 },
 );
 
-export const GET = (request: Request) => isNeonAuthConfigured() ? handlers.GET(request) : unavailable();
-export const POST = (request: Request) => isNeonAuthConfigured() ? handlers.POST(request) : unavailable();
-export const PUT = (request: Request) => isNeonAuthConfigured() ? handlers.PUT(request) : unavailable();
-export const PATCH = (request: Request) => isNeonAuthConfigured() ? handlers.PATCH(request) : unavailable();
-export const DELETE = (request: Request) => isNeonAuthConfigured() ? handlers.DELETE(request) : unavailable();
+export const GET = (...args: Parameters<typeof handlers.GET>) =>
+  isNeonAuthConfigured() ? handlers.GET(...args) : unavailable();
+export const POST = (...args: Parameters<typeof handlers.POST>) =>
+  isNeonAuthConfigured() ? handlers.POST(...args) : unavailable();
+export const PUT = (...args: Parameters<typeof handlers.PUT>) =>
+  isNeonAuthConfigured() ? handlers.PUT(...args) : unavailable();
+export const PATCH = (...args: Parameters<typeof handlers.PATCH>) =>
+  isNeonAuthConfigured() ? handlers.PATCH(...args) : unavailable();
+export const DELETE = (...args: Parameters<typeof handlers.DELETE>) =>
+  isNeonAuthConfigured() ? handlers.DELETE(...args) : unavailable();

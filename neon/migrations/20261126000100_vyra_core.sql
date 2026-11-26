@@ -224,9 +224,6 @@ create policy "profile owner inserts own profile" on public.profiles for insert 
   with check (id = (select auth.uid()));
 drop policy if exists "profile owner updates own profile" on public.profiles;
 create policy "profile owner updates own profile" on public.profiles for update to authenticated using (id = (select auth.uid())) with check (id = (select auth.uid()));
-drop policy if exists "profile owner creates own profile" on public.profiles;
-create policy "profile owner creates own profile" on public.profiles for insert to authenticated
-with check (id = (select auth.uid()));
 
 
 drop policy if exists "enabled instruments are readable" on public.instrument_catalog;

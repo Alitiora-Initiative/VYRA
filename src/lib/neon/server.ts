@@ -17,7 +17,10 @@ export async function getNeonServer() {
   const { data: session, error: sessionError } = await auth.getSession();
   if (sessionError || !session?.user) return null;
 
-  const { data: tokenData, error: tokenError } = await auth.token();
+  const authWithToken = auth as unknown as {
+    token: () => Promise<{ data: { token?: string } | null; error?: unknown }>;
+  };
+  const { data: tokenData, error: tokenError } = await authWithToken.token();
   if (tokenError || !tokenData?.token) return null;
 
   const name = session.user.name ?? null;

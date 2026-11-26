@@ -218,13 +218,14 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [x] Connect the Neon integration and provision the dedicated `vyra-markets` project on the Free plan in Frankfurt.
 - [x] Enable Neon Managed Better Auth (email/password) and the PostgreSQL Data API for the VYRA database.
 - [x] Inspect the actual PostgreSQL 17 schema, roles, grants, auth helpers and Neon Auth UUID user-ID type.
-- [x] Create the isolated `vyra-neon-migration-test` branch.
-- [x] Apply and inspect the VYRA schema on the isolated test branch: 14 application tables, 20 foreign keys, 18 RLS policies and immutable/balanced-ledger triggers.
+- [x] Apply and inspect the VYRA schema on the dedicated Neon database's default `main` branch: 14 application tables, 20 foreign keys, 19 RLS policies and immutable/balanced-ledger triggers.
+- [x] Verify the Neon Auth user table is empty (0 users) and the new database contains no customer records.
+- [ ] Provision and verify a disposable Neon branch for future migration regression tests before making subsequent schema changes.
 - [x] Preserve UUID user references to `neon_auth."user"(id)`; use the verified `auth.uid()` UUID helper rather than converting the existing identity model to TEXT.
 - [x] Remove the unsupported Supabase `auth.users` trigger assumption; Neon owns its Auth schema, so VYRA profiles are provisioned lazily through the authenticated application route.
 - [x] Replace Supabase `anon` with Neon Data API's `anonymous` role and remove the `service_role` dependency.
 - [x] Keep the private SQL schema unexposed and disable the global market-order matching function; user paper-order matching remains scoped to the authenticated user's active paper account.
-- [ ] Complete the application adapter migration in the isolated GitHub branch and review its draft pull request.
+- [ ] Complete and review the application adapter migration in draft GitHub PR #18 (`feat/neon-backend`).
 - [ ] Pass GitHub Actions tests, typecheck, lint and production build on the migration branch.
 - [ ] Configure branch-matched Neon Auth URL, cookie secret, Data API URL and server-only PostgreSQL URL in the deployment secret store; do not add values to Git.
 - [ ] End-to-end test sign-up, sign-in, session persistence, sign-out and email password recovery using the actual app origin.
