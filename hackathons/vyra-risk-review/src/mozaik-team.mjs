@@ -114,10 +114,12 @@ function buildAuditorPrompt(state) {
   ].join('\n\n');
 }
 
-export function createReviewSession({ route, sources, model = process.env.MOZAIK_MODEL || 'gpt-5.5', timeoutMs = 180000 }) {
+export function createReviewSession({ route, sources, model = process.env.MOZAIK_MODEL || 'gpt-5.5', timeoutMs = 180000, inferenceRunnerConfig = null }) {
   const state = new ReviewState(route, sources);
   const runtime = defineRuntime();
-  runtime.initializeRuntime({ state });
+  const runtimeConfig = { state };
+  if (inferenceRunnerConfig) runtimeConfig.inferenceRunnerConfig = inferenceRunnerConfig;
+  runtime.initializeRuntime(runtimeConfig);
   const operator = createHuman({ name: 'VYRA Human Reviewer', capabilities: ['review', 'acknowledge'], handlers: [] });
 
   const analystRoles = ['evidence-scout', 'route-analyst'];
