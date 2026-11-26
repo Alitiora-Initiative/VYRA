@@ -199,3 +199,13 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [ ] Keep demo traffic paper-only and synthetic; do not host real customer data or live broker credentials on free services.
 - [ ] Assess Netlify as an alternate Next.js preview host if Render cannot be used.
 - [ ] Assess Cloudflare vinext in a non-destructive branch only; require auth, middleware, API and build compatibility tests before adopting it.
+
+
+## P1 — Technology vendor due diligence
+
+- [x] Research and commit a brokerage technology vendor map by lifecycle layer.
+- [ ] Choose the preferred regulated brokerage/fund partner before selecting separate custody, payment or KYC vendors.
+- [ ] Ask the partner which KYC, AML, sanctions, custody, payment and market-data suppliers it already uses and permits.
+- [ ] Validate all vendor legal entities, country coverage, permissions, security, data roles, commercial costs and exit terms.
+- [ ] Select a chart library only after reviewing licence terms; current default candidate is Lightweight Charts, with no market-data entitlement implied.
+- [ ] Keep KYC and money movement within the licensed partner's approved infrastructure unless counsel/regulator authorises another model.
