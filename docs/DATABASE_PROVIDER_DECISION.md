@@ -2,7 +2,7 @@
 
 **Research date:** 26 November 2026  
 **Constraint:** zero capital, private GitHub repository, existing PostgreSQL schema and Next.js application.  
-**Decision:** Neon Postgres Free is the preferred isolated development and paper-trading database, subject to provisioning and migration tests. No real customer money or live brokerage activity may use a free-tier database.
+**Decision:** Neon Postgres Free is provisioned and selected for the isolated development and paper-trading database. The schema is applied; application integration and end-to-end release tests are still in progress. No real customer money or live brokerage activity may use a free-tier database.
 
 ## 1. Executive decision
 
@@ -14,10 +14,10 @@ Neon provides managed PostgreSQL, a PostgREST-compatible Data API, PostgreSQL RL
 
 ### Recommended stack
 
-- Database: Neon Postgres Free, in an isolated VYRA project.
-- Authentication: Neon Managed Better Auth, using the Supabase-style adapter where supported.
-- Data access: Neon Data API for RLS-protected application queries.
-- Privileged server operations: pooled PostgreSQL connection kept server-only, with narrowly scoped database roles.
+- Database: provisioned Neon Postgres Free project `vyra-markets` in Frankfurt, database `vyra`, branch `br-tiny-lake-bhoos1ij`.
+- Authentication: provisioned Neon Managed Better Auth with verified email required; the Next.js integration is committed, but email delivery and recovery need end-to-end tests.
+- Data access: provisioned Neon Data API, with the Neon SDK Data API client in the Next.js app.
+- Privileged server operations: dedicated quote-ingestion role for market quotes only; database owner credentials are never passed to the browser.
 - App host: Render or Netlify for paper-demo use only; separate from database.
 - Source of truth: reviewed SQL migrations in the private GitHub repository.
 
@@ -109,7 +109,7 @@ Aiven's Free PostgreSQL is time-unlimited and can be created without a credit ca
 
 Use Aiven if Neon provisioning or the Managed Better Auth route is unavailable and VYRA is comfortable retaining a separate auth service plus direct PostgreSQL access. Keep connection pooling and connection counts under explicit control.
 
-## 6. Target Neon environment
+## 6. Provisioned Neon environment
 
 - One isolated project named vyra-markets.
 - One database named vyra.
@@ -160,9 +160,26 @@ Before any future regulated production use, VYRA and its licensed partner must e
 
 - Supabase project provisioning was blocked by the account's two active Free project limit.
 - Existing projects 9N8 and Space Ledger remain untouched.
-- No VYRA Supabase project exists; no VYRA migration has been applied.
-- Neon is the chosen alternative, but no Neon project exists yet.
-- The Neon connection must be completed before provisioning tools and project secrets are available.
+- No VYRA Supabase project exists; the Supabase SQL remains historical reference only.
+- Neon project `vyra-markets` exists in Frankfurt, project ID `dawn-wind-08199003`.
+- Neon Managed Better Auth and Data API are enabled; the Neon migration is applied to main.
 - The database migration has not been applied or verified.
 
 **Decision:** choose Neon Postgres Free for isolated development/paper trading. Keep Aiven as a fallback. Do not use Firestore as the core ledger. Do not use temporary Firebase SQL Connect or Render Postgres trials as the permanent database.
+
+
+## 10. Actual provisioned state (26 November 2026)
+
+- Dedicated project: `vyra-markets` (Frankfurt, `aws-eu-central-1`).
+- Project ID: `dawn-wind-08199003`; database: `vyra`; main branch: `br-tiny-lake-bhoos1ij`.
+- Neon Managed Better Auth and the PostgREST-compatible Neon Data API are enabled.
+- Neon-managed user table uses UUID IDs, so existing VYRA UUID user references remain unchanged.
+- Main migration applied: `neon/migrations/20261126000100_vyra_core.sql`.
+- Schema audit: 14/14 public tables have RLS enabled, 19 public policies exist and 69 constraints are validated.
+- A restricted `vyra_quote_ingest` role has quote-only write permission; no access to orders, trading accounts, ledger entries or auth records.
+- VYRA app dependencies and auth/data modules are switched to Neon. Existing Supabase runtime helper modules are removed.
+- Neon email verification is required for new accounts. Email verification/reset still need end-to-end delivery testing.
+- GitHub Actions has recorded 16/16 unit tests passing and TypeScript passing on earlier Neon commits. A later ESLint config failure was fixed by switching to native Next.js flat configs; a current full green run is still required.
+- Render still has no VYRA service; a free paper-demo deployment remains to be created after CI/build validation.
+- No signed broker contract, legal policy PDFs, country approvals, funding rail, KYC provider, liquidity/dealing connection, mobile application or affiliate programme exists.
+- Keep Neon Free strictly for synthetic development and paper trading, not a regulated live brokerage book of record.
