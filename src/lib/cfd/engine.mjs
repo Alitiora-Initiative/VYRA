@@ -76,7 +76,20 @@ export function calculateCfdOrderRisk({
 
   const executionPrice = side === 'buy' ? quote.ask : quote.bid;
   const notional = lots * contract.contractSize * executionPrice * accountCurrencyRate;
-  const requiredMargin = notional / requestedLeverage;
+  let requiredMargin = notional / requestedLeverage;
+  let marginCalculationMethod = 'single_leverage';
+
+  if (policy.marginTiers !== undefined) {
+    const tiered = calculateTieredCfdMargin({
+      notional,
+      tiers: policy.marginTiers,
+      calculationMethod: policy.marginTierMethod,
+    });
+    if (!tiered.ok) return tiered;
+    requiredMargin = Math.max(requiredMargin, Number(tiered.requiredMargin));
+    marginCalculationMethod = 'marginal_tiered_max_of_requested_and_policy';
+  }
+
   if (!Number.isFinite(requiredMargin) || requiredMargin <= 0) return fail('MARGIN_CALCULATION_FAILED', 'Required margin could not be calculated.');
   if (requiredMargin > freeMargin) return fail('INSUFFICIENT_FREE_MARGIN', 'Order would exceed available margin.');
 
@@ -92,6 +105,7 @@ export function calculateCfdOrderRisk({
     leverage: requestedLeverage,
     requiredMargin: Number(requiredMargin.toFixed(8)),
     freeMarginAfter: Number((freeMargin - requiredMargin).toFixed(8)),
+    marginCalculationMethod,
     quoteSource: quote.source,
     quoteObservedAt: quote.observedAt,
     marginMode: policy.marginMode === 'cross' ? 'cross' : 'isolated',
@@ -131,10 +145,16 @@ export function calculateCfdMarginSnapshot({
   balance,
   positions = [],
   closeoutLevelPct,
+  pendingOrderMargin = 0,
+  otherReservedMargin = 0,
 }) {
   if (!Number.isFinite(balance)) return fail('BALANCE_INVALID', 'Account balance must be finite.');
   if (!Number.isFinite(closeoutLevelPct) || closeoutLevelPct < 0) {
     return fail('CLOSEOUT_POLICY_MISSING', 'An approved margin close-out threshold is required.');
+  }
+  if (!Number.isFinite(pendingOrderMargin) || pendingOrderMargin < 0 ||
+      !Number.isFinite(otherReservedMargin) || otherReservedMargin < 0) {
+    return fail('MARGIN_RESERVATION_INVALID', 'Pending-order and other reserved margin must be finite and non-negative.');
   }
 
   let unrealizedPnl = 0;
@@ -144,10 +164,12 @@ export function calculateCfdMarginSnapshot({
       return fail('POSITION_MARGIN_INVALID', 'Every position must supply finite P&L and non-negative required margin.');
     }
     unrealizedPnl += position.unrealizedPnl;
+    // Gross position margin is summed. Opposing long/short legs are not silently netted.
     usedMargin += position.marginRequired;
   }
   const equity = balance + unrealizedPnl;
-  const freeMargin = equity - usedMargin;
+  const totalMarginCommitment = usedMargin + pendingOrderMargin + otherReservedMargin;
+  const freeMargin = equity - totalMarginCommitment;
   const marginLevelPct = usedMargin === 0 ? null : (equity / usedMargin) * 100;
   return {
     ok: true,
@@ -155,6 +177,9 @@ export function calculateCfdMarginSnapshot({
     unrealizedPnl: Number(unrealizedPnl.toFixed(8)),
     equity: Number(equity.toFixed(8)),
     usedMargin: Number(usedMargin.toFixed(8)),
+    pendingOrderMargin: Number(pendingOrderMargin.toFixed(8)),
+    otherReservedMargin: Number(otherReservedMargin.toFixed(8)),
+    totalMarginCommitment: Number(totalMarginCommitment.toFixed(8)),
     freeMargin: Number(freeMargin.toFixed(8)),
     marginLevelPct: marginLevelPct === null ? null : Number(marginLevelPct.toFixed(8)),
     closeoutLevelPct,
