@@ -29,5 +29,10 @@
     "typescript": "5.7.2",
     "@eslint/eslintrc": "3.2.0",
     "@eslint/js": "9.17.0"
+  },
+  "overrides": {
+    "@neondatabase/auth-ui": {
+      "@neondatabase/auth": "$@neondatabase/auth"
+    }
   }
 }
