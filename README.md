@@ -1,6 +1,6 @@
 # VYRA Markets
 
-VYRA is a multi-asset brokerage software foundation designed around distinct market adapters for crypto, equities, FX and commodities. It is a software project—not a licensed brokerage, custodian, exchange or investment adviser.
+VYRA Markets is a partner-led, multi-asset market-access platform and brokerage-software foundation for crypto, equities, FX and commodities. Its competitive wedge is an evidence-backed Access Graph + Provider Graph + reconciliation layer. VYRA is a software project—not a licensed brokerage, custodian, exchange or investment adviser.
 
 ## Current build
 
