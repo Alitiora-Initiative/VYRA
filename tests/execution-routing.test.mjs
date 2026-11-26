@@ -5,6 +5,9 @@ import { rankPaperExecutionVenues, resolvePaperHedgePlan } from '../src/lib/exec
 const NOW = Date.parse('2026-11-26T10:00:00.000Z');
 const policy = {
   status: 'approved', version: 'execution-policy-v1',
+  jurisdictionCode: 'GB', clientType: 'retail',
+  evidenceUrl: 'https://example.test/best-execution', evidenceReference: 'Best execution test policy',
+  reviewedAt: new Date(NOW - 1000).toISOString(), effectiveFrom: new Date(NOW - 1000).toISOString(),
   maxQuoteAgeMs: 5000, maxBenchmarkAgeMs: 5000, maxLatencyMs: 500,
   nonFillPenaltyBps: 20, latencyPenaltyBps: 2,
 };
@@ -77,9 +80,12 @@ test('blocks a missing or stale best-execution policy and benchmark', () => {
 test('systematic hedge mode hedges aggregate net residual only after its trigger', () => {
   const base = {
     status: 'approved', version: 'hedge-v1', mode: 'systematic_net_residual',
+    jurisdictionCode: 'GB', clientType: 'professional',
+    evidenceUrl: 'https://example.test/hedge-policy', evidenceReference: 'Hedge policy fixture',
+    reviewedAt: new Date(NOW - 1000).toISOString(),
     effectiveFrom: new Date(NOW - 1000).toISOString(),
     triggerExposure: 1000, hedgeRatio: 0.5, maxRetainedExposure: 900,
-    permissions: { dealingPrincipal: true, externalHedging: true },
+    permissions: { dealingPrincipal: true, externalHedging: true, bestExecution: true, conflictsControls: true },
   };
   const below = resolvePaperHedgePlan({ policy: base, aggregateNetExposure: 800, now: NOW });
   const above = resolvePaperHedgePlan({ policy: base, aggregateNetExposure: 1200, now: NOW });
@@ -91,6 +97,9 @@ test('systematic hedge mode hedges aggregate net residual only after its trigger
 test('partial internalisation splits only the aggregate book and enforces retained limit', () => {
   const policy = {
     status: 'approved', version: 'hedge-v2', mode: 'partial_internalisation',
+    jurisdictionCode: 'GB', clientType: 'professional',
+    evidenceUrl: 'https://example.test/hedge-policy', evidenceReference: 'Hedge policy fixture',
+    reviewedAt: new Date(NOW - 1000).toISOString(),
     effectiveFrom: new Date(NOW - 1000).toISOString(),
     internalisationRatio: 0.25, maxRetainedExposure: 500,
     permissions: { dealingPrincipal: true, externalHedging: true },
@@ -104,9 +113,12 @@ test('partial internalisation splits only the aggregate book and enforces retain
 test('risk warehouse blocks exposure above limit and requires dealing controls', () => {
   const policy = {
     status: 'approved', version: 'warehouse-v1', mode: 'risk_warehousing',
+    jurisdictionCode: 'GB', clientType: 'professional',
+    evidenceUrl: 'https://example.test/hedge-policy', evidenceReference: 'Hedge policy fixture',
+    reviewedAt: new Date(NOW - 1000).toISOString(),
     effectiveFrom: new Date(NOW - 1000).toISOString(),
     maxRetainedExposure: 500,
-    permissions: { dealingPrincipal: true, conflictsControls: true },
+    permissions: { dealingPrincipal: true, bestExecution: true, conflictsControls: true },
   };
   assert.equal(resolvePaperHedgePlan({ policy, aggregateNetExposure: 501, now: NOW }).code, 'RETAINED_EXPOSURE_LIMIT');
   assert.equal(resolvePaperHedgePlan({
@@ -118,8 +130,11 @@ test('risk warehouse blocks exposure above limit and requires dealing controls',
 test('straight-through route cannot retain risk and requires external routing approval', () => {
   const policy = {
     status: 'approved', version: 'stp-v1', mode: 'straight_through',
+    jurisdictionCode: 'GB', clientType: 'professional',
+    evidenceUrl: 'https://example.test/hedge-policy', evidenceReference: 'Hedge policy fixture',
+    reviewedAt: new Date(NOW - 1000).toISOString(),
     effectiveFrom: new Date(NOW - 1000).toISOString(),
-    permissions: { externalRouting: true },
+    permissions: { externalRouting: true, bestExecution: true, conflictsControls: true },
   };
   const result = resolvePaperHedgePlan({ policy, aggregateNetExposure: 250, now: NOW });
   assert.equal(result.externalHedgeExposure, 250);
