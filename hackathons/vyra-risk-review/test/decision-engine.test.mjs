@@ -19,7 +19,11 @@ const route = {
   },
   launchGates: Object.fromEntries(LAUNCH_GATES.map((gate) => [gate, false])),
 };
-const sources = [{ id: 'cma-licensing-checklists' }];
+const sources = [
+  { id: 'cma-licensing-checklists' },
+  { id: 'kenya-vasp-regulations' },
+  { id: 'cbk-cma-vasp-notice' },
+];
 
 function makeValidReports() {
   return {
@@ -35,7 +39,7 @@ function makeValidReports() {
     'route-analyst': parseAgentJson(JSON.stringify({
       status: 'review',
       summary: 'The route involves a virtual-asset activity in Kenya.',
-      claims: [{ claim: 'The activity requires review under the current framework.', sourceIds: ['cma-licensing-checklists'] }],
+      claims: [{ claim: 'The 2026 Kenya VASP framework requires service and promotion classification.', sourceIds: ['kenya-vasp-regulations', 'cbk-cma-vasp-notice'] }],
       activityClassification: 'licensing_review_required',
       missingEvidence: ['Exact role and partner licence evidence'],
       risks: ['Local targeting and promotion restrictions'],
