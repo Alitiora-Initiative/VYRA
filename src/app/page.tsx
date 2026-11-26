@@ -224,6 +224,7 @@ export default function Home() {
       <div className="workspace"><div className="avatar">{userEmail ? userEmail.slice(0,1).toUpperCase() : 'V'}</div><div>VYRA workspace<small>{userEmail || 'Guest access'}</small></div></div>
       <div className="navlabel">WORKSPACE</div>
       {nav.map(([name, Icon]) => <button key={name} onClick={() => { setActive(name); if (name === 'Activity') document.getElementById('activity')?.scrollIntoView({behavior:'smooth'}); else if (name === 'Markets') document.getElementById('markets')?.scrollIntoView({behavior:'smooth'}); else if (name === 'Portfolio') document.getElementById('portfolio')?.scrollIntoView({behavior:'smooth'}); }} className={'navitem ' + (active === name ? 'selected' : '')}><Icon size={18}/>{name}</button>)}
+      <Link href="/partners" className="navitem"><BriefcaseBusiness size={18}/>Brokerage partners</Link>
       <div className="navlabel">PREFERENCES</div>
       <button className="navitem"><Settings size={18}/>Settings</button>
       <button className="navitem"><CircleHelp size={18}/>Help centre</button>
