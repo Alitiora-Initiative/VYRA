@@ -18,6 +18,6 @@ export type CfdMarginTier = { minNotional: number; maxNotional?: number | null; 
 export function calculateTieredCfdMargin(input: { notional: number; tiers: CfdMarginTier[]; calculationMethod: 'marginal' | string }): Record<string, unknown>;
 export type CfdOperatingModel = 'technology_partner' | 'agency_routed' | 'matched_principal' | 'market_maker' | 'hybrid';
 export function resolvePaperBrokerageOperatingModel(input: {
-  policy: { status: 'approved'; policyId: string; policyVersion: string; jurisdictionCode: string; clientType: string; effectiveFrom: string; effectiveUntil?: string | null; operatingModel: CfdOperatingModel; maxRetainedExposure?: number; permissions: Record<string, boolean> };
+  policy: { status: 'approved'; policyId: string; policyVersion: string; jurisdictionCode: string; clientType: string; evidenceUrl: string; evidenceReference: string; reviewedAt: string; effectiveFrom: string; effectiveUntil?: string | null; operatingModel: CfdOperatingModel; maxRetainedExposure?: number; permissions: Record<string, boolean> };
   netExposureAfterTrade?: number; now?: number;
 }): Record<string, unknown>;
