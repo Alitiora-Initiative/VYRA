@@ -114,6 +114,8 @@ VYRA is being developed first as a **partner-led market-access platform**, not a
 - [Provider brokerage launch checklist](docs/PROVIDER_BROKERAGE_LAUNCH_CHECKLIST.md) — maps the supplied white-label brokerage checklist to VYRA's real state and launch evidence.
 - [CRM and brokerage operations](docs/CRM_AND_BROKERAGE_OPERATIONS.md) — CRM vendor shortlist, operating queues, launch waves, acquisition/retention analytics and the staff-only CRM foundation.
 - [Forex & CFD product architecture](docs/CFD_PRODUCT_AND_EXECUTION_ARCHITECTURE.md) — CFD contract/margin engine, A-Book/B-Book/Hybrid dealing, Kenya licensing research, CRM/back office, PSP, KYC and provider diligence.
+- [Brokerage operating-model research](docs/BROKERAGE_OPERATING_MODEL_RESEARCH.md) — technology partner, agency/non-dealing, matched principal, market maker, hybrid, STP and newer hedging models.
+- [CFD execution router](docs/CFD_EXECUTION_ROUTER.md) — total-cost venue ranking, progressive margin tiers, systematic hedging, partial internalisation and release controls.
 - [CFD traderoom implementation](docs/CFD_TRADEROOM_IMPLEMENTATION.md) — current read-only contract/quote room, empty-data truth and required controls before paper CFD orders.
 - [App Store listing draft](docs/APP_STORE_LISTING_DRAFT.md) — truthful paper-prototype listing copy and the missing store-eligibility evidence.
 - [GitHub implementation issues](https://github.com/Alitiora-Initiative/VYRA/issues) — trackable delivery backlog.
