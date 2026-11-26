@@ -175,6 +175,32 @@ flowchart TD
 | Portfolio information | Displays partner-sourced data with timestamps | Authoritative account record and statement |
 | Complaints | Own platform/referral complaints and route clearly | Owns brokerage, execution, custody and fund complaints |
 
+
+
+## 9. Implemented AccessGraph route evaluation
+
+~~~mermaid
+flowchart TD
+ A[Proposed customer journey] --> B[Select jurisdiction]
+ B --> C[Select customer / investor type]
+ C --> D[Select product class]
+ D --> E[Describe actual VYRA activity]
+ E --> F{Versioned rule pack exists?}
+ F -->|No| G[Unassessed: block route]
+ F -->|Yes| H[Match evidence and activity rules]
+ H --> I[Show source, provision, date and review items]
+ I --> J[Verify regulated principal and customer category]
+ J --> K[Check 12 mandatory evidence gates]
+ K --> L{All evidence complete?}
+ L -->|No| M[Keep onboarding, referral, execution and money movement disabled]
+ L -->|Yes| N[Manual legal/compliance go-no-go]
+ N --> O{Signed release decision?}
+ O -->|No| M
+ O -->|Yes| P[Enable only the exact approved country × customer × product × activity]
+~~~
+
+This is the current product-control prototype. The implemented rule pack covers Kenya only and is not a comprehensive legal database. Other listed countries return unassessed. Even a fully completed checklist does not itself enable production activity.
+
 ## 8. Hard-stop rules
 
 - Unknown country, customer type, permission or product status means blocked, not assumed approved.
