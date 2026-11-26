@@ -207,3 +207,36 @@ test('blocks an expired operating policy', async () => {
   };
   assert.equal(resolvePaperBrokerageOperatingModel({ policy, now }).code, 'EXECUTION_POLICY_OUT_OF_DATE');
 });
+
+
+test('blocks an operating model without source evidence or a valid review date', async () => {
+  const { resolvePaperBrokerageOperatingModel } = await import('../src/lib/cfd/engine.mjs');
+  const base = {
+    status: 'approved', policyId: 'policy-evidence-test', policyVersion: '1',
+    jurisdictionCode: 'KE', clientType: 'retail',
+    evidenceUrl: 'https://example.test/evidence', evidenceReference: 'Evidence reference',
+    reviewedAt: new Date(now - 1000).toISOString(),
+    effectiveFrom: new Date(now - 1000).toISOString(),
+    operatingModel: 'technology_partner', permissions: {},
+  };
+  assert.equal(resolvePaperBrokerageOperatingModel({
+    policy: { ...base, evidenceReference: '' }, now,
+  }).code, 'EXECUTION_POLICY_MISSING');
+  assert.equal(resolvePaperBrokerageOperatingModel({
+    policy: { ...base, reviewedAt: new Date(now + 1000).toISOString() }, now,
+  }).code, 'EXECUTION_POLICY_EVIDENCE_INVALID');
+});
+
+test('agency routing requires independent best-execution and conflicts controls', async () => {
+  const { resolvePaperBrokerageOperatingModel } = await import('../src/lib/cfd/engine.mjs');
+  const policy = {
+    status: 'approved', policyId: 'agency-policy', policyVersion: '1',
+    jurisdictionCode: 'KE', clientType: 'retail',
+    evidenceUrl: 'https://example.test/agency', evidenceReference: 'Agency evidence',
+    reviewedAt: new Date(now - 1000).toISOString(),
+    effectiveFrom: new Date(now - 1000).toISOString(),
+    operatingModel: 'agency_routed',
+    permissions: { agencyRouted: true, externalVenueApproved: true },
+  };
+  assert.equal(resolvePaperBrokerageOperatingModel({ policy, now }).code, 'AGENCY_PERMISSION_MISSING');
+});
