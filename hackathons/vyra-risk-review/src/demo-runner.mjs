@@ -11,6 +11,29 @@ function outputMessage(content) {
   };
 }
 
+function inferAgentRole(request, call) {
+  let requestDump = '';
+  try {
+    requestDump = JSON.stringify(request ?? {});
+  } catch {
+    requestDump = String(request ?? '');
+  }
+
+  const markers = [
+    ['evidence-scout', ['ROLE: evidence-scout', 'Your role is Evidence Scout.']],
+    ['route-analyst', ['ROLE: route-analyst', 'Your role is Route Analyst.']],
+    ['independent-auditor', ['Audit the two concurrent analyst reports', 'Your role is Independent Auditor.']],
+  ];
+
+  const matches = markers.flatMap(([role, phrases]) =>
+    phrases.map((phrase) => ({ role, index: requestDump.lastIndexOf(phrase) }))
+  ).filter((match) => match.index >= 0).sort((a, b) => b.index - a.index);
+
+  // Prefer the most recent task marker in the full request. Fall back to Mozaik call
+  // order only for request shapes that omit all role-specific context.
+  return matches[0]?.role ?? ['evidence-scout', 'route-analyst', 'independent-auditor'][call] ?? 'unexpected-extra-call';
+}
+
 export class VYRAOfflineInferenceRunner {
   constructor({ delayMs = 75 } = {}) {
     this.delayMs = delayMs;
@@ -22,20 +45,7 @@ export class VYRAOfflineInferenceRunner {
 
   async run(request) {
     const call = this.calls++;
-    const roles = ['evidence-scout', 'route-analyst', 'independent-auditor'];
-    let contextDump = '';
-    try {
-      contextDump = JSON.stringify(request?.context ?? {});
-    } catch {
-      contextDump = String(request?.context ?? '');
-    }
-    const role = contextDump.includes('ROLE: evidence-scout')
-      ? 'evidence-scout'
-      : contextDump.includes('ROLE: route-analyst')
-        ? 'route-analyst'
-        : contextDump.includes('Audit the two concurrent analyst reports')
-          ? 'independent-auditor'
-          : (roles[call] ?? 'unexpected-extra-call');
+    const role = inferAgentRole(request, call);
     const startedAt = Date.now();
     this.active += 1;
     this.maxInFlight = Math.max(this.maxInFlight, this.active);
