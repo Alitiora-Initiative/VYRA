@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { calculateCfdMarginSnapshot, calculateCfdOrderRisk, validateCfdQuote } from './engine.mjs';
+import { calculateCfdMarginSnapshot, calculateCfdOrderRisk, markCfdPosition, validateCfdQuote } from './engine.mjs';
 
 const ZERO_HASH = '0'.repeat(64);
 const EPSILON = 1e-8;
@@ -93,11 +93,16 @@ function startCommand(state, { idempotencyKey, operation, fingerprint }) {
     return { error: fail('IDEMPOTENCY_KEY_REUSE', 'This idempotency key was already used for a different request.') };
   }
   const order = existing.orderId ? state.orders.find((item) => item.orderId === existing.orderId) ?? null : null;
+  const position = existing.positionId ? state.positions.find((item) => item.positionId === existing.positionId) ?? null : null;
+  const positionClose = existing.positionCloseId
+    ? state.positionCloses.find((item) => item.closeId === existing.positionCloseId) ?? null : null;
   return {
     replay: {
       ...existing.result,
       state,
       order,
+      position,
+      positionClose,
       replayed: true,
       paperOnly: true,
     },
@@ -110,6 +115,8 @@ function finishCommand(state, command, result) {
     operation: command.operation,
     fingerprint: command.fingerprint,
     orderId: result.order?.orderId ?? null,
+    positionId: result.position?.positionId ?? result.positionClose?.positionId ?? null,
+    positionCloseId: result.positionClose?.closeId ?? null,
     result: {
       ok: result.ok,
       code: result.code,
@@ -194,6 +201,7 @@ export function createPaperCfdAccountState({ account, openingBalance, openingJou
     },
     orders: [],
     positions: [],
+    positionCloses: [],
     reservations: [],
     journals: [],
     ledgerEntries: [],
@@ -528,8 +536,11 @@ export function fillPaperCfdOrder({ state, orderId, fillId, eventId, idempotency
     contractSize: order.contractSize,
     side: order.side === 'buy' ? 'long' : 'short',
     lots: fillLots,
+    remainingLots: fillLots,
+    closedLots: 0,
     entryPrice: execution.price,
     marginRequired: marginAllocated,
+    marginReleased: 0,
     unrealizedPnl: 0,
     status: 'open',
     openedAt: new Date(now).toISOString(),
@@ -661,6 +672,218 @@ export function rejectPaperCfdOrder(input) {
   return closeRemainder({ ...input, operation: 'reject_order', terminalStatus: 'rejected' });
 }
 
+
+
+/**
+ * Closes all or part of a paper position against a fresh contract quote.
+ * Realised P&L and close fees are booked through separate balanced journals.
+ */
+export function closePaperCfdPosition({
+  state, positionId, closeId, eventId, idempotencyKey,
+  lots, execution, pnlJournalId, feeJournalId, now = Date.now(),
+}) {
+  if (!state || state.account?.mode !== 'paper') {
+    return fail('PAPER_ACCOUNT_REQUIRED', 'A paper CFD account state is required.');
+  }
+  if (!validId(positionId) || !validId(closeId) || !validId(eventId)) {
+    return fail('POSITION_CLOSE_IDENTIFIERS_REQUIRED', 'Position, close and event IDs are required.');
+  }
+  const fingerprint = digest({ positionId, closeId, eventId, lots, execution, pnlJournalId, feeJournalId });
+  const command = startCommand(state, { idempotencyKey, operation: 'close_position', fingerprint });
+  if (command.error) return command.error;
+  if (command.replay) return command.replay;
+
+  const index = state.positions.findIndex((item) => item.positionId === positionId);
+  if (index < 0) return fail('POSITION_NOT_FOUND', 'Paper position does not exist.');
+  const position = state.positions[index];
+  const remainingBefore = Number(position.remainingLots ?? position.lots);
+  if (position.status !== 'open' || !POSITIVE(remainingBefore)) {
+    return fail('POSITION_NOT_OPEN', 'Only an open paper position can be closed.');
+  }
+  if (!POSITIVE(lots) || lots > remainingBefore + EPSILON ||
+      !onIncrement(lots, position.lotStep)) {
+    return fail('POSITION_CLOSE_QUANTITY_INVALID', 'Close quantity must respect the contract lot step and cannot exceed open position size.');
+  }
+  if (lots < position.minLots - EPSILON && !nearlyEqual(lots, remainingBefore)) {
+    return fail('POSITION_CLOSE_BELOW_MINIMUM', 'A partial close must satisfy the contract minimum lot size.');
+  }
+  if (state.positionCloses.some((item) => item.closeId === closeId)) {
+    return fail('POSITION_CLOSE_ID_DUPLICATE', 'Position close ID already exists.');
+  }
+  if (!execution || !POSITIVE(execution.price) ||
+      typeof execution.source !== 'string' || !execution.source.trim() || !execution.quote) {
+    return fail('CLOSE_EXECUTION_INVALID', 'Close requires a positive execution price, named source and fresh bid/ask quote.');
+  }
+  const quoteCheck = validateCfdQuote(execution.quote, {
+    now, maxAgeMs: position.maxQuoteAgeMs,
+  });
+  if (!quoteCheck.ok) return quoteCheck;
+  const observedAt = Date.parse(execution.observedAt);
+  if (!Number.isFinite(observedAt) || observedAt > now + 30000 ||
+      now - observedAt > position.maxQuoteAgeMs) {
+    return fail('CLOSE_EXECUTION_TIMESTAMP_INVALID', 'Close execution timestamp is invalid, future-dated or stale.');
+  }
+  if (!onIncrement(execution.price, position.tickSize) ||
+      !onIncrement(execution.quote.bid, position.tickSize) ||
+      !onIncrement(execution.quote.ask, position.tickSize)) {
+    return fail('CLOSE_EXECUTION_TICK_INVALID', 'Close execution and quote prices must conform to the contract tick size.');
+  }
+
+  const closeReferencePrice = position.side === 'long' ? execution.quote.bid : execution.quote.ask;
+  const adverseBps = position.side === 'long'
+    ? ((closeReferencePrice - execution.price) / closeReferencePrice) * 10000
+    : ((execution.price - closeReferencePrice) / closeReferencePrice) * 10000;
+  if (adverseBps > position.maxExecutionDeviationBps + EPSILON) {
+    return fail('CLOSE_EXECUTION_DEVIATION', 'Close price exceeds the approved maximum adverse execution deviation.', {
+      adverseBps: round8(adverseBps),
+      maxExecutionDeviationBps: position.maxExecutionDeviationBps,
+    });
+  }
+  if (!Number.isFinite(execution.feeAmount ?? 0) || (execution.feeAmount ?? 0) < 0) {
+    return fail('CLOSE_FEE_INVALID', 'Close fee must be finite and non-negative.');
+  }
+  const feeAmount = round8(execution.feeAmount ?? 0);
+  const closeLots = round8(lots);
+  const conversionRate = position.accountCurrencyRate ?? 1;
+  const priceDifference = position.side === 'long'
+    ? execution.price - position.entryPrice
+    : position.entryPrice - execution.price;
+  const realisedPnl = round8(priceDifference * closeLots * position.contractSize * conversionRate);
+  if (Math.abs(realisedPnl) > EPSILON && !validId(pnlJournalId)) {
+    return fail('P_AND_L_JOURNAL_ID_REQUIRED', 'A unique balanced journal ID is required to post realised P&L.');
+  }
+  if (feeAmount > 0 && !validId(feeJournalId)) {
+    return fail('CLOSE_FEE_JOURNAL_ID_REQUIRED', 'A unique balanced journal ID is required to post a close fee.');
+  }
+
+  const ratio = closeLots / remainingBefore;
+  const releasedMargin = round8(position.marginRequired * ratio);
+  const remainingAfter = round8(Math.max(0, remainingBefore - closeLots));
+  const marginRemaining = remainingAfter <= EPSILON
+    ? 0 : round8(Math.max(0, position.marginRequired - releasedMargin));
+  const updatedPosition = {
+    ...position,
+    remainingLots: remainingAfter,
+    closedLots: round8((position.closedLots ?? 0) + closeLots),
+    marginRequired: marginRemaining,
+    marginReleased: round8((position.marginReleased ?? 0) + releasedMargin),
+    unrealizedPnl: 0,
+    status: remainingAfter <= EPSILON ? 'closed' : 'open',
+    closedAt: remainingAfter <= EPSILON ? new Date(now).toISOString() : null,
+    updatedAt: new Date(now).toISOString(),
+  };
+  if (remainingAfter > EPSILON) {
+    const marked = markCfdPosition({
+      side: position.side,
+      lots: remainingAfter,
+      contractSize: position.contractSize,
+      entryPrice: position.entryPrice,
+      quote: execution.quote,
+      accountCurrencyRate: conversionRate,
+    });
+    if (!marked.ok) return marked;
+    updatedPosition.unrealizedPnl = marked.unrealizedPnl;
+  }
+  const positionClose = {
+    closeId, positionId, accountId: state.account.accountId,
+    orderId: position.orderId,
+    lots: closeLots,
+    price: round8(execution.price),
+    closeReferencePrice: round8(closeReferencePrice),
+    quoteSource: execution.quote.source,
+    quoteObservedAt: execution.quote.observedAt,
+    executionSource: execution.source,
+    executionObservedAt: execution.observedAt,
+    externalExecutionId: execution.externalExecutionId ?? null,
+    venueId: execution.venueId ?? null,
+    realisedPnl,
+    feeAmount,
+    releasedMargin,
+    currency: state.account.currency,
+    closedAt: new Date(now).toISOString(),
+    paperOnly: true,
+  };
+
+  let nextPositions = [...state.positions];
+  nextPositions[index] = updatedPosition;
+  let next = {
+    ...state,
+    positions: nextPositions,
+    positionCloses: [...state.positionCloses, positionClose],
+  };
+
+  if (Math.abs(realisedPnl) > EPSILON) {
+    const lines = realisedPnl > 0
+      ? [
+          { accountCode: 'paper_cash', debit: realisedPnl, credit: 0 },
+          { accountCode: 'paper_realised_pnl', debit: 0, credit: realisedPnl },
+        ]
+      : [
+          { accountCode: 'paper_realised_pnl', debit: Math.abs(realisedPnl), credit: 0 },
+          { accountCode: 'paper_cash', debit: 0, credit: Math.abs(realisedPnl) },
+        ];
+    const journal = postJournal(next, {
+      journalId: pnlJournalId,
+      idempotencyKey: 'PAPER_POSITION_PNL:' + closeId,
+      referenceType: 'paper_position_close_pnl',
+      referenceId: closeId,
+      currency: state.account.currency,
+      lines,
+      now,
+    });
+    if (!journal.ok) return journal;
+    next = {
+      ...next,
+      journals: [...next.journals, journal.journal],
+      ledgerEntries: [...next.ledgerEntries, ...journal.entries],
+    };
+  }
+  if (feeAmount > 0) {
+    const journal = postJournal(next, {
+      journalId: feeJournalId,
+      idempotencyKey: 'PAPER_POSITION_CLOSE_FEE:' + closeId,
+      referenceType: 'paper_position_close_fee',
+      referenceId: closeId,
+      currency: state.account.currency,
+      lines: [
+        { accountCode: 'paper_trading_fees', debit: feeAmount, credit: 0 },
+        { accountCode: 'paper_cash', debit: 0, credit: feeAmount },
+      ],
+      now,
+    });
+    if (!journal.ok) return journal;
+    next = {
+      ...next,
+      journals: [...next.journals, journal.journal],
+      ledgerEntries: [...next.ledgerEntries, ...journal.entries],
+    };
+  }
+
+  const eventResult = buildEvent(next, {
+    eventId,
+    eventType: updatedPosition.status === 'closed' ? 'POSITION_CLOSED' : 'POSITION_PARTIALLY_CLOSED',
+    orderId: position.orderId,
+    payload: {
+      closeId, positionId, lots: closeLots, price: positionClose.price,
+      realisedPnl, feeAmount, releasedMargin, remainingLots: remainingAfter,
+      executionSource: execution.source, quoteSource: execution.quote.source,
+      adverseBps: round8(adverseBps),
+    },
+    now,
+  });
+  if (!eventResult.ok) return eventResult;
+  next = addEvent(next, eventResult.event);
+  return finishCommand(next, command, {
+    ok: true,
+    position: updatedPosition,
+    positionClose,
+    event: eventResult.event,
+    realisedPnl,
+    feeAmount,
+    releasedMargin,
+  });
+}
+
 export function verifyPaperCfdEventChain(events = []) {
   let previousHash = ZERO_HASH;
   for (let index = 0; index < events.length; index += 1) {
@@ -731,6 +954,19 @@ export function reconcilePaperCfdState(state) {
     }
   }
 
+  for (const position of state.positions) {
+    const remaining = Number(position.remainingLots ?? position.lots);
+    const closes = round8(state.positionCloses
+      .filter((item) => item.positionId === position.positionId)
+      .reduce((sum, item) => sum + item.lots, 0));
+    if (!Number.isFinite(remaining) || remaining < 0 ||
+        !nearlyEqual(remaining + closes, position.lots) ||
+        (position.status === 'closed' && remaining > EPSILON) ||
+        (position.status === 'open' && remaining <= EPSILON)) {
+      return fail('POSITION_CLOSE_RECONCILIATION_FAILED', 'Opened, closed and remaining position lots do not reconcile.', { positionId: position.positionId });
+    }
+  }
+
   const snapshot = accountSnapshot(state);
   if (!snapshot.ok) return snapshot;
   return {
@@ -743,6 +979,7 @@ export function reconcilePaperCfdState(state) {
     orderCount: state.orders.length,
     openOrderCount: state.orders.filter((order) => ['accepted', 'partially_filled'].includes(order.status)).length,
     positionCount: state.positions.filter((position) => position.status === 'open').length,
+    positionCloseCount: state.positionCloses.length,
     cashBalance: cashBalance(state),
     usedMargin: snapshot.usedMargin,
     pendingOrderMargin: snapshot.pendingOrderMargin,
