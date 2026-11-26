@@ -32,6 +32,25 @@ No vendor badge, sandbox key, SDK, chart widget, liquidity bridge, white-label C
 | Legal / compliance / audit | Perimeter advice, licence applications, independent controls, statutory audits | Qualified local regulatory counsel, auditor, security assessor | Not replaceable with a software tool; budget must be known before any regulated launch |
 | Hosting / database / security | Web app, auth, database, secret management, logs and backups | Render, Netlify, Cloudflare Workers, Supabase (demo only on Free) | Free plans for synthetic paper demo only; production needs supported resilience and contractual controls |
 
+## 2A. White-label brokerage technology vendors
+
+The user's supplied Quadcode checklist names six platform suppliers. They belong in a separate vendor lane from the regulated brokers/account providers in the next section.
+
+| Technology supplier | Fit | Public commercial signal (26 Nov 2026) | Key diligence |
+|---|---|---|---|
+| Quadcode | Broad white-label Forex/CFD brokerage suite: traderoom, back office, dealing, liquidity, KYC, billing, web/desktop/mobile, sales and affiliate components | Public packages shown from US$17,500 to US$90,000 depending on tier | Confirm tier-specific inclusions, additional PSP/KYC/data/mobile fees, recurring fees, country coverage, licensed entities and client-money/execution ownership |
+| B2Broker | Multi-product technology and liquidity ecosystem: B2CORE, B2TRADER, B2COPY, bridges/connectivity, white-label MT4/MT5 and prime-of-prime liquidity | Public product starting examples: B2CORE US$1,000/month; B2TRADER US$2,500/month; B2COPY US$1,500/month. A liquidity commission offset model is advertised | Identify minimum A-book flow, liquidity and volume charges, bundle economics, setup/hosting, and whether every module can be licensed separately |
+| Leverate | White-label terminal, CRM/client portal, web/mobile/desktop, hosting, liquidity integrations, charting and copy trading | Its public pricing page shows €1,690/month for up to 1,000 real accounts or 250 active traders; CRM/client portal +€2,390/month | Confirm the exact platform/CRM configuration, payment/KYC/dealing inclusions, market-data and licensing costs, region-specific services and termination terms |
+| TradeSmarter | Full platform/back office and CRM for FX/CFD, crypto futures, digital options and prop products; payments and liquidity integrations | Custom quote; no fixed public package price identified | Verify exact product risk/legal classification, LP/PSP counterparty contracts, payout/payment coverage, pricing model, client-money flow and service-level metrics |
+| Soft-FX | FX and digital-asset brokerage software, TickTrader platform, Trader's Room, liquidity aggregation, APIs and web/mobile/desktop apps | Custom quote; no comparable public package price identified | Confirm deployment/hosting model, licence scope, connector charges, KYC/PSP integrations, support and whether VYRA needs separate execution/custody providers |
+| AlphaPoint | Digital-asset exchange infrastructure, order book, liquidity aggregation and risk controls for crypto/tokens/securities/stablecoin venues | Enterprise quote; no public price identified | More relevant to a separately authorised digital-asset venue than a general FX/CFD brokerage; verify market model, securities handling, custodian, counterparty and regulatory responsibility |
+
+**Source links:** Quadcode (https://quadcode.com/; https://quadcode.com/white-label-broker); B2Broker (https://b2broker.com/; https://b2broker.com/fees-and-pricing/); Leverate (https://leverate.com/pricing/trading-platform/); TradeSmarter (https://www.tradesmarter.com/); Soft-FX (https://www.soft-fx.com/solutions/forex-broker-turnkey/); AlphaPoint (https://alphapoint.com/wp-content/uploads/2024/04/AlphaPoint-Exchange-Software-Product.pdf).
+
+All prices are provider-published public examples, not VYRA quotations or total project costs. Compare 12–36 month total cost, including setup, recurring subscriptions, per-account or volume charges, liquidity/bridge, PSP, KYC, data, mobile apps, customisation, support, legal/regulatory, onboarding and exit fees.
+
+**Selection gate:** a platform vendor is not automatically VYRA's broker, custodian, liquidity counterparty, bank, licensed payment provider or regulator-approved introducer. No technology contract should be signed until the initial product/country and regulated principal are selected and written role/account/funds/execution responsibilities are clear.
+
 ## 3. Brokerage and investment rails — candidates
 
 ### 3.1 Interactive Brokers
@@ -162,8 +181,8 @@ The tool must be selected to match the regulated partner and the data/controller
 |---|---|---|
 | Front end | Existing Next.js / React | Already in VYRA repository |
 | Chart | TradingView Lightweight Charts or current chart components | Open-source chart library; data source kept separate |
-| Authentication | Existing Supabase Auth prototype | Keep until dedicated project capacity is resolved |
-| Application database | Dedicated VYRA Postgres project | Existing creation blocked; do not use another product's DB |
+| Authentication | Neon Managed Better Auth on the dedicated VYRA project | Paper-demo identity only; verify email OTP/reset/session lifecycle and add the exact hosted origin before deployment |
+| Application database | Dedicated Neon Postgres project `vyra-markets` in Frankfurt, with main and `vyra-dev` branches | Neon-native migration applied; Free tier is synthetic/paper only, not a live customer-money book |
 | Brokerage | One provider-approved direct/fully-disclosed account relationship | Avoid VYRA holding funds, custody or trading principal risk |
 | Fund access | A Kenyan licensed ISPP/fund-manager partner first; alternatives marketplaces only through eligible institution | Fits the bridge hypothesis; investor eligibility and fund approvals remain separate |
 | Market data | Partner-provided feed with written display rights | Reduces duplicate commercial data work |
