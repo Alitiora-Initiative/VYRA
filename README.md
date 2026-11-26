@@ -68,6 +68,7 @@ The SQL migration sets current paper defaults to USD 100,000 starting cash, $10,
 | `GET /api/access-graph` | Versioned public jurisdiction/product/activity rulepack and evidence sources |
 | `GET /api/provider-graph` | Provider-role requirements and verified/unverified relationship state |
 | `GET /api/partners` | Research-only broker candidates; referrals remain disabled |
+| `GET/POST/PATCH /api/crm` | Staff-only prospect CRM, task and operations case queues, partner register and audit history |
 | `GET /api/markets` | Provider quotes, timestamps, quote persistence and scoped limit matching |
 | `GET /api/instruments` | Neon-backed instrument catalogue |
 | `GET /api/me` | Current authenticated user |
@@ -109,7 +110,10 @@ VYRA is being developed first as a **partner-led market-access platform**, not a
 - [Database provider decision](docs/DATABASE_PROVIDER_DECISION.md) — compares Neon, Supabase, Aiven, Firebase, Render, Railway and Turso, with a zero-cost recommendation.
 - [Neon migration runbook](docs/NEON_MIGRATION_RUNBOOK.md) — provisioned Neon infrastructure, SQL migration, app integration, security boundaries and remaining tests.
 - [Provider brokerage launch checklist](docs/PROVIDER_BROKERAGE_LAUNCH_CHECKLIST.md) — maps the supplied white-label brokerage checklist to VYRA's real state and launch evidence.
+- [CRM and brokerage operations](docs/CRM_AND_BROKERAGE_OPERATIONS.md) — CRM vendor shortlist, operating queues, launch waves, acquisition/retention analytics and the staff-only CRM foundation.
 - [App Store listing draft](docs/APP_STORE_LISTING_DRAFT.md) — truthful paper-prototype listing copy and the missing store-eligibility evidence.
 - [GitHub implementation issues](https://github.com/Alitiora-Initiative/VYRA/issues) — trackable delivery backlog.
+
+**CRM implementation status:** the staff-only CRM page and API are being introduced on `feat/brokerage-crm-operations-desk`; the additive CRM migrations have been exercised on an isolated Neon review branch only. The main Neon branch does not yet contain the CRM schema. Staff memberships are not seeded; a database administrator must provision explicit roles after reviewing the PR.
 
 **Current infrastructure truth:** Neon Postgres, Managed Better Auth and the Data API are provisioned; the adapted SQL schema is applied to the dedicated VYRA main branch. The app's active auth/data code uses Neon. The free Render paper-demo service is not yet created. The original Supabase projects 9N8 and Space Ledger remain untouched. Real-money features remain disabled.
