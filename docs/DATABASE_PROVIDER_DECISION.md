@@ -83,7 +83,7 @@ The cutover still has limits:
 - Email verification and reset delivery must be checked against the Managed Auth configuration; do not claim these flows work before testing.
 - Managed Better Auth exposes a supported subset of Better Auth plugins. Confirm every desired login method before selecting it.
 
-VYRA has not provisioned its Supabase project or applied its schema. No production VYRA users or password hashes are known to exist. This is the cleanest point to make the provider decision. The unrelated Supabase projects must not be modified.
+At the time this provider comparison was first written, VYRA had not yet provisioned a dedicated database. The decision has since been implemented: the isolated Neon project `vyra-markets` is provisioned and its Neon-native schema is applied. No previous production user accounts or passwords needed migration. The unrelated Supabase projects remain untouched.
 
 ## 4. Why not Firebase Firestore?
 
@@ -121,34 +121,38 @@ Use Aiven if Neon provisioning or the Managed Better Auth route is unavailable a
 - Pooled PostgreSQL connection for server-only migrations and restricted maintenance.
 - All credentials stored as host secrets; never committed to Git.
 
-Expected environment settings must be checked against the exact Neon SDK version:
-- NEON_AUTH_BASE_URL
-- NEON_AUTH_COOKIE_SECRET (32+ random characters)
-- NEXT_PUBLIC_NEON_AUTH_URL if the selected client adapter requires it
-- NEON_DATA_API_URL
-- DATABASE_URL (server-only pooled connection)
-- NEON_API_KEY for provisioning/admin only, never browser-side
-- existing market-data provider keys
+The active VYRA application currently uses these environment settings:
+- `NEON_AUTH_BASE_URL`
+- `NEON_AUTH_COOKIE_SECRET` (32+ random characters; server-only)
+- `NEON_DATA_API_URL`
+- `NEON_MARKET_DATA_DATABASE_URL` (pooled URL for the restricted `vyra_quote_ingest` role, server-only)
+- optional `TWELVEDATA_API_KEY` and `COINGECKO_DEMO_API_KEY`
+- optional `NEXT_PUBLIC_GTM_ID`, loaded only after analytics consent
 
-## 7. Migration sequence
+Do not add a generic database-owner `DATABASE_URL`, Neon admin API key or owner connection string to public application routes. Provisioning is managed through Neon separately; the runtime quote writer must use its restricted role.
 
-1. Connect the Neon service; create an isolated Neon Free project.
-2. Enable Managed Better Auth and the Neon Data API.
-3. Create a Neon development branch.
-4. Install and pin the Neon SDK packages according to the current Neon skill/docs.
-5. Replace Supabase browser/server auth clients with the documented Neon Next.js setup and Supabase-style adapter where supported.
-6. Replace direct Supabase admin access with a server-only Neon PostgreSQL client or restricted Data API access.
-7. Change Supabase auth.users references to neon_auth user and user owner columns from UUID to TEXT.
-8. Change owner checks to auth.user_id() and PL/pgSQL owner variables to TEXT.
-9. Replace the Supabase auth-user trigger with a trigger on neon_auth user using the verified Better Auth column names.
-10. Replace service_role assumptions with a controlled server-only privileged role.
-11. Apply the new migration to the development branch only.
-12. Test authentication, owner isolation, ledger invariants, idempotency, risk controls and audit immutability.
-13. Run unit tests, typecheck, lint, production build and end-to-end tests in CI.
-14. Promote to the root paper environment only after every check passes.
-15. Keep all live execution switches disabled.
+## 7. Implemented migration and remaining verification
 
-Detailed route inventory, SQL identity conversion, privileged access boundaries and test cases are in NEON_MIGRATION_RUNBOOK.md.
+The original numbered sequence below has been completed in substance and superseded by the active runbook. Current implementation:
+1. Provisioned the dedicated Neon project `vyra-markets` and database `vyra` in Frankfurt.
+2. Enabled Neon Managed Better Auth and the Neon Data API.
+3. Created isolated branch `vyra-dev` from main.
+4. Inspected actual Managed Better Auth schema and confirmed UUID identity. Existing VYRA user references remain UUID; the active policies use `auth.uid()`.
+5. Applied `neon/migrations/20261126000100_vyra_core.sql` to the development branch and the main paper branch.
+6. Replaced the active Supabase application runtime with Neon Auth, Neon Data API and a restricted server-only quote-writer connection.
+7. Enabled RLS on all 14 public VYRA tables and inspected the 19 policies and database grants.
+8. Restricted the quote writer so it cannot access or change customer accounts, orders, positions or ledger records.
+9. Enabled mandatory email OTP verification and session revocation on password reset.
+10. Passed a full GitHub Actions run covering 16 unit tests, TypeScript, ESLint and the production Next.js build.
+
+Remaining work:
+- two-user signed-JWT cross-tenant isolation tests;
+- end-to-end signup/OTP/password-reset/session/logout testing with a controlled mailbox;
+- paper account/order/fill/cancel/ledger concurrency and rollback testing against Neon;
+- encrypted export and tested restore;
+- hosted paper-demo runtime verification.
+
+See `docs/NEON_MIGRATION_RUNBOOK.md` for the exact branch IDs, verified roles, auth settings and release gates.
 
 ## 8. Reliability and production boundary
 
