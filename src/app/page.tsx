@@ -6,7 +6,7 @@ import {
   Activity, ArrowUpRight, Bell, BriefcaseBusiness,
   ChartNoAxesCombined, CircleHelp, Command, CreditCard, Globe2,
   LayoutDashboard, LogIn, Menu, Plus, Settings, ShieldCheck,
-  Star, RefreshCw, ExternalLink, X,
+  Star, RefreshCw, ExternalLink, X, Network,
 } from 'lucide-react';
 
 type Quote = {
@@ -230,6 +230,7 @@ export default function Home() {
       <div className="workspace"><div className="avatar">{userEmail ? userEmail.slice(0,1).toUpperCase() : 'V'}</div><div>VYRA workspace<small>{userEmail || 'Guest access'}</small></div></div>
       <div className="navlabel">WORKSPACE</div>
       {nav.map(([name, Icon]) => <button key={name} onClick={() => { setActive(name); if (name === 'Activity') document.getElementById('activity')?.scrollIntoView({behavior:'smooth'}); else if (name === 'Markets') document.getElementById('markets')?.scrollIntoView({behavior:'smooth'}); else if (name === 'Portfolio') document.getElementById('portfolio')?.scrollIntoView({behavior:'smooth'}); }} className={'navitem ' + (active === name ? 'selected' : '')}><Icon size={18}/>{name}</button>)}
+      <Link href="/access-graph" className="navitem"><Network size={18}/>Access Graph</Link>
       <Link href="/partners" className="navitem"><BriefcaseBusiness size={18}/>Brokerage partners</Link>
       <div className="navlabel">PREFERENCES</div>
       <button className="navitem"><Settings size={18}/>Settings</button>
@@ -239,7 +240,7 @@ export default function Home() {
     <section className="content">
       <header className="topbar"><div className="crumb"><Menu size={18}/><span>Workspace</span><b>/</b>{active}</div><div className="topactions"><button className="iconbtn" onClick={() => void loadMarkets()} aria-label="Refresh market data"><RefreshCw size={16}/></button><button className="iconbtn" aria-label="Notifications"><Bell size={17}/></button>{userEmail ? <><span className="account">{userEmail}</span><form action="/api/logout" method="post"><button className="account" type="submit">Sign out</button></form></> : <Link className="account" href="/login"><LogIn size={16}/>Sign in</Link>}</div></header>
       <div className="page">
-        <div className="welcome"><div><div className="eyebrow"><Globe2 size={14}/> MULTI-ASSET BROKERAGE FOUNDATION</div><h1>Trade with clarity.</h1><p>One workspace for crypto, equities, FX and commodities.</p></div><div className="status"><span className="dot"/> PAPER MODE <ShieldCheck size={14}/></div></div>
+        <div className="welcome"><div><div className="eyebrow"><Globe2 size={14}/> MULTI-ASSET BROKERAGE FOUNDATION</div><h1>Trade with clarity.</h1><p>One workspace for crypto, equities, FX and commodities.</p></div><div className="welcomeActions"><Link className="accessQuickLink" href="/access-graph"><Network size={15}/> Access Graph <ArrowUpRight size={13}/></Link><div className="status"><span className="dot"/> PAPER MODE <ShieldCheck size={14}/></div></div></div>
         <div className="notice"><ShieldCheck size={19}/><div><strong>Paper trading only — live execution is locked</strong><p>Prices below come from connected market-data providers and carry source timestamps. Paper fills use an explicit 5 bps slippage assumption. No client funds or live broker orders are handled.</p></div></div>
         {message && <div className="messageBar" role="status">{message}<button onClick={() => setMessage('')} aria-label="Dismiss"><X size={15}/></button></div>}
         <section className="balance" id="portfolio">
