@@ -217,8 +217,9 @@ function validateApprovedExecutionPolicy(policy, now = Date.now()) {
     return fail('EXECUTION_POLICY_MISSING', 'An approved, versioned country and client-type execution policy is required.');
   }
   const effectiveFrom = Date.parse(policy.effectiveFrom);
-  const effectiveUntil = policy.effectiveUntil ? Date.parse(policy.effectiveUntil) : Number.POSITIVE_INFINITY;
-  if (!Number.isFinite(effectiveFrom) || !Number.isFinite(effectiveUntil) ||
+  const hasEffectiveUntil = policy.effectiveUntil !== undefined && policy.effectiveUntil !== null;
+  const effectiveUntil = hasEffectiveUntil ? Date.parse(policy.effectiveUntil) : Number.POSITIVE_INFINITY;
+  if (!Number.isFinite(effectiveFrom) || (hasEffectiveUntil && !Number.isFinite(effectiveUntil)) ||
       effectiveFrom > now || effectiveUntil <= now) {
     return fail('EXECUTION_POLICY_OUT_OF_DATE', 'The execution policy is not within its approved effective period.');
   }
