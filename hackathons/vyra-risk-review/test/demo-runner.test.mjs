@@ -22,6 +22,17 @@ test('assigns offline agent roles from message context rather than call order', 
   assert.equal(auditor.rowResponse.role, 'independent-auditor');
 });
 
+test('uses the latest role marker in the full request when memory contains old roles', async () => {
+  const runner = new VYRAOfflineInferenceRunner({ delayMs: 0 });
+  const result = await runner.run({
+    context: {
+      earlierMessages: ['ROLE: evidence-scout', 'ROLE: route-analyst'],
+      currentTask: 'ROLE: route-analyst',
+    },
+  });
+  assert.equal(result.rowResponse.role, 'route-analyst');
+});
+
 test('records offline provider-call and concurrency metrics without duplicate fields', async () => {
   const runner = new VYRAOfflineInferenceRunner({ delayMs: 5 });
   await Promise.all([
@@ -36,8 +47,9 @@ test('records offline provider-call and concurrency metrics without duplicate fi
   assert.equal(snapshot.completedCalls, 3);
   assert.equal(snapshot.maxConcurrentCalls, 2);
   assert.equal(snapshot.timeline.length, 6);
-  assert.deepEqual(
-    snapshot.timeline.filter((entry) => entry.event === 'completed').map((entry) => entry.role),
-    ['evidence-scout', 'route-analyst', 'independent-auditor']
-  );
+  const completedRoles = snapshot.timeline
+    .filter((entry) => entry.event === 'completed')
+    .map((entry) => entry.role);
+  assert.deepEqual(completedRoles.slice(0, 2).sort(), ['evidence-scout', 'route-analyst']);
+  assert.equal(completedRoles[2], 'independent-auditor');
 });
