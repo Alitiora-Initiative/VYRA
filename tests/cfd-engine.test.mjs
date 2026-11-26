@@ -68,6 +68,49 @@ test('calculates equity, free margin and a policy-controlled closeout signal', (
   assert.equal(snapshot.closeoutRequired, true);
 });
 
+
+
+test('uses the stricter result of user-requested leverage and progressive policy tiers', () => {
+  const result = calculateCfdOrderRisk({
+    contract, quote, side: 'buy', lots: 0.1, requestedLeverage: 10,
+    policy: {
+      maxLeverage: 20, marginMode: 'cross', marginTierMethod: 'marginal',
+      marginTiers: [
+        { minNotional: 0, maxNotional: 5000, maxLeverage: 20 },
+        { minNotional: 5000, maxNotional: null, maxLeverage: 10 },
+      ],
+    },
+    freeMargin: 5000, now,
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.marginCalculationMethod, 'marginal_tiered_max_of_requested_and_policy');
+  assert.equal(result.requiredMargin, 1080.2);
+});
+
+test('gross margin does not offset opposing positions and includes pending reservations', () => {
+  const snapshot = calculateCfdMarginSnapshot({
+    balance: 2000,
+    positions: [
+      { unrealizedPnl: 0, marginRequired: 500 },
+      { unrealizedPnl: 0, marginRequired: 500 },
+    ],
+    pendingOrderMargin: 200,
+    otherReservedMargin: 100,
+    closeoutLevelPct: 50,
+  });
+  assert.equal(snapshot.usedMargin, 1000);
+  assert.equal(snapshot.totalMarginCommitment, 1300);
+  assert.equal(snapshot.freeMargin, 700);
+});
+
+test('rejects negative pending or other margin reservations', () => {
+  const result = calculateCfdMarginSnapshot({
+    balance: 1000, positions: [], closeoutLevelPct: 50,
+    pendingOrderMargin: -1,
+  });
+  assert.equal(result.code, 'MARGIN_RESERVATION_INVALID');
+});
+
 test('A-book, B-book and hybrid route simulation never claims a live execution', () => {
   assert.equal(resolvePaperExecutionModel({ model: 'a_book', netExposureAfterTrade: 100 }).route, 'paper_external_hedge');
   assert.equal(resolvePaperExecutionModel({ model: 'b_book', netExposureAfterTrade: 100 }).route, 'paper_internal_principal');
