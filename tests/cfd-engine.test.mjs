@@ -75,3 +75,88 @@ test('A-book, B-book and hybrid route simulation never claims a live execution',
   assert.equal(resolvePaperExecutionModel({ model: 'hybrid', netExposureAfterTrade: 300, maxRetainedExposure: 1000 }).route, 'paper_internal_principal');
   assert.equal(resolvePaperExecutionModel({ model: 'hybrid', netExposureAfterTrade: 300 }).code, 'HYBRID_LIMIT_MISSING');
 });
+
+
+test('calculates progressive margin using explicit contiguous notional tiers', async () => {
+  const { calculateTieredCfdMargin } = await import('../src/lib/cfd/engine.mjs');
+  const result = calculateTieredCfdMargin({
+    notional: 250000, calculationMethod: 'marginal',
+    tiers: [
+      { minNotional: 0, maxNotional: 100000, maxLeverage: 30 },
+      { minNotional: 100000, maxNotional: 200000, maxLeverage: 20 },
+      { minNotional: 200000, maxNotional: null, maxLeverage: 10 },
+    ],
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.requiredMargin, 18333.33333333);
+  assert.equal(result.appliedTiers.length, 3);
+});
+
+test('blocks missing, gapped or implicit tiered-margin methods', async () => {
+  const { calculateTieredCfdMargin } = await import('../src/lib/cfd/engine.mjs');
+  assert.equal(calculateTieredCfdMargin({ notional: 1000, tiers: [] }).code, 'MARGIN_TIER_METHOD_MISSING');
+  assert.equal(calculateTieredCfdMargin({
+    notional: 150000, calculationMethod: 'marginal',
+    tiers: [
+      { minNotional: 0, maxNotional: 100000, maxLeverage: 30 },
+      { minNotional: 120000, maxNotional: null, maxLeverage: 20 },
+    ],
+  }).code, 'MARGIN_TIER_GAP');
+});
+
+test('separates a technology partner from a regulated execution model', async () => {
+  const { resolvePaperBrokerageOperatingModel } = await import('../src/lib/cfd/engine.mjs');
+  const policy = {
+    status: 'approved', policyId: 'policy-kenya-demo', policyVersion: '1.0',
+    jurisdictionCode: 'KE', clientType: 'retail',
+    effectiveFrom: new Date(now - 1000).toISOString(),
+    operatingModel: 'technology_partner', permissions: {},
+  };
+  const result = resolvePaperBrokerageOperatingModel({ policy, now });
+  assert.equal(result.ok, true);
+  assert.equal(result.route, 'no_execution_partner_handoff');
+  assert.equal(result.acceptsClientOrders, false);
+});
+
+test('requires explicit principal permissions for matched principal', async () => {
+  const { resolvePaperBrokerageOperatingModel } = await import('../src/lib/cfd/engine.mjs');
+  const policy = {
+    status: 'approved', policyId: 'policy-demo', policyVersion: '1',
+    jurisdictionCode: 'GB', clientType: 'retail',
+    effectiveFrom: new Date(now - 1000).toISOString(),
+    operatingModel: 'matched_principal',
+    permissions: { principal: true, matchedPrincipal: true, bestExecution: true, conflictsControls: false },
+  };
+  assert.equal(resolvePaperBrokerageOperatingModel({ policy, now }).code, 'MATCHED_PRINCIPAL_CONTROLS_MISSING');
+});
+
+test('hybrid operating model retains only the approved exposure amount and routes the excess', async () => {
+  const { resolvePaperBrokerageOperatingModel } = await import('../src/lib/cfd/engine.mjs');
+  const policy = {
+    status: 'approved', policyId: 'policy-hybrid', policyVersion: '2',
+    jurisdictionCode: 'GB', clientType: 'professional',
+    effectiveFrom: new Date(now - 1000).toISOString(),
+    operatingModel: 'hybrid', maxRetainedExposure: 1000,
+    permissions: {
+      principal: true, dealing: true, agencyRouted: true, externalVenueApproved: true,
+      bestExecution: true, conflictsControls: true,
+    },
+  };
+  const result = resolvePaperBrokerageOperatingModel({ policy, netExposureAfterTrade: 1400, now });
+  assert.equal(result.ok, true);
+  assert.equal(result.retainedExposure, 1000);
+  assert.equal(result.externalHedgeExposure, 400);
+  assert.equal(result.neverUsesClientProfitability, true);
+});
+
+test('blocks an expired operating policy', async () => {
+  const { resolvePaperBrokerageOperatingModel } = await import('../src/lib/cfd/engine.mjs');
+  const policy = {
+    status: 'approved', policyId: 'policy-expired', policyVersion: '1',
+    jurisdictionCode: 'KE', clientType: 'retail',
+    effectiveFrom: new Date(now - 10000).toISOString(),
+    effectiveUntil: new Date(now - 1000).toISOString(),
+    operatingModel: 'agency_routed', permissions: { agencyRouted: true, externalVenueApproved: true },
+  };
+  assert.equal(resolvePaperBrokerageOperatingModel({ policy, now }).code, 'EXECUTION_POLICY_OUT_OF_DATE');
+});
