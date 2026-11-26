@@ -345,7 +345,9 @@ export function submitPaperCfdOrder({ state, request, contract, quote, policy, n
     filledLots: 0,
     remainingLots: round8(request.lots),
     requestedLeverage: request.requestedLeverage,
+    lotStep: contract.lotStep,
     referencePrice: risk.executionPrice,
+    accountCurrencyRate: request.accountCurrencyRate ?? 1,
     referencePriceSide: risk.priceSide,
     marginRequired: risk.requiredMargin,
     marginRemaining: risk.requiredMargin,
@@ -445,8 +447,10 @@ export function fillPaperCfdOrder({ state, orderId, fillId, eventId, idempotency
   if (state.positions.some((position) => position.fillId === fillId)) {
     return fail('FILL_ID_DUPLICATE', 'Fill ID already exists in this paper account.');
   }
-  if (!POSITIVE(lots) || lots > order.remainingLots + EPSILON) {
-    return fail('FILL_QUANTITY_INVALID', 'Fill quantity must be positive and cannot exceed the unfilled order quantity.');
+  if (!POSITIVE(lots) || lots > order.remainingLots + EPSILON ||
+      !POSITIVE(order.lotStep) ||
+      Math.abs((lots / order.lotStep) - Math.round(lots / order.lotStep)) > EPSILON) {
+    return fail('FILL_QUANTITY_INVALID', 'Fill quantity must be positive, respect the instrument lot step and not exceed the unfilled order quantity.');
   }
   if (!validId(positionId)) return fail('POSITION_ID_REQUIRED', 'A unique position ID is required for each paper fill.');
 
