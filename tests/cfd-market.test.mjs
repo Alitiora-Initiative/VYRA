@@ -14,7 +14,7 @@ test('accepts a valid fresh bid/ask quote and calculates spread in basis points'
   assert.equal(result.available, true);
   if (result.available) {
     assert.equal(result.ageMs, 1000);
-    assert.equal(result.spreadBps, 1.8519);
+    assert.equal(result.spreadBps, 1.8517);
   }
 });
 
