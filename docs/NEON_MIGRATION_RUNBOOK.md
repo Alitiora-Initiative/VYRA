@@ -1,143 +1,159 @@
-# VYRA — Neon Postgres + Managed Better Auth Migration Runbook
+# VYRA — Neon Postgres + Managed Better Auth Runbook
 
-**Status:** Database provisioned and migrated; app port committed; end-to-end auth/provider tests and final CI remain open.  
-**Provider:** Neon Postgres Free for synthetic development and paper trading only.  
-**Project:** `vyra-markets`, Frankfurt (`aws-eu-central-1`).  
+**Status:** Neon is provisioned, the migration is applied to the main branch, and the Next.js app is using Neon. End-to-end authentication, signed-user isolation, full paper-ledger verification and hosted deployment remain open.  
+**Use:** isolated synthetic development and paper trading only; not a live financial book of record.  
+**Project:** `vyra-markets`, Frankfurt (`aws-eu-central-1`), ID `dawn-wind-08199003`.  
 **Database:** `vyra`; main branch `br-tiny-lake-bhoos1ij`.  
-**Main migration:** `neon/migrations/20261126000100_vyra_core.sql`.
+**Development branch:** `vyra-dev`, ID `br-lively-morning-bhf3wagy` (branched from main on 26 Nov 2026).  
+**Migration of record:** `neon/migrations/20261126000100_vyra_core.sql`.
 
-## 1. Current infrastructure state
+## 1. Actual infrastructure state
 
-Neon is connected and a dedicated project has been created. Neon Managed Better Auth and the Neon Data API are enabled. The adapted core SQL migration was applied to both an isolated validation branch and the main branch. The validation branch was deleted after successful testing.
+Neon is connected to the VYRA project. Neon Managed Better Auth and the Neon Data API are enabled on main. The Neon-specific core migration is applied to main. The isolated `vyra-dev` branch was created from main after migration so that subsequent checks can run without changing the main paper branch.
 
-The main branch currently contains:
-- 14 VYRA public tables, with RLS enabled on all 14;
-- 19 public row-level security policies;
-- 69 validated database constraints;
-- UUID business identifiers and UUID user references to Neon Managed Auth;
-- paper order, fill, ledger, risk-limit, audit and quote routines;
-- enabled-instrument catalogue rows, but no test/customer accounts, orders, fills or market-quote rows.
+Verified on the development branch:
+- database `vyra` exists and is owned by `vyra_owner`;
+- 14 VYRA application tables exist in `public`;
+- 9 Neon Managed Better Auth tables exist in `neon_auth`;
+- the restricted quote-ingestion table exists in `market_ingestion`;
+- all 14 VYRA public tables have RLS enabled;
+- 19 public RLS policies were inspected;
+- UUID user references and the paper-order/ledger functions exist;
+- no seeded customer account, order, fill or market quote was found in the main application dataset at the time of inspection.
 
-All unrelated Supabase projects remain untouched. The original Supabase SQL file remains only as a migration-history reference. Never apply it to Neon.
+The development branch is not a deleted temporary branch; it is the active isolated validation branch. Do not drop it while it is used for testing. Unrelated Supabase projects (9N8 and Space Ledger) have not been touched. The legacy Supabase migration is retained only for history; never apply it to Neon.
 
-## 2. Verified auth schema and RLS contract
+## 2. Auth identity and RLS contract
 
-The inspected Neon Managed Auth table `neon_auth."user"` has a UUID primary key (`id`), text name/email and Better Auth timestamp fields. Neon also exposes `auth.uid()` returning UUID, `auth.user_id()` returning text and `auth.jwt()` returning JSONB. The VYRA user references therefore remain UUID; the earlier generic runbook assumption that all Better Auth IDs would be text is not used in the applied migration.
+The actual Neon Managed Auth table `neon_auth."user"` has a UUID primary key (`id`). Neon exposes `auth.uid()` as UUID and `auth.user_id()` as text. VYRA keeps its user-reference columns as UUID and uses `auth.uid()` in ownership policies. The migration does not install triggers on or alter Neon-managed auth tables.
 
-The Neon migration:
-- references `neon_auth."user"(id)` for user-owned records;
-- does not install triggers on Neon-managed auth tables;
-- uses `auth.uid()` for user-ownership checks;
-- creates profiles lazily through the authenticated profile API;
-- preserves UUID account/order/instrument/ledger identifiers;
-- retains RLS on all VYRA public tables.
+The database access pattern is:
+- user requests use the Neon Data API with a JWT from the current Neon Auth session;
+- anonymous requests receive only the privileges explicitly granted to the `anonymous` role;
+- the Data API exposes the `public` schema and uses Neon Auth as its JWT provider;
+- RLS policies scope user-owned records to the signed-in UUID;
+- authenticated users can read allowed data but cannot directly insert orders or journal entries;
+- account/order creation and user-scoped matching are performed through narrowly granted PostgreSQL functions.
 
-The managed roles `anonymous` and `authenticated` are non-login roles with RLS enabled. Owner policies are scoped to `auth.uid()`. The global matcher is deliberately non-executable by anonymous and authenticated roles. Public market matching is a disabled server-only stub; `process_my_paper_quote` validates ownership of an active paper account before processing that user's orders.
+Observed access checks on `vyra-dev`:
+- anonymous role cannot select `trading_accounts` or `orders`;
+- authenticated role can select orders but cannot insert orders directly;
+- anonymous cannot execute `open_paper_account()`;
+- authenticated can execute `open_paper_account()` and the ownership-checked `process_my_paper_quote(uuid,uuid)`;
+- authenticated cannot execute the global `process_market_quote(uuid)` matcher.
 
-## 3. Privileged quote ingestion
+RLS being enabled does not replace signed-session tests. Two real synthetic users (A and B) still need to be tested with valid Neon Auth JWTs.
 
-A dedicated `vyra_quote_ingest` PostgreSQL login role was created for the quote writer. It is not a superuser and does not bypass RLS. Its grants are limited to quote ingestion; it has no permission to mutate orders, trading accounts, positions, balances, ledger entries or auth records. This role is the only account to use in `NEON_MARKET_DATA_DATABASE_URL`.
+## 3. Restricted quote ingestion
 
-Never place the database owner connection string, Neon API key, Auth server secret or this quote-writer password in Git, browser bundles, `NEXT_PUBLIC_*` variables or generic user-facing API code. The quote writer uses a pooled connection and prepared parameters, validates positive prices and timestamps, and only overwrites a stored quote with an equal/newer observation.
+A dedicated PostgreSQL login role `vyra_quote_ingest` is used only by the market quote writer. It is not the database owner and has no permission to mutate accounts, orders, positions, fills, ledger records or auth tables. Its application connection is stored only in `NEON_MARKET_DATA_DATABASE_URL`.
 
-## 4. Application migration status
+The app module `src/lib/neon/market-writer.ts` validates positive prices, timestamps, instrument IDs and source labels; it uses parameterised SQL and only updates a stored quote when the incoming observation is not older.
 
-The active Next.js app has been moved from Supabase SSR to Neon:
+Never put the owner URL, Neon API key, Auth cookie secret or quote-writer password in Git, browser bundles, logs, `NEXT_PUBLIC_*` variables or generic user-facing routes.
+
+## 4. Active application integration
+
+The Next.js application now uses Neon instead of the former Supabase SSR/auth runtime:
 - `src/lib/neon/auth.ts`: Neon Managed Better Auth server integration and signed session cookies.
-- `src/lib/neon/auth-client.ts`: Neon Auth browser client.
-- `src/lib/neon/server.ts`: request-scoped Neon Data API client using the validated Neon Auth session token.
-- `src/lib/neon/market-writer.ts`: server-only pooled quote writer using the restricted role.
+- `src/lib/neon/auth-client.ts`: browser auth client.
+- `src/lib/neon/server.ts`: request-scoped Neon Data API client using the validated current session token.
+- `src/lib/neon/market-writer.ts`: server-only PostgreSQL writer using the restricted quote-ingestion role.
 - `src/app/api/auth/[...path]/route.ts`: Neon Auth request handler with Next.js route context.
 - `src/app/auth/[path]/page.tsx`: Neon Auth UI routes.
-- `src/app/api/me`, profile, watchlist, paper account, paper order, order cancellation and ledger routes: Neon Data API.
-- `src/app/api/markets` and `src/app/api/instruments`: Neon-backed catalogue and quote persistence.
-- `proxy.ts`: Neon middleware integration for protected settings.
-- The old `src/lib/supabase/*`, Supabase middleware and Supabase PKCE callback runtime files have been removed.
+- `src/app/api/me`, profile, watchlist, paper account, paper order, cancellation and ledger routes: Neon Data API.
+- `src/app/api/markets` and `src/app/api/instruments`: provider quote/catalogue API and persistence.
+- `proxy.ts`: Neon middleware integration.
 
-The app uses pinned Next.js 16 and the Neon SDK packages. Neon Auth UI `0.4.0-beta` publishes an exact `0.6.0-beta` peer dependency while VYRA uses Auth `0.7.0-beta`; the repository includes a package override to keep Auth UI on the app's Auth version instead of allowing a second nested SDK copy. This must be revisited when Neon republishes compatible package versions.
+The original Supabase migration and documentation remain as historical references where useful; do not connect the VYRA app to the other Supabase products.
 
-## 5. Environment variables
+## 5. Server environment
 
-Required for the web app:
-- `NEON_AUTH_BASE_URL` — Managed Better Auth base URL for this branch.
-- `NEON_AUTH_COOKIE_SECRET` — server-only random secret, minimum 32 characters.
-- `NEON_DATA_API_URL` — Neon Data API endpoint for the `vyra` database.
-- `NEON_MARKET_DATA_DATABASE_URL` — pooled PostgreSQL URL for the restricted `vyra_quote_ingest` role.
-- `TWELVEDATA_API_KEY` — optional provider key for shares/FX/commodities; without it those provider classes remain unavailable.
-- `COINGECKO_DEMO_API_KEY` — optional provider key if CoinGecko rate limits the demo.
-- `NEXT_PUBLIC_GTM_ID` — optional GTM container; no ID is currently configured and the script does not load until the visitor opts into analytics.
+Required:
+- `NEON_AUTH_BASE_URL` — Managed Better Auth endpoint for the branch used by the app.
+- `NEON_AUTH_COOKIE_SECRET` — server-only random secret of at least 32 characters.
+- `NEON_DATA_API_URL` — Neon Data API endpoint for database `vyra`.
+- `NEON_MARKET_DATA_DATABASE_URL` — pooled URL for the restricted `vyra_quote_ingest` role.
 
-The actual secrets belong in the target hosting provider's environment store. Never commit real values into `.env.example` or GitHub.
+Optional:
+- `TWELVEDATA_API_KEY` — provider key for equities, FX and commodities. Without it, those classes remain unavailable.
+- `COINGECKO_DEMO_API_KEY` — optional if CoinGecko rate limits the paper demo.
+- `NEXT_PUBLIC_GTM_ID` — optional analytics container; no ID is configured and GTM is consent-gated.
 
-## 6. Managed Auth settings
+Credentials must be set in the selected host's encrypted secret store. Do not store production secrets in GitHub Actions logs, code, issue comments or public environment variables.
 
-Neon Auth is branded as VYRA Markets. Email/password sign-up is enabled; new accounts must complete email verification using an OTP before sign-in. The shared Neon email provider is selected. The app's auth UI uses Neon Auth's supported sign-in, sign-up, forgot-password and reset-password views.
+## 6. Neon Auth settings
 
-Not yet certified:
-- deliverability for verification emails;
-- end-to-end OTP confirmation;
-- password reset email receipt and completion;
-- session refresh across browser reloads and app restarts;
-- logout invalidation;
-- trusted-domain redirect behavior on the deployed host.
+Neon Auth email application name is set to **VYRA Markets** on main and `vyra-dev`.
 
-Localhost is allowed for development. Add the exact final staging/production origin to Neon Auth trusted domains when the host URL exists. Never use an open wildcard for production redirect origins.
+Verified on both branches:
+- email/password authentication is enabled;
+- sign-up is enabled;
+- email verification is required;
+- OTP is the email-verification method;
+- verification emails are configured to send on sign-up and sign-in;
+- automatic sign-in after successful verification is enabled;
+- sessions are revoked on password reset;
+- localhost is allowed for local development;
+- no custom trusted production origin has yet been added.
 
-## 7. RLS, order and ledger verification
+The shared Neon email provider is still configured. The sender has not yet been replaced with a VYRA-owned custom-domain mailbox.
 
-The applied schema was inspected directly. Verified facts:
-- RLS enabled on all 14 public tables.
-- 19 public RLS policies exist.
-- 69 constraints are validated.
-- authenticated/anonymous roles cannot execute the global `process_market_quote(uuid)` matcher.
-- authenticated users can call only the user-scoped `process_my_paper_quote(uuid,uuid)` flow, whose private function checks that the account belongs to the JWT user and is an active paper account.
-- unauthenticated paper-account opening is rejected with `AUTH_REQUIRED`.
-- `vyra_quote_ingest` cannot mutate orders/accounts/ledger records.
+Not yet certified end-to-end:
+- verification OTP delivery and completion;
+- password-reset email delivery and reset completion;
+- session persistence across reloads;
+- logout/session invalidation;
+- password-reset revocation;
+- redirect behavior on the eventual hosted origin.
 
-Still required using two synthetic signed-in users:
-1. Verify each can read only their own profile, accounts, positions, fills, orders, risk limits, watchlist and ledger.
-2. Attempt cross-account access by guessing a second user's UUIDs; every read/write must fail or return no rows.
-3. Verify anonymous users can only read enabled instruments and market quotes.
-4. Create paper account; check initial journal debits/credits balance.
-5. Submit market and non-marketable limit orders with unique client-order IDs.
-6. Verify matching, reservations, partial state if implemented, cancellation and duplicate idempotent retry.
-7. Verify no fill is written for stale/future quotes or rejected orders.
-8. Verify ledger updates are immutable and balance checks reject unbalanced journal transactions.
-9. Confirm failed RPCs roll back all side effects.
+When a staging host is created, add only its exact HTTPS origin to Neon Auth trusted domains. Do not use a wildcard. Disable localhost on the production branch only after the final hosting and local development split is agreed and verified.
 
-## 8. CI and production-build status
+## 7. RLS, paper order and ledger verification
 
-The repository's previous GitHub workflow runs recorded 16/16 unit tests passing and TypeScript passing after the auth-handler route signature was corrected. The old ESLint legacy compatibility wrapper then failed with a circular-configuration error; it has been replaced with Next.js's native flat configs at `eslint.config.mjs`.
+Direct inspection verified:
+- RLS is enabled on all 14 VYRA public application tables;
+- account, order, fill, position, risk-limit and ledger reads have user/account-owner policies;
+- anonymous users have catalogue and market-quote reads only;
+- client roles cannot mutate the financial tables directly;
+- the quote-ingestion role can write quotes but not accounts, orders or ledgers;
+- the global matcher is not executable by anonymous/authenticated roles;
+- the user-scoped matcher verifies the authenticated user owns the active paper account.
 
-**Do not claim CI complete until one current main-branch run passes all four stages:** unit tests, TypeScript, lint and production build. The final build can still expose package/export/runtime issues that TypeScript alone does not catch.
+Still required with synthetic signed-in users A and B:
+1. Verify A can read only A's profile, accounts, watchlist, orders, positions, fills and ledger.
+2. Attempt cross-account reads and mutations using B's UUIDs from A's session; they must fail or return no rows.
+3. Verify anonymous access is limited to enabled catalogue entries and public quotes.
+4. Open a paper account and confirm balanced opening journal entries.
+5. Submit market and non-marketable limit paper orders with a reused client idempotency UUID on retries.
+6. Verify quote age, notional/position/daily-loss limits and cash/share reservations.
+7. Verify fills, cancellations and failed transactions preserve ledger balance and transaction atomicity.
+8. Verify audit and ledger mutation triggers reject update/delete.
+9. Test simultaneous/replayed order submissions and rollback behavior.
 
-## 9. Deployment state
+## 8. Continuous integration
 
-The Render account has two empty workspaces, `My Workspace` and `JOJO`; no VYRA Render service has been created. A free Render web service may host the paper demo once CI and runtime checks pass. It is not a suitable production brokerage host or production financial book of record.
+The GitHub Actions workflow runs unit tests, TypeScript, ESLint and a production Next.js build. The last completed full workflow before the latest fixes reported all 16 unit tests passing and TypeScript passing, but lint failures prevented the production build. The observed lint issues were corrected in subsequent commits (Next.js internal links and the dashboard initial-load effect).
 
-After creating the demo service:
-- set the four required Neon variables in Render's secret store;
-- add the exact `https://<service>.onrender.com` origin to Neon Auth trusted domains;
-- test sign-up, verification, sign-in, sign-out, API health, quote refresh, paper account, order and ledger flows;
-- do not use real customer information or money;
-- do not deploy a live trading interface.
+**Do not mark CI green until a current main-branch workflow completes with success for every stage.** If lint passes, require the production build to finish rather than infer success from tests or typecheck.
 
-## 10. Rollback
+## 9. Hosting state
 
-If the Neon app integration fails:
-- keep the dedicated Neon project and migration intact for diagnosis;
-- revert the app commit to a known passing build;
-- keep live execution disabled;
-- do not use another product's Supabase database as a fallback;
-- preserve the original Supabase migration only for historical reference.
+The repository contains a free Render Node web-service blueprint in Frankfurt with `/api/health` as the health check. No VYRA Render service has been created. The connected Render account has two workspaces, `My Workspace` and `JOJO`; the workspace for VYRA has not been selected.
 
-## 11. Remaining launch blockers
+The connected Vercel Hobby team cannot currently link this private organisation-owned GitHub repository; VYRA has no Vercel project. Do not make the repository public or upgrade Vercel to bypass this.
 
-- [ ] Complete CI: tests, typecheck, lint and Next.js production build on one current commit.
-- [ ] End-to-end Neon Auth email verification/reset and session tests.
-- [ ] Two-user RLS and complete paper order/ledger integration tests.
-- [ ] Verify live quote API against each provider; obtain commercial market-data rights before any public redistribution.
-- [ ] Provision a Render paper-demo service and set Neon secrets securely.
-- [ ] Confirm staging trusted origin and verify security headers, logs and backup restore.
-- [ ] Choose one provider, one first market/jurisdiction and one operating model; obtain written partner and legal approvals.
-- [ ] Keep all live brokerage activity disabled until regulated partner integration and formal certification.
+After the owner selects the Render workspace and the service is created:
+- set all four required Neon values in the Render secret store;
+- set optional provider keys only when available;
+- add the exact `https://<service>.onrender.com` origin to Neon Auth;
+- run the health endpoint and test all sign-in, quote, account, order and ledger flows;
+- keep all test data synthetic and paper-only.
+
+Render Free is acceptable for a non-production demo only. It is not approved hosting for a live brokerage or customer-money system.
+
+## 10. Rollback and non-negotiable boundary
+
+If the Neon integration fails, revert the application deployment to the last known passing commit while retaining the isolated database branch for diagnosis. Do not use another product's database as a fallback. Keep the live execution adapters hard-disabled.
+
+A real brokerage launch remains blocked on a signed provider agreement, regulator/legal classification, country/product scope, client asset/funding/custody responsibilities, KYC/AML/sanctions, approved disclosures, provider API certification, operational resilience, reconciliation, monitoring, independent security review and formal go/no-go evidence.
