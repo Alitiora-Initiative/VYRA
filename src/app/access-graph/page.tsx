@@ -11,17 +11,27 @@ import {
   ACCESS_GRAPH_REVIEW_DATE, ACCESS_GRAPH_VERSION, evaluateAccess,
   type AccessDecision,
 } from '@/lib/access-graph/rules.mjs';
+import { evaluateMarketAccessRoute } from '@/lib/access-graph/route-gate.mjs';
+import { getProviderGraphSnapshot } from '@/lib/provider-graph/capabilities.mjs';
+
+const PROVIDER_CANDIDATES = getProviderGraphSnapshot().providers;
 
 export default function AccessGraphPage() {
   const [country, setCountry] = useState('KE');
   const [customerType, setCustomerType] = useState('retail');
   const [product, setProduct] = useState('virtual_asset');
   const [activity, setActivity] = useState('virtual_asset_service');
+  const [providerId, setProviderId] = useState('interactive-brokers');
 
   const result = useMemo<AccessDecision>(
     () => evaluateAccess({ country, customerType, product, activity }),
     [country, customerType, product, activity]
   );
+  const routeDecision = useMemo(
+    () => evaluateMarketAccessRoute({ country, customerType, product, activity, providerId }),
+    [country, customerType, product, activity, providerId]
+  );
+  const selectedProvider = PROVIDER_CANDIDATES.find((item) => item.id === providerId);
   const matchedEvidenceIds = new Set(result.evidence.map((item) => item.id));
 
   return (
@@ -34,7 +44,7 @@ export default function AccessGraphPage() {
       <section className="accessHero">
         <div className="accessEyebrow"><Network size={15}/> REGULATORY-AWARE MARKET ACCESS INFRASTRUCTURE</div>
         <h1>One access graph.<br/><span>Every route has proof.</span></h1>
-        <p>Before a broker, product or referral is connected, VYRA maps the country, activity and product to its evidence, required approvals and missing operating controls.</p>
+        <p>Before a broker, product or referral is connected, VYRA maps the country, customer, activity, provider capabilities and evidence required for that exact route.</p>
         <div className="accessHeroMeta">
           <span><ShieldCheck size={14}/> Default-deny policy</span>
           <span><Database size={14}/> Rule pack {ACCESS_GRAPH_VERSION}</span>
@@ -48,7 +58,7 @@ export default function AccessGraphPage() {
             <div><div className="accessEyebrow">01 / ROUTE SIMULATOR</div><h2>Test a market-access route</h2></div>
             <span className="accessStatusTag">SIMULATION</span>
           </div>
-          <p className="accessLead">Change one dimension at a time. An unknown combination never inherits permission from another country or product.</p>
+          <p className="accessLead">Change one dimension at a time. An unknown combination never inherits permission from another country, product or provider.</p>
 
           <div className="accessFields">
             <label>Customer / target jurisdiction
@@ -71,6 +81,11 @@ export default function AccessGraphPage() {
                 {ACCESS_ACTIVITIES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
               </select>
             </label>
+            <label>Partner / provider candidate
+              <select value={providerId} onChange={(event) => setProviderId(event.target.value)}>
+                {PROVIDER_CANDIDATES.map((item) => <option key={item.id} value={item.id}>{item.name} · research only</option>)}
+              </select>
+            </label>
           </div>
 
           <div className={'accessDecision ' + result.severity}>
@@ -82,6 +97,31 @@ export default function AccessGraphPage() {
             <div className="accessDecisionFooter">
               <span><CircleAlert size={14}/> {result.missingGates.length} outstanding evidence gates</span>
               <strong>LIVE ACTIONS: DISABLED</strong>
+            </div>
+          </div>
+
+          <div className="accessDecision critical">
+            <div className="accessDecisionTop">
+              <div className="accessDecisionIcon"><Network size={20}/></div>
+              <div>
+                <span>COMBINED ACCESS + PROVIDER DECISION</span>
+                <h3>{routeDecision.readyForHumanReview ? 'Evidence complete — human review required' : 'Route blocked pending evidence'}</h3>
+              </div>
+            </div>
+            <p>{selectedProvider?.name ?? providerId} is evaluated against the same country, investor type, product and activity as AccessGraph. Both graphs must pass before a route can even be escalated for human review.</p>
+            <div className="accessRouteBlockers">
+              {routeDecision.blockers.slice(0, 6).map((blocker, index) => (
+                <div className="accessRouteBlocker" key={blocker}>
+                  <span>{String(index + 1).padStart(2, '0')}</span>
+                  <p>{blocker}</p>
+                </div>
+              ))}
+              {routeDecision.blockers.length > 6 && <div className="accessRouteMore">+ {routeDecision.blockers.length - 6} more blockers in the composite decision</div>}
+              {routeDecision.blockers.length === 0 && <div className="accessRouteMore">No recorded blockers. This outcome is still not an approval.</div>}
+            </div>
+            <div className="accessDecisionFooter">
+              <span><CircleAlert size={14}/> {routeDecision.blockers.length} blockers · {routeDecision.provider.missingCapabilities.length} capability gaps</span>
+              <strong>NO CUSTOMER ACTIONS ENABLED</strong>
             </div>
           </div>
 
@@ -99,7 +139,7 @@ export default function AccessGraphPage() {
             <div className="accessPipelineStep"><span>1</span><div><strong>Identify activity</strong><small>Not just asset label — what does VYRA actually do?</small></div></div>
             <div className="accessPipelineStep"><span>2</span><div><strong>Resolve jurisdiction</strong><small>Residence, targeting, distribution and economic nexus</small></div></div>
             <div className="accessPipelineStep"><span>3</span><div><strong>Attach source evidence</strong><small>Regulator, law, version, provision and review date</small></div></div>
-            <div className="accessPipelineStep"><span>4</span><div><strong>Verify principal and scope</strong><small>Licence, contract, product, country and data rights</small></div></div>
+            <div className="accessPipelineStep"><span>4</span><div><strong>Verify provider capabilities</strong><small>Only the roles required for this activity must have current evidence</small></div></div>
             <div className="accessPipelineStep"><span>5</span><div><strong>Human release gate</strong><small>Legal, compliance, security and operations sign-off</small></div></div>
           </div>
           <div className="accessPipelineFoot"><ShieldCheck size={16}/> A partner logo or offshore server is not a policy decision.</div>
