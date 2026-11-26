@@ -59,6 +59,18 @@ These are industry descriptions of how the broker manages the market risk create
 
 VYRA's paper execution model function is a training/test simulation only. Its route labels are not real orders, liquidity connections, broker decisions or execution certification.
 
+## 4.1 Current operating and routing model research
+
+The current implementation separates the legal operating model from the technical risk-transfer model. See [Brokerage operating-model research](BROKERAGE_OPERATING_MODEL_RESEARCH.md) and [CFD execution router](CFD_EXECUTION_ROUTER.md) for the current comparisons and implementation boundary.
+
+The model registry now distinguishes technology partner, agency-routed, matched-principal, market-maker and hybrid structures. The paper hedge engine separately models straight-through routing, systematic net-residual hedging, partial internalisation and risk warehousing. A matched-principal route is still treated as principal activity in FCA guidance; A-Book or external hedging does not itself decide the customer counterparty or licence category.
+
+The current paper router estimates total expected venue cost using benchmark price impact, fees, expected slippage, non-fill risk and latency. It rejects missing permissions, stale/indicative quotes, insufficient depth and invalid costs. This is not production best-execution evidence.
+
+The updated margin model supports progressive notional tiers only when the method and each tier are explicit, contiguous and policy-covered. Position margin is gross by default; opposing long/short legs are not automatically netted. Pending-order and other margin reservations reduce free margin.
+
+The research incorporates B2CONNECT's 2026 product documentation on tiered margin, systematic net-residual hedging, partial risk internalisation and recovery of orders after an interrupted provider connection. These are vendor-documented patterns, not a substitute for vendor conformance testing or VYRA's own regulatory approvals.
+
 ## 4. CFD risk and pricing engine requirements
 
 ### Order-entry checks
