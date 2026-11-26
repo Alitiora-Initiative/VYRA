@@ -131,6 +131,29 @@ test('a verified flag without dated, reviewer-attributed evidence is still block
   assert.ok(result.missingCapabilities.some((item) => item.reason.includes('verification date')));
 });
 
+test('expired or future-dated capability evidence stays blocked', () => {
+  const input = {
+    providerId: 'interactive-brokers',
+    country: 'KE',
+    customerType: 'retail',
+    product: 'securities',
+    activity: 'market_information',
+  };
+
+  const expiredGraph = makeVerifiedGraph(input);
+  expiredGraph.providers[0].capabilityStatus.market_data.evidence[0].reverifyBy = '2000-01-01';
+  const expired = evaluateProviderRoute(input, expiredGraph);
+  assert.equal(expired.ready, false);
+  assert.ok(expired.missingCapabilities.some((item) => item.id === 'market_data'));
+
+  const futureGraph = makeVerifiedGraph(input);
+  futureGraph.providers[0].capabilityStatus.market_data.evidence[0].verifiedAt = '2099-01-01';
+  futureGraph.providers[0].capabilityStatus.market_data.evidence[0].reverifyBy = '2100-01-01';
+  const future = evaluateProviderRoute(input, futureGraph);
+  assert.equal(future.ready, false);
+  assert.ok(future.missingCapabilities.some((item) => item.id === 'market_data'));
+});
+
 test('an unexpired, reviewed capability record can pass its provider-level checks but never enables an action', () => {
   const input = {
     providerId: 'interactive-brokers',
