@@ -32,24 +32,25 @@ No vendor badge, sandbox key, SDK, chart widget, liquidity bridge, white-label C
 | Legal / compliance / audit | Perimeter advice, licence applications, independent controls, statutory audits | Qualified local regulatory counsel, auditor, security assessor | Not replaceable with a software tool; budget must be known before any regulated launch |
 | Hosting / database / security | Web app, auth, database, secret management, logs and backups | Render, Netlify, Cloudflare Workers, Supabase (demo only on Free) | Free plans for synthetic paper demo only; production needs supported resilience and contractual controls |
 
-## 2A. White-label brokerage technology vendors
+## 2A. Trading-platform supplier capability checklist
 
-The user's supplied Quadcode checklist names six platform suppliers. They belong in a separate vendor lane from the regulated brokers/account providers in the next section.
+Assess any trading-platform supplier against the actual VYRA requirement rather than a bundled marketing label. A supplier may provide some or all of the following modules, but the legal and operational owner of each service must remain explicit.
 
-| Technology supplier | Fit | Public commercial signal (26 Nov 2026) | Key diligence |
-|---|---|---|---|
-| Quadcode | Broad white-label Forex/CFD brokerage suite: traderoom, back office, dealing, liquidity, KYC, billing, web/desktop/mobile, sales and affiliate components | Public packages shown from US$17,500 to US$90,000 depending on tier | Confirm tier-specific inclusions, additional PSP/KYC/data/mobile fees, recurring fees, country coverage, licensed entities and client-money/execution ownership |
-| B2Broker | Multi-product technology and liquidity ecosystem: B2CORE, B2TRADER, B2COPY, bridges/connectivity, white-label MT4/MT5 and prime-of-prime liquidity | Public product starting examples: B2CORE US$1,000/month; B2TRADER US$2,500/month; B2COPY US$1,500/month. A liquidity commission offset model is advertised | Identify minimum A-book flow, liquidity and volume charges, bundle economics, setup/hosting, and whether every module can be licensed separately |
-| Leverate | White-label terminal, CRM/client portal, web/mobile/desktop, hosting, liquidity integrations, charting and copy trading | Its public pricing page shows €1,690/month for up to 1,000 real accounts or 250 active traders; CRM/client portal +€2,390/month | Confirm the exact platform/CRM configuration, payment/KYC/dealing inclusions, market-data and licensing costs, region-specific services and termination terms |
-| TradeSmarter | Full platform/back office and CRM for FX/CFD, crypto futures, digital options and prop products; payments and liquidity integrations | Custom quote; no fixed public package price identified | Verify exact product risk/legal classification, LP/PSP counterparty contracts, payout/payment coverage, pricing model, client-money flow and service-level metrics |
-| Soft-FX | FX and digital-asset brokerage software, TickTrader platform, Trader's Room, liquidity aggregation, APIs and web/mobile/desktop apps | Custom quote; no comparable public package price identified | Confirm deployment/hosting model, licence scope, connector charges, KYC/PSP integrations, support and whether VYRA needs separate execution/custody providers |
-| AlphaPoint | Digital-asset exchange infrastructure, order book, liquidity aggregation and risk controls for crypto/tokens/securities/stablecoin venues | Enterprise quote; no public price identified | More relevant to a separately authorised digital-asset venue than a general FX/CFD brokerage; verify market model, securities handling, custodian, counterparty and regulatory responsibility |
+| Module | Capability requirements | Integration and commercial evidence |
+|---|---|---|
+| Traderoom / terminal | Multi-asset instrument selector, quote detail, charts, watchlists, order ticket, order status, positions, account history and responsive layouts | Supported instruments and order types, data source and entitlement, supported client apps, UI customisation, accessibility and test environment |
+| Dealing / execution | Order routing, validation, fills, rejects, cancels, partial fills, venue and counterparty connectivity | Named executing entity, venues/LPs, order lifecycle events, API/webhooks, idempotency, rate limits, best-execution policy and kill switch |
+| Liquidity / pricing | Market depth or quote aggregation, spread/markup rules, symbol mapping and trading session calendars | Liquidity counterparties, price formation, markups, market-data source, execution statistics, outages and volume/commission minimums |
+| CRM / sales / support | Customer lifecycle, permissions, secure communications, complaint intake and support case tracking | Data controller/processor roles, user roles, audit export, support SLA, retention, incident and termination |
+| KYC / AML | Document and liveness workflows, KYB, sanctions/PEP/adverse media, transaction monitoring and case management | Partner decision owner, processor DPA, geographic coverage, false-positive operations, audit and retention |
+| Billing / payments | Fee schedules, payment initiation, deposits, withdrawals, refunds and reconciliation | Bank/PSP legal entity, authorised activities, supported country/currencies, client-money handling, settlement and chargeback terms |
+| Reporting / back office | Statements, trade confirmations, client activity, exposure/risk, fee reports and operational/audit exports | Source of truth, export formats, event replay, reconciliation process, data portability and audit access |
+| Affiliates | Advertiser offer configuration, eligible country/instrument rules, acceptance records, attributed leads and commission calculations | Promotion approval workflow, disclosures, attribution expiry, fraud and reversal handling, tax/reporting and prohibited traffic policy |
+| Mobile / desktop | iOS/Android build, desktop distribution, app signing, store releases and version management | Source/binary ownership, app-store eligibility, SDK inventory, support lifecycle, data declarations and release SLA |
 
-**Source links:** Quadcode (https://quadcode.com/; https://quadcode.com/white-label-broker); B2Broker (https://b2broker.com/; https://b2broker.com/fees-and-pricing/); Leverate (https://leverate.com/pricing/trading-platform/); TradeSmarter (https://www.tradesmarter.com/); Soft-FX (https://www.soft-fx.com/solutions/forex-broker-turnkey/); AlphaPoint (https://alphapoint.com/wp-content/uploads/2024/04/AlphaPoint-Exchange-Software-Product.pdf).
+Vendor comparisons must use a 12–36 month total-cost model: implementation/setup, recurring licences, accounts/active-user charges, volume or commission thresholds, liquidity/bridge, market-data, KYC, payment, hosting, support, customisation, mobile releases, data export and termination. No price or feature shown in marketing material is treated as a VYRA quote or proof of regulatory permission.
 
-All prices are provider-published public examples, not VYRA quotations or total project costs. Compare 12–36 month total cost, including setup, recurring subscriptions, per-account or volume charges, liquidity/bridge, PSP, KYC, data, mobile apps, customisation, support, legal/regulatory, onboarding and exit fees.
-
-**Selection gate:** a platform vendor is not automatically VYRA's broker, custodian, liquidity counterparty, bank, licensed payment provider or regulator-approved introducer. No technology contract should be signed until the initial product/country and regulated principal are selected and written role/account/funds/execution responsibilities are clear.
+**VYRA approach:** preserve a provider-neutral adapter boundary. The regulated principal determines which modules and counterparties may be connected; VYRA integrates only the approved interfaces and never treats a technology platform as a broker, custodian, bank or regulator.
 
 ## 3. Brokerage and investment rails — candidates
 
@@ -164,7 +165,7 @@ VYRA must not ask a user to deposit to a founder bank account, personal wallet, 
 
 Minimum tool categories:
 - Source control and protected CI: private GitHub, Actions, Dependabot and secret scanning.
-- Authentication: current Supabase Auth for prototype; future MFA and partner SSO/OAuth are required before account linking.
+- Authentication: Neon Managed Better Auth for the VYRA paper environment; MFA and approved partner SSO/OAuth are required before any partner account-linking or sensitive account access.
 - Secrets: host-managed secret vault; separated sandbox and production credentials.
 - Logs and observability: structured server logs with PII redaction, host metrics, alerting and trace correlation; assess Sentry/OpenTelemetry as candidates.
 - API controls: schema validation, idempotency keys, rate limits, webhook signature verification, replay prevention, key rotation, request tracing.
