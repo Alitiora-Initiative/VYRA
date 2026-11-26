@@ -117,7 +117,7 @@ Must be confirmed: regions, partner entity/customer restrictions, licence model,
 |---|---|---|---|
 | Source control and CI | GitHub, GitHub Actions | Private repo, branch protections, reproducible build, secret scanning | Existing repository |
 | Application | Next.js, React | Secure server boundary, accessibility, reliable APIs | Existing foundation |
-| Auth and database | Supabase Postgres/Auth | RLS, backups, region, API security, project limits | Dedicated VYRA project blocked by free-project limit |
+| Auth and database | Neon Postgres + Neon Managed Better Auth + Neon Data API | RLS, JWT role mapping, backups, region, auth mail delivery, API security and branch isolation | Dedicated `vyra-markets` project provisioned in Frankfurt; Neon-native migration applied; 14/14 application tables have RLS |
 | Demo hosting | Render, eligible Vercel deployment | Private repo access, environment secrets, region, health checks, cost | Render workspace selection still needed |
 | Market data | Broker feeds, licensed exchange vendor; CoinGecko/Twelve Data for prototype | Display rights, freshness, coverage, redistribution and cost | Existing feeds are development-only pending terms |
 | Brokerage provider | IBKR, Saxo, Alpaca, DriveWealth, Upvest | Licence fit, country coverage, account/custody model, APIs, fees | Research candidates only |
@@ -162,7 +162,7 @@ Tool names in this table are candidates or categories, not endorsements or conne
 - No commercial market-data redistribution contract exists.
 - No broker production API credentials exist.
 - No real customer KYC, account opening, deposits, withdrawals, custody or live trading are enabled.
-- No dedicated VYRA Supabase project exists due the organisation's free-project limit.
+- VYRA now uses the dedicated Neon `vyra-markets` project in Frankfurt, with main and `vyra-dev` branches; the old Supabase project limit is historical.
 - No Render demo service exists because workspace selection is still required.
 - No full production build or production deployment certification has been recorded.
 
