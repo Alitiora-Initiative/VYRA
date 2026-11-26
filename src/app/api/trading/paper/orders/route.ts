@@ -1,12 +1,12 @@
 import type { NextRequest } from 'next/server';
-import { getSupabaseServer } from '@/lib/supabase/server';
+import { getNeonServer } from '@/lib/neon/server';
 import { isRecord, isSameOriginRequest, jsonError, privateJson } from '@/lib/http';
 import { validatePaperOrder } from '@/lib/trading/paper-risk.mjs';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  const supabase = await getSupabaseServer();
+  const supabase = await getNeonServer();
   if (!supabase) return jsonError('Authentication database is not configured.', 503, 'AUTH_NOT_CONFIGURED');
   const { data: userData, error: authError } = await supabase.auth.getUser();
   if (authError || !userData.user) return jsonError('Sign in to view orders.', 401, 'UNAUTHENTICATED');
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   if (!isSameOriginRequest(request)) return jsonError('Cross-origin mutation rejected.', 403, 'ORIGIN_REJECTED');
-  const supabase = await getSupabaseServer();
+  const supabase = await getNeonServer();
   if (!supabase) return jsonError('Authentication database is not configured.', 503, 'AUTH_NOT_CONFIGURED');
   const { data: userData, error: authError } = await supabase.auth.getUser();
   if (authError || !userData.user) return jsonError('Sign in before submitting a paper order.', 401, 'UNAUTHENTICATED');
