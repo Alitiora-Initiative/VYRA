@@ -98,7 +98,6 @@ A completed document or software task does not mean VYRA is authorised to conduc
 
 - [x] Build the first AccessGraph jurisdiction/customer-type/product/activity evaluator with versioned evidence, default-deny for unknown jurisdictions and twelve incomplete release gates.
 - [x] Add the Provider Graph with eleven distinct supplier/accountability roles and default `not_verified` state for all research candidates.
-- [~] Add the first staff-only CRM control plane: prospect stages, source/campaign capture, staff roles, task queue, case queue, partner register and append-only audit (feature branch; isolated Neon migration tested, main schema not yet applied).
 - [~] Add a staff-only CRM foundation for prospect stages, source/campaign capture, staff roles, task queue, case queue, partner research and append-only audit (feature branch; isolated Neon migration tested, main schema not yet applied).
 - [~] Add a CFD contract/quote reference schema (disabled by default), no-default country/client margin-policy registry, and tested paper calculations for bid/ask, long/short P&L, leverage caps and margin snapshots (feature branch; no CFD product data seeded).
 - [ ] Build a partner capability registry for market data, onboarding, accounts, KYC status, deposits, withdrawals, balances, positions, orders, statements and support.

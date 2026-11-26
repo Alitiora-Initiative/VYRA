@@ -117,6 +117,6 @@ VYRA is being developed first as a **partner-led market-access platform**, not a
 
 **Product focus:** VYRA's first brokerage product family is Forex/CFDs. The current work adds CFD reference data and deterministic paper risk calculations; it does not add live market execution or real-money CFD accounts.
 
-**CRM implementation status:** the staff-only CRM page and API are being introduced on `feat/brokerage-crm-operations-desk`; the additive CRM migrations have been exercised on an isolated Neon review branch only. The main Neon branch does not yet contain the CRM schema. Staff memberships are not seeded; a database administrator must provision explicit roles after reviewing the PR.
+**CRM implementation status:** the staff-only CRM page and API were merged to main in PR #20. The additive CRM and CFD migrations, including role hardening, have been exercised on an isolated Neon review branch only; the main Neon branch does not yet contain those schemas. Staff memberships are not seeded; a database administrator must provision explicit roles after review.
 
 **Current infrastructure truth:** Neon Postgres, Managed Better Auth and the Data API are provisioned; the adapted SQL schema is applied to the dedicated VYRA main branch. The app's active auth/data code uses Neon. The free Render paper-demo service is not yet created. The original Supabase projects 9N8 and Space Ledger remain untouched. Real-money features remain disabled.
