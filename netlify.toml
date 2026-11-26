@@ -1,0 +1,10 @@
+# VYRA Markets — Netlify deployment
+# Next.js 16 is deployed with Netlify's maintained OpenNext adapter.
+# Do not add a static SPA fallback: App Router, API routes and auth require SSR.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
