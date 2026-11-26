@@ -48,6 +48,8 @@ The engine never answers “legal” or “illegal” as a general statement. It
 
 ### Partner Capability Graph
 
+The working Provider Graph at `/provider-graph` and `GET /api/provider-graph` is the second half of the wedge. It models eleven supplier/accountability roles and currently shows the five researched provider records as disconnected and unverified; none has a VYRA-confirmed contract, licence, country scope, sandbox or production approval. The system deliberately refuses to infer a service from marketing claims or an available API.
+
 The provider graph is distinct from the legal rule graph. A provider may provide an API but not custody, or may custody assets but not accept customers from the target country. VYRA needs explicit capability records and evidence for each role:
 - account and KYC ownership;
 - customer type, country and product eligibility;
@@ -102,18 +104,24 @@ Do not tell judges that VYRA is a broker, that crypto/forex/securities are clear
 “Market access is fragmented. Connecting a quote or order API is easy compared with proving that this provider can serve this resident, for this product, through this activity, with the right custody and KYC responsibilities.”
 
 **0:35–1:25 — AccessGraph**  
-Open /access-graph. Choose Kenya + virtual assets + provide a virtual-asset service. Show the mapped 2026 VASP rule, official source, local-targeting/economic-benefit test and the blocked result. Switch to another country; show that the system returns unassessed rather than assuming permission. Switch to Kenya + securities + market information; show that information-only is not a trading permission.
+Open `/access-graph`. Choose Kenya + virtual assets + provide a virtual-asset service. Show the mapped 2026 VASP rule, official source, local-targeting/economic-benefit test and the blocked result. Switch to another country; show that the system returns unassessed rather than assuming permission. Switch to Kenya + securities + market information; show that information-only is not a trading permission.
 
-**1:25–2:10 — Partner capability**  
+**1:25–2:10 — Provider Graph**  
+Open `/provider-graph`. Show that each vendor is unconnected and all eleven roles require evidence. Explain how one provider can offer an API but not own the account, KYC, custody or settlement.
+
+**2:10–2:40 — Customer categories**  
+Switch the AccessGraph between retail, professional and institutional investors. Show the customer-type gate and the rulepack’s explicit limitation where its categories are not yet differentiated.
+
+**2:40–3:20 — Partner capability**  
 Show that provider records are not automatically approved. An API candidate remains disconnected until legal entity, licence, customer country, product scope, account/KYC ownership, custody, order handling and data rights have dated evidence.
 
-**2:10–3:10 — Market workspace**  
+**3:20–4:05 — Market workspace**  
 Show provider-sourced quote timestamps, watchlist, USD paper account, paper order, positions and double-entry paper journal. Explain that the simulator tests product UX and order controls, not real trading or returns.
 
-**3:10–4:10 — Reconciliation and failure behaviour**  
+**4:05–4:40 — Reconciliation and failure behaviour**  
 Demonstrate tests or a controlled test fixture: duplicate event, stale quote, unknown state or mismatch is rejected/quarantined, not silently marked filled. Show idempotency and append-only journal controls from the code/test report. Do not use fake market prices in the live dashboard.
 
-**4:10–5:00 — Business and ask**  
+**4:40–5:00 — Business and ask**  
 “VYRA sells infrastructure to regulated firms: evidence-backed market access, partner adapters and reconciled customer journeys. We need one regulated design partner and a scoped pilot, not customer deposits. Our next milestone is a signed sandbox/data agreement and a tested single-country/single-product integration.”
 
 ## 7. Investor thesis
@@ -167,8 +175,8 @@ VYRA is not trying to replace an exchange, broker, custodian or enterprise core 
 
 ### Phase 1 — Demo quality (now)
 - AccessGraph interactive simulator, official source register and API.
-- Versioned jurisdiction pack with unit tests.
-- Partner capability schema and explicit disconnected state.
+- Versioned jurisdiction pack with customer-category input and unit tests.
+- Provider Graph role/evidence matrix, public API and explicitly disconnected states.
 - Market workspace, paper trading and ledger.
 - Five-minute demo recording, architecture and short technical report.
 
@@ -194,7 +202,7 @@ VYRA is not trying to replace an exchange, broker, custodian or enterprise core 
 
 ## 10. Current verified product baseline
 
-- Next.js 16 / React 19 web application.
+- Next.js 16 / React 19 web application, including AccessGraph and Provider Graph.
 - Dedicated Neon Postgres project vyra-markets, Frankfurt; Neon Managed Better Auth and Data API.
 - All 14 public VYRA application tables have RLS enabled; dedicated quote-ingestion role cannot mutate customer accounts, orders or ledgers.
 - Market-data adapters for CoinGecko and Twelve Data; feeds remain subject to provider terms and commercial redistribution rights.
