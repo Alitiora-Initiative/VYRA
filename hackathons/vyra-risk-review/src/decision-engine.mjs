@@ -29,7 +29,7 @@ export function extractText(answer) {
 }
 
 export function parseAgentJson(raw) {
-  const text = String(raw ?? '').trim().replace(/^\`\`\`(?:json)?\\s*/i, '').replace(/\\s*\`\`\`$/, '');
+  const text = String(raw ?? '').trim();
   const fallback = () => ({
     parseStatus: 'unparsed',
     status: 'unparsed',
