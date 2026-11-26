@@ -177,3 +177,16 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [ ] Annual privacy, AML, cyber and outsourcing policy review.
 - [ ] Retire partner links immediately on licence suspension, contract expiry or unresolved critical issue.
 - [ ] Version and archive every policy, disclosure and marketing asset.
+
+
+## P0 — Kenya virtual-asset regime (separate from securities and CIS)
+
+- [x] Research and document the VASP Act 2025 and VASP Regulations 2026 in the Kenya VASP addendum.
+- [ ] Obtain legal classification of each crypto-related VYRA function under the VASP Act and Regulations.
+- [ ] Confirm the local and cross-border targeting/revenue implications under Regulation 4.
+- [ ] Confirm whether any crypto referral, affiliate or partner-promotion activity would be subject to Regulations 123–132 or other intermediary requirements.
+- [ ] Request current CMA VASP broker/exchange licence application instructions and checklist.
+- [ ] Request CBK clarification only if wallet-provider, payment-processor or stablecoin activity is proposed.
+- [ ] Keep crypto referrals, promotion, wallet custody, exchange routing and live order features disabled until permissions and partner approvals are documented.
+- [ ] Do not plan an owned Kenyan VASP broker/exchange licence under the current zero-capital constraint: the published minimum paid-up capital is KSh 10m for a virtual-asset broker and KSh 100m for an exchange, plus required liquid capital and other costs.
+- [ ] If a licensed partner model is viable, document marketing responsibility, outsourcing approval, customer asset ownership, KYC/AML, custody, reconciliation, data-sharing, fees and exit arrangements.
