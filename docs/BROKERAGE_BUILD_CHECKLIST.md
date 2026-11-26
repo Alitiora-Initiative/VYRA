@@ -96,7 +96,8 @@ A completed document or software task does not mean VYRA is authorised to conduc
 
 ## P1 — Product and software foundations
 
-- [x] Build the first AccessGraph jurisdiction/product/activity evaluator with versioned evidence, default-deny for unknown jurisdictions and eleven incomplete release gates.
+- [x] Build the first AccessGraph jurisdiction/customer-type/product/activity evaluator with versioned evidence, default-deny for unknown jurisdictions and twelve incomplete release gates.
+- [x] Add the Provider Graph with eleven distinct supplier/accountability roles and default `not_verified` state for all research candidates.
 - [ ] Build a partner capability registry for market data, onboarding, accounts, KYC status, deposits, withdrawals, balances, positions, orders, statements and support.
 - [ ] Build a partner directory with legal entity, regulator, licence, category, scope, official register link and evidence date.
 - [ ] Build a product catalogue with identifier, legal provider, asset class, issuer/manager, currency, domicile, customer restrictions, fees and risks.
@@ -259,6 +260,7 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [x] Define VYRA's competitive wedge as evidence-backed market access and provider interoperability rather than a generic broker clone.
 - [x] Commit hackathon/investor thesis, five-minute demo script, customer model and proof-point roadmap.
 - [x] Add a working AccessGraph UI, public API, Kenya source register and default-deny test suite.
+- [x] Add a working Provider Graph UI/API, eleven role evidence checklists and fail-closed provider-route tests.
 - [ ] Capture a real end-to-end demo video from a verified running deployment.
 - [ ] Interview at least 15 broker, fund-manager, compliance and operations buyers; record validated pain and willingness to pay.
 - [ ] Obtain two written design-partner letters of intent and one signed sandbox/data access agreement.
