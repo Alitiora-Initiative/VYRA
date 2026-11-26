@@ -19,7 +19,7 @@ Verified on the development branch:
 - all 14 VYRA public tables have RLS enabled;
 - 19 public RLS policies were inspected;
 - UUID user references and the paper-order/ledger functions exist;
-- no seeded customer account, order, fill or market quote was found in the main application dataset at the time of inspection.
+- main remains free of test customer accounts, orders, fills and market quotes. A synthetic QA identity and one USD 100,000 paper account were created on `vyra-dev` only; the account-opening RPC returned successfully and the opening journal was verified balanced (USD 100,000 debit / USD 100,000 credit). The QA identity remains isolated on the development branch because Neon Auth deletion returned an API error; it was not created on main.
 
 The development branch is not a deleted temporary branch; it is the active isolated validation branch. Do not drop it while it is used for testing. Unrelated Supabase projects (9N8 and Space Ledger) have not been touched. The legacy Supabase migration is retained only for history; never apply it to Neon.
 
@@ -42,7 +42,7 @@ Observed access checks on `vyra-dev`:
 - authenticated can execute `open_paper_account()` and the ownership-checked `process_my_paper_quote(uuid,uuid)`;
 - authenticated cannot execute the global `process_market_quote(uuid)` matcher.
 
-RLS being enabled does not replace signed-session tests. Two real synthetic users (A and B) still need to be tested with valid Neon Auth JWTs.
+RLS being enabled does not replace signed-session tests. A synthetic test identity on `vyra-dev` was used to exercise the account-opening RPC with a UUID subject and authenticated JWT claim context; the function created the paper account and its balanced opening journal. This was a database-level claim-context test, not a browser sign-in test using a real issued JWT. Two real synthetic users (A and B) still need end-to-end testing with Neon-issued JWTs.
 
 ## 3. Restricted quote ingestion
 
@@ -133,7 +133,7 @@ Still required with synthetic signed-in users A and B:
 
 ## 8. Continuous integration
 
-The GitHub Actions workflow runs unit tests, TypeScript, ESLint and a production Next.js build. The last completed full workflow before the latest fixes reported all 16 unit tests passing and TypeScript passing, but lint failures prevented the production build. The observed lint issues were corrected in subsequent commits (Next.js internal links and the dashboard initial-load effect).
+The GitHub Actions workflow runs unit tests, TypeScript, ESLint and a production Next.js build. The latest full workflow run on the active main history passed all 30 unit tests and TypeScript. ESLint then exposed two generated `.d.mts` declaration files being parsed as source; the config now ignores generated declaration modules. A fresh workflow is running for that fix. The production build is not yet certified green.
 
 **Do not mark CI green until a current main-branch workflow completes with success for every stage.** If lint passes, require the production build to finish rather than infer success from tests or typecheck.
 
