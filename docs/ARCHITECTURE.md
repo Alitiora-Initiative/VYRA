@@ -80,7 +80,8 @@ The shared Neon sender is still in use. Email deliverability, OTP confirmation, 
 
 | Route | Function |
 |---|---|
-| `GET /api/health` | Runtime, auth, database, market-data and execution-gate status |
+| `GET /api/health` | Liveness check: confirms the Node service is responding |
+| `GET /api/ready` | Dependency readiness: Neon Auth, Data API and database; reports paper-trading readiness separately |
 | `GET /api/execution/readiness` | Live provider slots and hard-disabled live execution |
 | `GET /api/markets` | Provider quotes, timestamps, quote persistence and user-scoped limit matching |
 | `GET /api/instruments` | Enabled Neon instrument catalogue |
