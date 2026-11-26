@@ -32,7 +32,7 @@ The original `supabase/migrations/20261126000100_vyra_core.sql` is retained as m
 
 ## Deployment blueprint
 
-A free Render Node web-service blueprint is included in `render.yaml` (Frankfurt region, auto-deploy from `main`, health check `/api/health`). The required Neon secrets are declared as manual environment variables. Choose the intended Render workspace before creating the service. The Vercel Git integration was checked but this private organisation-owned GitHub repository cannot be linked while the connected Vercel team is on the Hobby plan; Vercel reported that a Pro upgrade is required. The repository has not been made public to work around that restriction.
+A free Render Node web-service blueprint is included in `render.yaml` (Frankfurt region, auto-deploy from `main`, readiness check `/api/ready`). The required Neon secrets are declared as manual environment variables. Choose the intended Render workspace before creating the service. The Vercel Git integration was checked but this private organisation-owned GitHub repository cannot be linked while the connected Vercel team is on the Hobby plan; Vercel reported that a Pro upgrade is required. The repository has not been made public to work around that restriction.
 
 ## Local setup
 
@@ -59,7 +59,8 @@ The SQL migration sets current paper defaults to USD 100,000 starting cash, $10,
 
 | Endpoint | Purpose |
 | --- | --- |
-| `GET /api/health` | Runtime configuration and execution gates |
+| `GET /api/health` | Liveness response for the running Node service |
+| `GET /api/ready` | Dependency readiness: Neon Auth, Data API, database and quote-writer configuration; returns 503 until app dependencies are ready |
 | `GET /api/execution/readiness` | Provider slots and live execution lock |
 | `GET /api/partners` | Research-only broker candidates; referrals remain disabled |
 | `GET /api/markets` | Provider quotes, timestamps, quote persistence and scoped limit matching |
