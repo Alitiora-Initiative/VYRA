@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import Script from 'next/script';
 import { useEffect, useState } from 'react';
 
@@ -42,7 +43,7 @@ export function AnalyticsConsent() {
         <aside className="consentBanner" aria-label="Analytics preferences">
           <div>
             <strong>Privacy choices</strong>
-            <p>VYRA does not load optional analytics until you allow them. Read the <a href="/legal/privacy">privacy status</a>.</p>
+            <p>VYRA does not load optional analytics until you allow them. Read the <Link href="/legal/privacy">privacy status</Link>.</p>
           </div>
           <div className="consentActions">
             <button type="button" className="consentSecondary" onClick={() => choose('rejected')}>Reject analytics</button>
