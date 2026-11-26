@@ -18,6 +18,12 @@ function nearlyEqual(a, b) {
   return Math.abs(Number(a) - Number(b)) <= EPSILON;
 }
 
+function onIncrement(value, increment) {
+  if (!POSITIVE(value) || !POSITIVE(increment)) return false;
+  const steps = value / increment;
+  return Math.abs(steps - Math.round(steps)) <= 1e-7;
+}
+
 function canonical(value) {
   if (Array.isArray(value)) return '[' + value.map(canonical).join(',') + ']';
   if (value && typeof value === 'object') {
@@ -289,6 +295,15 @@ export function submitPaperCfdOrder({ state, request, contract, quote, policy, n
   if (request.orderType === 'limit' && !POSITIVE(request.limitPrice)) {
     return fail('LIMIT_PRICE_REQUIRED', 'A positive limit price is required for limit orders.');
   }
+  if (!POSITIVE(contract?.tickSize) || !onIncrement(quote?.bid, contract.tickSize) ||
+      !onIncrement(quote?.ask, contract.tickSize)) {
+    return rejectNewOrder(state, command, request, request.eventId,
+      'QUOTE_TICK_SIZE_INVALID', 'The provider quote must conform to the enabled contract tick size.', now);
+  }
+  if (request.orderType === 'limit' && !onIncrement(request.limitPrice, contract.tickSize)) {
+    return rejectNewOrder(state, command, request, request.eventId,
+      'LIMIT_PRICE_TICK_INVALID', 'The limit price must conform to the enabled contract tick size.', now);
+  }
   if (request.orderType === 'market' && request.limitPrice !== undefined) {
     return fail('MARKET_LIMIT_CONFLICT', 'A market order cannot include a limit price.');
   }
@@ -346,6 +361,7 @@ export function submitPaperCfdOrder({ state, request, contract, quote, policy, n
     remainingLots: round8(request.lots),
     requestedLeverage: request.requestedLeverage,
     lotStep: contract.lotStep,
+    tickSize: contract.tickSize,
     referencePrice: risk.executionPrice,
     accountCurrencyRate: request.accountCurrencyRate ?? 1,
     referencePriceSide: risk.priceSide,
@@ -405,6 +421,11 @@ function validateExecution({ order, execution, now }) {
   }
   const quote = validateCfdQuote(execution.quote, { now, maxAgeMs: order.maxQuoteAgeMs });
   if (!quote.ok) return quote;
+  if (!onIncrement(execution.price, order.tickSize) ||
+      !onIncrement(execution.quote.bid, order.tickSize) ||
+      !onIncrement(execution.quote.ask, order.tickSize)) {
+    return fail('EXECUTION_TICK_SIZE_INVALID', 'Execution price and fill quote must conform to the enabled contract tick size.');
+  }
   const observedAt = Date.parse(execution.observedAt);
   if (!Number.isFinite(observedAt) || observedAt > now + 30000 || now - observedAt > order.maxQuoteAgeMs) {
     return fail('EXECUTION_TIMESTAMP_INVALID', 'Execution timestamp is invalid, future-dated or stale.');
@@ -448,8 +469,7 @@ export function fillPaperCfdOrder({ state, orderId, fillId, eventId, idempotency
     return fail('FILL_ID_DUPLICATE', 'Fill ID already exists in this paper account.');
   }
   if (!POSITIVE(lots) || lots > order.remainingLots + EPSILON ||
-      !POSITIVE(order.lotStep) ||
-      Math.abs((lots / order.lotStep) - Math.round(lots / order.lotStep)) > EPSILON) {
+      !onIncrement(lots, order.lotStep)) {
     return fail('FILL_QUANTITY_INVALID', 'Fill quantity must be positive, respect the instrument lot step and not exceed the unfilled order quantity.');
   }
   if (!validId(positionId)) return fail('POSITION_ID_REQUIRED', 'A unique position ID is required for each paper fill.');
