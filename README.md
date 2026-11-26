@@ -77,6 +77,8 @@ VYRA is being developed first as a **partner-led market-access platform**, not a
 - [Regulatory document register](docs/REGULATORY_DOCUMENT_REGISTER.md) — all corporate, legal, compliance, privacy, operational and partner documents with honest status tracking.
 - [Hosting and infrastructure options](docs/HOSTING_AND_INFRASTRUCTURE_OPTIONS.md) — current zero-cost comparison of Render, Netlify, Cloudflare Workers, Railway, Vercel and Supabase constraints.
 - [Brokerage technology vendor map](docs/BROKERAGE_TECH_VENDOR_MAP.md) — brokerage rails, fund/hedge-fund distribution, KYC/AML, custody, data, charting and operational tooling.
+- [Database provider decision](docs/DATABASE_PROVIDER_DECISION.md) — compares Neon, Supabase, Aiven, Firebase, Render, Railway and Turso, with a zero-cost recommendation.
+- [Neon migration runbook](docs/NEON_MIGRATION_RUNBOOK.md) — step-by-step authentication, identity, RLS, data-access and migration test plan.
 - [GitHub implementation issues](https://github.com/Alitiora-Initiative/VYRA/issues) — trackable delivery backlog.
 
-**Current infrastructure blocker:** a dedicated VYRA Supabase project could not be created because the only available organisation reached its two-active-free-project limit. Existing projects 9N8 and Space Ledger were left untouched. VYRA must remain isolated; do not apply its migration to either unrelated project. A Render demo service also awaits the owner's workspace selection. Real-money features remain disabled.
+**Current database decision:** Supabase project creation was blocked by the available account's two-active-free-project limit. Neon Postgres Free is now the selected alternative, but the Neon service still needs to be connected and a dedicated project provisioned. Existing Supabase projects 9N8 and Space Ledger remain untouched. See the database decision and migration runbook. A Render demo service also awaits workspace selection. Real-money features remain disabled.
