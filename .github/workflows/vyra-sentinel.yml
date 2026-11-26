@@ -22,4 +22,5 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-audit --no-fund
+      - run: node --check src/decision-engine.mjs && node --check src/mozaik-team.mjs && node --check src/cli.mjs
       - run: npm test
