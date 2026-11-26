@@ -10,12 +10,17 @@ export type PartnerAccessGates = {
   dataRightsApproved: boolean;
   operationalReadinessApproved: boolean;
   productionEnabled: boolean;
+  virtualAssetActivityClassified?: boolean;
+  virtualAssetRegulatoryRouteApproved?: boolean;
+  virtualAssetPartnerScopeConfirmed?: boolean;
+  virtualAssetPromotionApproved?: boolean;
 };
 
 export type PartnerAccessInput = {
   partner: PartnerCandidate | null | undefined;
   country: string;
   assetClass: string;
+  activityClass?: 'securities' | 'collective_investment' | 'forex' | 'virtual_asset';
   gates: PartnerAccessGates;
 };
 
