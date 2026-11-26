@@ -10,6 +10,13 @@ const REQUIRED_GATES = [
   ['productionEnabled', 'Production access has not been explicitly enabled.'],
 ];
 
+const VIRTUAL_ASSET_GATES = [
+  ['virtualAssetActivityClassified', 'The virtual-asset activity has not been separately classified under the applicable VASP regime.'],
+  ['virtualAssetRegulatoryRouteApproved', 'The applicable virtual-asset regulator or legal approval route is not documented.'],
+  ['virtualAssetPartnerScopeConfirmed', 'The partner has not confirmed that its virtual-asset licence covers this exact service and territory.'],
+  ['virtualAssetPromotionApproved', 'Virtual-asset advertising and third-party promotion have not been separately approved.'],
+];
+
 export function evaluatePartnerAccess(input) {
   const reasons = [];
   const partner = input?.partner;
@@ -41,6 +48,14 @@ export function evaluatePartnerAccess(input) {
 
   for (const [key, message] of REQUIRED_GATES) {
     if (input?.gates?.[key] !== true) reasons.push(message);
+  }
+
+  // Crypto/virtual-asset activity has a separate Kenya VASP and promotion perimeter.
+  // Securities or CIS approvals must never silently authorise virtual-asset services.
+  if (input.assetClass === 'crypto' || input.activityClass === 'virtual_asset') {
+    for (const [key, message] of VIRTUAL_ASSET_GATES) {
+      if (input?.gates?.[key] !== true) reasons.push(message);
+    }
   }
 
   return { allowed: reasons.length === 0, reasons };
