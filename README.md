@@ -76,6 +76,7 @@ VYRA is being developed first as a **partner-led market-access platform**, not a
 - [Partner outreach pack](docs/PARTNER_OUTREACH_PACK.md) — contact approach, discovery messages, regulator inquiry and due-diligence questions.
 - [Regulatory document register](docs/REGULATORY_DOCUMENT_REGISTER.md) — all corporate, legal, compliance, privacy, operational and partner documents with honest status tracking.
 - [Hosting and infrastructure options](docs/HOSTING_AND_INFRASTRUCTURE_OPTIONS.md) — current zero-cost comparison of Render, Netlify, Cloudflare Workers, Railway, Vercel and Supabase constraints.
+- [Brokerage technology vendor map](docs/BROKERAGE_TECH_VENDOR_MAP.md) — brokerage rails, fund/hedge-fund distribution, KYC/AML, custody, data, charting and operational tooling.
 - [GitHub implementation issues](https://github.com/Alitiora-Initiative/VYRA/issues) — trackable delivery backlog.
 
 **Current infrastructure blocker:** a dedicated VYRA Supabase project could not be created because the only available organisation reached its two-active-free-project limit. Existing projects 9N8 and Space Ledger were left untouched. VYRA must remain isolated; do not apply its migration to either unrelated project. A Render demo service also awaits the owner's workspace selection. Real-money features remain disabled.
