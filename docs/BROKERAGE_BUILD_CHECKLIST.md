@@ -36,8 +36,8 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [x] Create a dedicated quote-ingestion PostgreSQL role; it cannot modify customer accounts, orders, positions or ledger records.
 - [x] Enforce email verification for new Neon Auth accounts and enable the shared Neon email provider; delivery/reset still require end-to-end test.
 - [x] Add VYRA favicon, installable-web-app manifest, legal-document status pages and analytics consent gate.
-- [x] Run GitHub Actions on main: all 16 unit tests, TypeScript, ESLint and the production Next.js build passed on commit `9f0e6d65ceed9a53fdf5457f600d5a67adc37783` (26 Nov 2026).
-- [~] Re-run the full workflow after the latest documentation-only Neon runbook correction; do not treat an in-progress run as completed.
+- [x] Run GitHub Actions on main: 30 unit tests and TypeScript passed on the latest observed full run; generated declaration files then exposed an ESLint parsing issue, which has been fixed in a follow-up commit. Production build is still awaiting a full green run.
+- [~] Re-run the full workflow after the ESLint declaration-file ignore fix and current parallel main-branch changes; do not treat an in-progress run as completed.
 - [ ] Verify Neon sign-up, OTP verification email delivery, sign-in, session refresh, sign-out and password reset end-to-end using a test mailbox. Neon is configured to require verification; delivery and reset completion are not yet certified.
 - [ ] Add the exact deployed staging origin to Neon Auth trusted domains after the Render service URL is known.
 - [ ] Provision the free Render paper-demo web service and set the four Neon environment variables securely; do not deploy as a live brokerage.
@@ -246,7 +246,8 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [ ] Test paper-account opening, market/limit order, duplicate idempotency, cancellation, quote freshness, concurrency, rollback and journal balance using synthetic users.
 - [ ] Complete backup export and restore test; Neon Free is for demo/paper only, not a live brokerage book of record.
 - [ ] Complete JWT-backed account isolation and application integration testing with two synthetic users. The direct grants/RLS catalogue inspection has passed, but it is not a substitute for session-level tests.
-- [ ] Exercise paper account opening, market/limit orders, idempotency retries, cancellation, quote-age rejection, risk limits, concurrent submissions, fill rollback and balanced journal posting against Neon.
+- [x] On the isolated `vyra-dev` branch, create a synthetic Neon Auth identity, call the authenticated paper-account opening RPC with its UUID JWT subject, and verify the $100,000 opening journal balances exactly; test identity/account remain isolated on the dev branch.
+- [ ] Exercise market/limit orders, idempotency retries, cancellation, quote-age rejection, risk limits, concurrent submissions, fill rollback and balanced journal posting against Neon.
 - [ ] Complete Neon email OTP delivery, password recovery, session refresh, sign-out and reset-session revocation tests using a controlled test mailbox.
 - [ ] Verify all server-side credentials are absent from browser bundles, Git history and API responses.
 - [x] Run unit tests, typecheck, lint and production build; all four passed in GitHub Actions on commit `9f0e6d65ceed9a53fdf5457f600d5a67adc37783`.
