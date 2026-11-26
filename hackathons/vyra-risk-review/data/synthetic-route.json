@@ -1,0 +1,43 @@
+{
+  "caseId": "SYNTH-KE-VA-001",
+  "caseType": "synthetic_product_route_review",
+  "country": "KE",
+  "customerType": "retail",
+  "product": "virtual_asset",
+  "activity": "virtual_asset_service",
+  "proposedJourney": "A hypothetical Kenya-based retail customer discovers a virtual-asset product in VYRA. A hypothetical regulated principal would own onboarding, KYC/AML, client assets and execution. VYRA is considering providing the software interface and an account-status view.",
+  "provider": {
+    "providerId": "research-candidate",
+    "relationshipStatus": "research_only",
+    "legalEntityVerified": false,
+    "licenceEvidenceVerified": false,
+    "signedAgreement": false,
+    "sandboxConnected": false,
+    "productionApproved": false
+  },
+  "launchGates": {
+    "legalOpinion": false,
+    "customerTypeApproval": false,
+    "principalIdentified": false,
+    "partnerAgreement": false,
+    "countryApproval": false,
+    "productApproval": false,
+    "marketingApproval": false,
+    "dataRights": false,
+    "kycAllocation": false,
+    "custodyAllocation": false,
+    "executionAllocation": false,
+    "operationalReadiness": false
+  },
+  "sourceIds": [
+    "cma-licensing-checklists",
+    "kenya-vasp-regulations",
+    "cbk-cma-vasp-notice",
+    "cma-regulatory-sandbox"
+  ],
+  "constraints": [
+    "Use public source metadata only.",
+    "Do not treat this scenario as a legal opinion.",
+    "Do not enable onboarding, referrals, live orders, custody, payments or withdrawals."
+  ]
+}
