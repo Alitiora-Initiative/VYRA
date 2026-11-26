@@ -156,30 +156,20 @@ Neon Free provides a short instant-restore history window and constrained comput
 
 Before any future regulated production use, VYRA and its licensed partner must establish supported backups, tested disaster recovery, explicit RPO/RTO, failover and monitoring, audit evidence, access reviews, key management, incident response, data location and cross-border safeguards, and sufficient capacity. Do not use any Free database as the authoritative book of record for live customers.
 
-## 9. Current status
+## 9. Actual provisioned state (26 November 2026)
 
-- Supabase project provisioning was blocked by the account's two active Free project limit.
-- Existing projects 9N8 and Space Ledger remain untouched.
-- No VYRA Supabase project exists; the Supabase SQL remains historical reference only.
-- Neon project `vyra-markets` exists in Frankfurt, project ID `dawn-wind-08199003`.
-- Neon Managed Better Auth and Data API are enabled; the Neon migration is applied to main.
-- The database migration has not been applied or verified.
+- Dedicated Neon project: `vyra-markets`, Frankfurt (`aws-eu-central-1`), project ID `dawn-wind-08199003`.
+- Database: `vyra`; main branch: `br-tiny-lake-bhoos1ij`; isolated validation branch: `vyra-dev` (`br-lively-morning-bhf3wagy`).
+- Neon Managed Better Auth and the Neon Data API are enabled on main.
+- The Neon-specific migration `neon/migrations/20261126000100_vyra_core.sql` is applied to main and the validation branch.
+- The inspected Managed Better Auth user table uses UUID IDs. VYRA retains UUID user references and uses `auth.uid()`; it does not modify Neon-managed auth tables.
+- Verified on the validation branch: 14 public VYRA tables, all 14 with RLS enabled, 19 public RLS policies, and narrow role/function privileges. Anonymous users cannot read accounts/orders; authenticated users cannot directly insert orders or execute the global matcher.
+- The restricted `vyra_quote_ingest` role is used only for quote persistence; it cannot modify user accounts, orders, positions or ledger records.
+- The active Next.js application uses Neon Managed Better Auth, Neon Data API and a server-only PostgreSQL quote writer. The old Supabase runtime path is no longer active. Existing Supabase projects 9N8 and Space Ledger remain untouched.
+- Email/password sign-up is enabled and email verification is required using OTP. Verification emails are configured for sign-up/sign-in; password resets revoke sessions. Email delivery and reset completion still need end-to-end testing.
+- GitHub Actions completed successfully on commit `9f0e6d65ceed9a53fdf5457f600d5a67adc37783`: 16 unit tests, TypeScript, ESLint and production build all passed. A later documentation-only run is being checked separately.
+- No VYRA Render service exists. A paper-demo service remains blocked only by workspace choice and subsequent secret configuration.
+- Two-user JWT-backed RLS tests, full paper OMS/ledger integration tests, backup/restore evidence, and deployed auth tests remain outstanding.
+- No signed broker contract, provider-supplied legal PDFs, country/product approvals, funding rail, KYC provider, liquidity/dealing connection, native mobile application or affiliate programme exists.
 
-**Decision:** choose Neon Postgres Free for isolated development/paper trading. Keep Aiven as a fallback. Do not use Firestore as the core ledger. Do not use temporary Firebase SQL Connect or Render Postgres trials as the permanent database.
-
-
-## 10. Actual provisioned state (26 November 2026)
-
-- Dedicated project: `vyra-markets` (Frankfurt, `aws-eu-central-1`).
-- Project ID: `dawn-wind-08199003`; database: `vyra`; main branch: `br-tiny-lake-bhoos1ij`.
-- Neon Managed Better Auth and the PostgREST-compatible Neon Data API are enabled.
-- Neon-managed user table uses UUID IDs, so existing VYRA UUID user references remain unchanged.
-- Main migration applied: `neon/migrations/20261126000100_vyra_core.sql`.
-- Schema audit: 14/14 public tables have RLS enabled, 19 public policies exist and 69 constraints are validated.
-- A restricted `vyra_quote_ingest` role has quote-only write permission; no access to orders, trading accounts, ledger entries or auth records.
-- VYRA app dependencies and auth/data modules are switched to Neon. Existing Supabase runtime helper modules are removed.
-- Neon email verification is required for new accounts. Email verification/reset still need end-to-end delivery testing.
-- GitHub Actions has recorded 16/16 unit tests passing and TypeScript passing on earlier Neon commits. A later ESLint config failure was fixed by switching to native Next.js flat configs; a current full green run is still required.
-- Render still has no VYRA service; a free paper-demo deployment remains to be created after CI/build validation.
-- No signed broker contract, legal policy PDFs, country approvals, funding rail, KYC provider, liquidity/dealing connection, mobile application or affiliate programme exists.
-- Keep Neon Free strictly for synthetic development and paper trading, not a regulated live brokerage book of record.
+**Decision:** Neon Postgres Free is the chosen isolated development and paper-trading database. Keep Aiven as a fallback. Do not use Firestore as the core ledger. Do not use a Free database as the authoritative book of record for live brokerage customers.
