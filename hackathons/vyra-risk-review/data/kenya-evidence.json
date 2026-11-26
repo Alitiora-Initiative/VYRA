@@ -1,0 +1,57 @@
+{
+  "version": "KE-2026.11.26.2",
+  "reviewedAt": "2026-11-26",
+  "notice": "Curated source metadata and summaries for a demo. This is not a complete legal text, legal opinion, or authorisation.",
+  "sources": [
+    {
+      "id": "cma-licensing-checklists",
+      "authority": "Capital Markets Authority (Kenya)",
+      "title": "CMA licensing checklists",
+      "publishedOrUpdated": "Updated 15 September 2026",
+      "url": "https://www.cma.or.ke/licensing/",
+      "provisions": ["Broker Dealer", "Stockbrokers", "Investment Adviser", "Intermediary Service Platform Provider", "Online Forex Brokers"],
+      "summary": "The CMA publishes separate licensing checklists for market-intermediary categories. Its page says the checklists are summaries and the underlying regulations are conclusive.",
+      "limitation": "A checklist is not a licence and does not determine VYRA's classification."
+    },
+    {
+      "id": "cma-cis-regulations",
+      "authority": "Parliament of Kenya / Capital Markets Authority",
+      "title": "Capital Markets (Collective Investment Schemes) Regulations, 2023",
+      "publishedOrUpdated": "2023",
+      "url": "https://www.parliament.go.ke/sites/default/files/2024-03/Capital%20markets%20regulations%2C%202023%20%28LN%20NO.%20170%20OF%202023%2C%20LN%20NO.%20171%20OF%202023%2C%20LN%20NO.%20172%20OF%202023%20AND%20LN%20NO.%20173%20OF%202023%29-compressed.pdf",
+      "provisions": ["Regulations 76–77: ISPP licensing and requirements"],
+      "summary": "The regulations state that a person shall not operate an intermediary service platform without an ISPP licence, and that marketing and distribution of schemes from multiple fund managers requires CMA approval.",
+      "limitation": "The current consolidated and transitional position, and the exact VYRA journey, need qualified Kenyan counsel and CMA confirmation."
+    },
+    {
+      "id": "kenya-vasp-regulations",
+      "authority": "National Treasury / Central Bank of Kenya / Capital Markets Authority",
+      "title": "Virtual Asset Service Providers Regulations, 2026 (Legal Notice 134 of 2026)",
+      "publishedOrUpdated": "Gazetted 22 July 2026",
+      "url": "https://www.centralbank.go.ke/wp-content/uploads/2026/11/The-Virtual-Asset-Service-Providers-Regulations-2026.pdf",
+      "provisions": ["Regulation 4: application in or from Kenya", "Regulation 6: licence application", "Regulations 123–125: advertising and promotions"],
+      "summary": "The regulations apply to persons offering virtual-asset services in or from Kenya. Targeting local consumers or deriving economic benefit/income from Kenya can establish this connection even without physical presence. Licensing and promotion obligations are activity-specific.",
+      "limitation": "Exact service category, regulator, transitional provisions and VYRA's role require current legal review."
+    },
+    {
+      "id": "cbk-cma-vasp-notice",
+      "authority": "Central Bank of Kenya and Capital Markets Authority",
+      "title": "Public notice: gazettement of the VASP Regulations, 2026",
+      "publishedOrUpdated": "13 November 2026",
+      "url": "https://www.centralbank.go.ke/wp-content/uploads/2026/11/CBK-CMA-Public-Notice-Operationalisation-of-the-VASP-Regulations-2026-.pdf",
+      "provisions": ["VASP Act 2025 and Regulations 2026 operationalisation"],
+      "summary": "The joint notice says persons providing or intending to provide virtual-asset services must apply to the relevant regulator under the applicable service category.",
+      "limitation": "The notice does not confer a licence or appointment on VYRA."
+    },
+    {
+      "id": "cma-regulatory-sandbox",
+      "authority": "Capital Markets Authority (Kenya)",
+      "title": "CMA Regulatory Sandbox eligibility",
+      "publishedOrUpdated": "Accessed 26 November 2026",
+      "url": "https://www.sandbox.cma.or.ke/index.php/who-is-eligible",
+      "provisions": ["Eligibility and innovation scope"],
+      "summary": "The CMA describes eligibility for a Kenyan-incorporated company or a firm licensed by an equivalent securities regulator, intending to offer an innovative solution in Kenya. The page excludes products, services or models already clearly addressed under existing laws.",
+      "limitation": "A sandbox is a supervised testing route, not a general exemption or automatic permission."
+    }
+  ]
+}
