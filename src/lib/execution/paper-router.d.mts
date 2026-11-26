@@ -9,8 +9,10 @@ export function rankPaperExecutionVenues(input: {
   benchmarkSource: string; benchmarkObservedAt: string;
   candidates: PaperExecutionCandidate[];
   policy: {
-    status: 'approved'; version: string; maxQuoteAgeMs: number;
-    maxBenchmarkAgeMs: number; maxLatencyMs: number;
+    status: 'approved'; version: string; jurisdictionCode: string; clientType: string;
+    evidenceUrl: string; evidenceReference: string; reviewedAt: string;
+    effectiveFrom: string; effectiveUntil?: string | null;
+    maxQuoteAgeMs: number; maxBenchmarkAgeMs: number; maxLatencyMs: number;
     nonFillPenaltyBps: number; latencyPenaltyBps: number;
   };
   now?: number;
@@ -19,6 +21,8 @@ export type PaperHedgeMode = 'straight_through' | 'systematic_net_residual' | 'p
 export function resolvePaperHedgePlan(input: {
   policy: {
     status: 'approved'; version: string; mode: PaperHedgeMode;
+    jurisdictionCode: string; clientType: string;
+    evidenceUrl: string; evidenceReference: string; reviewedAt: string;
     effectiveFrom: string; effectiveUntil?: string | null;
     permissions: Record<string, boolean>;
     triggerExposure?: number; hedgeRatio?: number; internalisationRatio?: number;
