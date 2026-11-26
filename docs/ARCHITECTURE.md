@@ -23,6 +23,7 @@ The intended first commercial model is partner-led: an appropriately authorised 
 - **Risk controls:** order notional, position notional, daily realised-loss limits, available cash/share reservations, quote freshness, UUID idempotency and an adverse-slippage assumption are checked in the paper workflow.
 - **Accounting:** append-only paper double-entry journal with deferred balance checks, immutable ledger/audit triggers and account-level aggregate snapshots.
 - **Partner access:** candidate list and eligibility logic are research-only. Unknown, expired, suspended or unapproved partners/countries/products fail closed.
+- **AccessGraph:** `src/lib/access-graph/rules.mjs` contains a versioned, source-linked Kenya rule pack for virtual-asset services/promotions, CIS platform distribution, securities intermediation and online forex. Unmapped countries remain unassessed; eleven launch-evidence gates default to incomplete. The evaluator never enables customer actions, referral, money movement or live execution.
 - **Privacy:** optional Google Tag Manager loads only after consent and only if `NEXT_PUBLIC_GTM_ID` is valid. No container ID is currently configured.
 - **Legal pages:** `/legal/*` routes are publication-status notices, not provider-issued terms, AML or execution policies. The six requested PDFs have not been supplied.
 
@@ -93,7 +94,12 @@ The shared Neon sender is still in use. Email deliverability, OTP confirmation, 
 | `POST /api/trading/paper/orders/:id/cancel` | Account-scoped paper order cancellation |
 | `GET /api/trading/paper/ledger` | Immutable paper journal |
 | `GET /api/partners` | Research-only candidates; no customer referral actions |
+| `GET /api/access-graph` | Versioned jurisdiction/product/activity rules and source evidence; customer actions remain disabled |
 | `POST /api/logout` | Same-origin protected sign-out |
+
+## AccessGraph policy boundary
+
+AccessGraph is a versioned rules-as-code prototype. It links activity-specific jurisdiction signals to regulator/statutory sources and lists required evidence. It is currently mapped only for Kenya and does not determine whether a real legal activity is authorised. A missing match is unassessed, not permitted. All eleven launch gates default to false; even marking all gates complete results in manual go/no-go, not an enabled switch. Rule evidence must be maintained by qualified counsel before any reliance in a real customer journey.
 
 ## Execution adapter boundary
 
