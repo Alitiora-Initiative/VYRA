@@ -181,3 +181,158 @@ export function resolvePaperExecutionModel({
     paperOnly: true,
   };
 }
+
+
+function validateApprovedExecutionPolicy(policy, now = Date.now()) {
+  if (!policy || typeof policy !== 'object' || policy.status !== 'approved' ||
+      typeof policy.policyId !== 'string' || !policy.policyId.trim() ||
+      typeof policy.policyVersion !== 'string' || !policy.policyVersion.trim() ||
+      typeof policy.jurisdictionCode !== 'string' || !/^[A-Z]{2}$/.test(policy.jurisdictionCode) ||
+      !policy.clientType || typeof policy.clientType !== 'string') {
+    return fail('EXECUTION_POLICY_MISSING', 'An approved, versioned country and client-type execution policy is required.');
+  }
+  const effectiveFrom = Date.parse(policy.effectiveFrom);
+  const effectiveUntil = policy.effectiveUntil ? Date.parse(policy.effectiveUntil) : Number.POSITIVE_INFINITY;
+  if (!Number.isFinite(effectiveFrom) || !Number.isFinite(effectiveUntil) ||
+      effectiveFrom > now || effectiveUntil <= now) {
+    return fail('EXECUTION_POLICY_OUT_OF_DATE', 'The execution policy is not within its approved effective period.');
+  }
+  return { ok: true };
+}
+
+/**
+ * Calculates progressive/marginal margin across explicit notional bands.
+ * The caller must choose this method in the signed-off provider policy.
+ * No leverage or tier is inferred when a band is missing.
+ */
+export function calculateTieredCfdMargin({ notional, tiers, calculationMethod }) {
+  if (!POSITIVE(notional)) return fail('NOTIONAL_INVALID', 'Notional must be a positive finite amount.');
+  if (calculationMethod !== 'marginal') {
+    return fail('MARGIN_TIER_METHOD_MISSING', 'The approved margin policy must explicitly select the marginal tier method.');
+  }
+  if (!Array.isArray(tiers) || tiers.length === 0) {
+    return fail('MARGIN_TIERS_MISSING', 'At least one approved notional tier is required.');
+  }
+
+  const ordered = [...tiers].sort((a, b) => Number(a.minNotional) - Number(b.minNotional));
+  if (Number(ordered[0].minNotional) !== 0) {
+    return fail('MARGIN_TIER_GAP', 'The first margin tier must begin at zero notional.');
+  }
+
+  let previousMax = 0;
+  let requiredMargin = 0;
+  const appliedTiers = [];
+  for (const tier of ordered) {
+    const min = Number(tier.minNotional);
+    const max = tier.maxNotional === null || tier.maxNotional === undefined
+      ? Number.POSITIVE_INFINITY : Number(tier.maxNotional);
+    const leverage = Number(tier.maxLeverage);
+    if (!Number.isFinite(min) || min < 0 || !(max > min) || !POSITIVE(leverage)) {
+      return fail('MARGIN_TIER_INVALID', 'Each margin tier needs a valid range and positive approved leverage.');
+    }
+    if (Math.abs(min - previousMax) > 1e-8) {
+      return fail('MARGIN_TIER_GAP', 'Margin tiers must be contiguous and non-overlapping.');
+    }
+
+    const sliceNotional = Math.max(0, Math.min(notional, max) - min);
+    if (sliceNotional > 0) {
+      const sliceMargin = sliceNotional / leverage;
+      requiredMargin += sliceMargin;
+      appliedTiers.push({
+        minNotional: min, maxNotional: Number.isFinite(max) ? max : null,
+        appliedNotional: Number(sliceNotional.toFixed(8)),
+        maxLeverage: leverage, requiredMargin: Number(sliceMargin.toFixed(8)),
+      });
+    }
+    previousMax = max;
+    if (Math.min(notional, max) >= notional) break;
+  }
+
+  if (!appliedTiers.length || previousMax < notional) {
+    return fail('MARGIN_TIER_COVERAGE_MISSING', 'Approved margin tiers do not cover the complete account notional.');
+  }
+  return {
+    ok: true, paperOnly: true, calculationMethod: 'marginal', notional,
+    requiredMargin: Number(requiredMargin.toFixed(8)),
+    effectiveLeverage: Number((notional / requiredMargin).toFixed(8)),
+    appliedTiers,
+  };
+}
+
+/**
+ * Resolves a paper-only operating model. The policy is an evidence gate,
+ * not a legal opinion. Matched-principal and internalised routes are marked
+ * as principal activity rather than disguised as agency routing.
+ */
+export function resolvePaperBrokerageOperatingModel({ policy, netExposureAfterTrade, now = Date.now() }) {
+  const approved = validateApprovedExecutionPolicy(policy, now);
+  if (!approved.ok) return approved;
+  const permissions = policy.permissions ?? {};
+  const model = policy.operatingModel;
+
+  if (model === 'technology_partner') {
+    return {
+      ok: true, paperOnly: true, operatingModel: model,
+      route: 'no_execution_partner_handoff', acceptsClientOrders: false,
+      isPrincipal: false, requiresRegulatedPrincipalHandoff: true,
+    };
+  }
+  if (model === 'agency_routed') {
+    if (permissions.agencyRouted !== true || permissions.externalVenueApproved !== true) {
+      return fail('AGENCY_PERMISSION_MISSING', 'Agency routing requires explicit jurisdiction permission and an approved external venue.');
+    }
+    return {
+      ok: true, paperOnly: true, operatingModel: model,
+      route: 'paper_external_agency_route', acceptsClientOrders: true,
+      isPrincipal: false, clientCounterpartyMustBeVerified: true,
+    };
+  }
+  if (model === 'matched_principal') {
+    if (permissions.principal !== true || permissions.matchedPrincipal !== true ||
+        permissions.bestExecution !== true || permissions.conflictsControls !== true) {
+      return fail('MATCHED_PRINCIPAL_CONTROLS_MISSING', 'Matched-principal flow requires approved principal permissions, best-execution and conflicts controls.');
+    }
+    return {
+      ok: true, paperOnly: true, operatingModel: model,
+      route: 'paper_back_to_back_principal', acceptsClientOrders: true,
+      isPrincipal: true, bestExecutionEvidenceRequired: true,
+    };
+  }
+  if (model === 'market_maker') {
+    if (permissions.principal !== true || permissions.dealing !== true ||
+        permissions.conflictsControls !== true) {
+      return fail('DEALING_PERMISSION_MISSING', 'Market-making requires explicit dealing/principal permission and approved conflicts controls.');
+    }
+    return {
+      ok: true, paperOnly: true, operatingModel: model,
+      route: 'paper_internalised_principal', acceptsClientOrders: true,
+      isPrincipal: true, dealingDeskSegregationRequired: true,
+    };
+  }
+  if (model === 'hybrid') {
+    if (permissions.principal !== true || permissions.dealing !== true ||
+        permissions.agencyRouted !== true || permissions.externalVenueApproved !== true ||
+        permissions.bestExecution !== true || permissions.conflictsControls !== true) {
+      return fail('HYBRID_PERMISSIONS_MISSING', 'Hybrid risk transfer requires approved principal, dealing, external-hedging, best-execution and conflicts controls.');
+    }
+    if (!Number.isFinite(netExposureAfterTrade)) {
+      return fail('EXPOSURE_INVALID', 'Hybrid routing requires aggregate symbol exposure after the proposed trade.');
+    }
+    const maxRetainedExposure = Number(policy.maxRetainedExposure);
+    if (!POSITIVE(maxRetainedExposure)) {
+      return fail('HYBRID_LIMIT_MISSING', 'Hybrid routing requires an approved positive retained-exposure limit.');
+    }
+    const retainedExposure = Math.min(Math.abs(netExposureAfterTrade), maxRetainedExposure);
+    const externalHedgeExposure = Math.max(0, Math.abs(netExposureAfterTrade) - maxRetainedExposure);
+    return {
+      ok: true, paperOnly: true, operatingModel: model,
+      route: externalHedgeExposure > 0 ? 'paper_internal_plus_external_hedge' : 'paper_internal_principal',
+      rule: 'aggregate_symbol_exposure_limit', netExposureAfterTrade,
+      retainedExposure: Number(retainedExposure.toFixed(8)),
+      externalHedgeExposure: Number(externalHedgeExposure.toFixed(8)),
+      acceptsClientOrders: true, isPrincipal: true,
+      neverUsesClientProfitability: true,
+    };
+  }
+  return fail('OPERATING_MODEL_UNSUPPORTED', 'The approved operating model is not supported by the VYRA paper engine.');
+}
