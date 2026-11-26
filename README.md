@@ -35,7 +35,27 @@ VYRA's user IDs remain UUIDs: the inspected Managed Better Auth user table uses 
 
 The original `supabase/migrations/20261126000100_vyra_core.sql` is retained as migration history/reference; do not apply it to Neon. Use the Neon-specific migration for Neon.
 
-## Deployment blueprint
+## Deployment
+
+### Netlify
+
+The feature branch includes `netlify.toml` for Netlify's maintained Next.js/OpenNext runtime. It runs `npm run build`, publishes the Next.js build output, and selects Node.js 22. Do not convert this app to a static export or add an SPA catch-all redirect: its App Router pages, API handlers and authentication need server rendering.
+
+To create the site, sign in to Netlify, choose **Add new project → Import an existing project → GitHub**, authorize access to this private repository, and select `Alitiora-Initiative/VYRA`. Keep `main` as the production branch and enable Deploy Previews for pull requests; PR #21 uses `feat/brokerage-crm-operations-desk`, so its preview can show this branch without merging it. Netlify should detect Next.js and use the repository's `netlify.toml`.
+
+Add runtime secrets in Netlify's project environment-variable settings, not in Git or `netlify.toml`:
+
+- `NEON_AUTH_BASE_URL`
+- `NEON_AUTH_COOKIE_SECRET`
+- `NEON_DATA_API_URL`
+- `NEON_MARKET_DATA_DATABASE_URL` (use the restricted `vyra_quote_ingest` database role, not the database-owner URL)
+- `TWELVEDATA_API_KEY` and `COINGECKO_DEMO_API_KEY` for the configured market-data providers, as applicable.
+
+After importing the repository, add the new Netlify deploy-preview origin to Neon Auth's trusted origins and verify email verification/reset delivery. Environment values must be configured before testing authentication or provider-backed APIs. Changing environment variables requires a new deploy.
+
+**Netlify account connection and first deployment are still pending.** This repository configuration does not by itself create a Netlify site, authorize GitHub access or publish a URL.
+
+### Other hosting blueprint
 
 A free Render Node web-service blueprint is included in `render.yaml` (Frankfurt region, auto-deploy from `main`, readiness check `/api/ready`). The required Neon secrets are declared as manual environment variables. Choose the intended Render workspace before creating the service. The Vercel Git integration was checked but this private organisation-owned GitHub repository cannot be linked while the connected Vercel team is on the Hobby plan; Vercel reported that a Pro upgrade is required. The repository has not been made public to work around that restriction.
 
@@ -113,7 +133,7 @@ VYRA is being developed first as a **partner-led market-access platform**, not a
 - [Database provider decision](docs/DATABASE_PROVIDER_DECISION.md) — compares Neon, Supabase, Aiven, Firebase, Render, Railway and Turso, with a zero-cost recommendation.
 - [Neon migration runbook](docs/NEON_MIGRATION_RUNBOOK.md) — provisioned Neon infrastructure, SQL migration, app integration, security boundaries and remaining tests.
 - [Provider brokerage launch checklist](docs/PROVIDER_BROKERAGE_LAUNCH_CHECKLIST.md) — maps the supplied white-label brokerage checklist to VYRA's real state and launch evidence.
-- [CRM and brokerage operations](docs/CRM_AND_BROKERAGE_OPERATIONS.md) — CRM vendor shortlist, operating queues, launch waves, acquisition/retention analytics and the staff-only CRM foundation.
+- [CRM and brokerage operations](docs/CRM_AND_BROKERAGE_OPERATIONS.md) — CRM vendor shortlist, operating queues, partner register and audit history.
 - [Forex & CFD product architecture](docs/CFD_PRODUCT_AND_EXECUTION_ARCHITECTURE.md) — CFD contract/margin engine, A-Book/B-Book/Hybrid dealing, Kenya licensing research, CRM/back office, PSP, KYC and provider diligence.
 - [Brokerage operating-model research](docs/BROKERAGE_OPERATING_MODEL_RESEARCH.md) — technology partner, agency/non-dealing, matched principal, market maker, hybrid, STP and newer hedging models.
 - [CFD execution router](docs/CFD_EXECUTION_ROUTER.md) — total-cost venue ranking, progressive margin tiers, systematic hedging, partial internalisation and release controls.
