@@ -165,3 +165,28 @@ Tool names in this table are candidates or categories, not endorsements or conne
 - No dedicated VYRA Supabase project exists due the organisation's free-project limit.
 - No Render demo service exists because workspace selection is still required.
 - No full production build or production deployment certification has been recorded.
+
+
+## 9. Kenya VASP Regime — essential crypto-specific research (added 26 Nov 2026)
+
+Primary sources:
+- VASP Act 2025, Act No. 20 of 2025: https://www.centralbank.go.ke/wp-content/uploads/2026/11/Virtual-Asset-Service-Providers-Act-2025.pdf
+- VASP Regulations 2026, Legal Notice 134 of 2026: https://www.centralbank.go.ke/wp-content/uploads/2026/11/The-Virtual-Asset-Service-Providers-Regulations-2026.pdf
+- Joint CBK/CMA notice of 13 Nov 2026: https://www.centralbank.go.ke/wp-content/uploads/2026/11/CBK-CMA-Public-Notice-Operationalisation-of-the-VASP-Regulations-2026-.pdf
+- CBK VASP licensing checklist: https://www.centralbank.go.ke/wp-content/uploads/2026/11/VASPs-Licensing-checklist.pdf
+
+Important provisions:
+- The VASP Act commenced 4 November 2025; the Regulations were gazetted and commenced 22 July 2026.
+- Regulation 4 applies to persons offering virtual-asset services in or from Kenya. Targeting/soliciting Kenyan consumers or deriving economic benefit/income from Kenya is a territorial factor even where there is no Kenyan physical presence.
+- The Act's First Schedule assigns wallet providers, virtual-asset payment processors and stablecoin issuers to CBK; exchange, virtual-asset broker, investment adviser/manager, ICO, tokenisation and token issuance platform services to CMA.
+- Section 8(2) prohibits a person from carrying on or holding itself out as carrying on a VASP business in or from Kenya without the relevant licence.
+- Regulations 123–132 cover virtual-asset advertising and promotions. A person acting on behalf of a licensee must comply; the licensee is responsible for that advertising. Paid promotion and risk/fee disclosures need particular attention.
+- Fifth Schedule capital requirements include KSh 10m paid-up capital for a VASP broker and KSh 100m for an exchange, with separate liquid-capital requirements. An additional activity can increase the required paid-up capital.
+- The CBK licensing checklist retrieved on the research date expressly describes its scope as stablecoin issuers, payment processors and wallet providers. Do not use it as the CMA VASP broker/exchange application checklist.
+
+Engineering and commercial implications:
+- Keep crypto disabled as a separate permission regime, not enabled by a securities/ISPP approval.
+- Obtain Kenyan counsel's written classification for paid referral, affiliate promotion, link-outs, wallet connections, quote routing and order transmission.
+- Ask CMA for the applicable VASP broker/exchange process; ask CBK only for wallet/payment/stablecoin functions.
+- No VYRA crypto partner is verified, contracted or production connected.
+- The full breakdown and required controls are in [KENYA_VASP_2026_ADDENDUM.md](KENYA_VASP_2026_ADDENDUM.md).
