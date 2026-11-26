@@ -10,6 +10,8 @@ const config = [
       'build/**',
       'coverage/**',
       'next-env.d.ts',
+      '**/*.d.mts',
+      '**/*.d.cts',
     ],
   },
 ];
