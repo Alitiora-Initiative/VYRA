@@ -209,7 +209,7 @@ The partner record must include legal entity name, company number, licence numbe
 
 ## 7. The VYRA product architecture
 
-The existing application already contains a useful early foundation: Next.js UI, Supabase SSR authentication code, provider adapters for crypto and Twelve Data, paper accounts, paper orders, risk checks, a double-entry paper ledger, watchlists, audit events and disabled live-execution adapter slots. These components are useful for a future broker-facing experience, but they are not a production brokerage. The next architecture should add strong domain boundaries rather than connect every provider directly to the dashboard.
+The existing application now uses Next.js 16, Neon Managed Better Auth, Neon Postgres and the Neon Data API. It contains provider adapters for crypto and Twelve Data, a database-backed instrument catalogue, paper accounts and orders, risk checks, a double-entry paper ledger, watchlists, audit events and hard-disabled live-execution adapter slots. The dedicated Neon project is provisioned and its Neon-native schema is applied. These components are useful foundations for a future broker-facing experience, but they are not a production brokerage. Preserve strong domain boundaries rather than connecting every vendor directly to the dashboard.
 
 ### 7.1 Core bounded contexts
 
@@ -274,7 +274,7 @@ Never commit provider API secrets, service-role keys, database passwords, OAuth 
 
 Require row-level security for every exposed user-owned table. Verify all RPC function ownership, execution grants, SECURITY DEFINER use and search paths. Prevent IDOR by resolving account and provider references only after verifying the current user's authorisation. Validate all server-side input with strict schemas, enforce same-origin protections for cookie-authenticated mutations and rate-limit login, account creation, referrals and sensitive APIs. Add abuse detection, bot protection, secure headers, CSP, CSRF controls where relevant, and safe error messages that do not leak provider tokens or SQL internals.
 
-The current Supabase project limit blocks a dedicated VYRA project in the only available organisation: the organisation has two active free projects and the free-project limit is two. The two existing projects are 9N8 and Space Ledger. Neither has been paused or modified. VYRA must not be connected to either product database. The schema should remain a reviewed migration in Git until a dedicated database project with approved capacity is available. Do not put VYRA production tables into a different product's project simply to get a green check.
+The earlier Supabase project attempt was blocked by the two-active-Free-project limit. VYRA has since been provisioned on a separate dedicated Neon project, `vyra-markets`, in Frankfurt. Its Neon-native schema is applied to the main branch and an isolated `vyra-dev` branch exists for validation. The unrelated Supabase projects 9N8 and Space Ledger remain untouched and must not be used as VYRA's database. Neon Free remains a synthetic/paper environment only, not a live customer-money book of record.
 
 ### 8.4 Audit and evidence
 
@@ -424,7 +424,7 @@ The current founder constraint is zero operating capital. The practical objectiv
 
 ### 13.2 What is blocked or must not be represented as free
 
-A dedicated VYRA Supabase project could not be created because Jaymn2006's Org already has its two allowed active free projects. Those projects are 9N8 and Space Ledger, and they must remain untouched. The attempted creation was rejected by Supabase. No VYRA project was created and no VYRA database migration was applied. Do not put VYRA tables into either existing database. The next step is to obtain a different organisation with free project capacity or to make a deliberate, separately authorised decision about an existing project. Do not pause or delete an existing project without explicit choice.
+The prior attempt to provision a VYRA Supabase project was rejected because the available organisation had reached its Free-project limit. That is historical context only: VYRA now uses its dedicated Neon project `vyra-markets`; the Neon migration is applied. The separate Supabase projects 9N8 and Space Ledger remain untouched. Do not move VYRA into either project or reapply the legacy Supabase migration.
 
 The Vercel integration was previously unable to link this private organisation-owned repository while the connected team is on the Hobby plan; the returned path required a paid plan. Do not upgrade or make the repository public to work around it. A free Render blueprint exists, but the correct Render workspace must be chosen before creating a service. No Render service has been created. Do not add production secrets until the service and legal model are ready.
 
@@ -553,16 +553,17 @@ If any of these conditions fails, the affected country, partner, asset class or 
 
 ## 19. Current status and immediate decisions
 
-The codebase is a paper-trading application foundation. It has no production broker connection, no live custody, no live customer-money flow, no completed KYC/AML system, no approved financial promotions, no confirmed referral contract, no live trade execution and no production certification. The current paper-risk tests previously passed locally, but a complete production build, migration, CI run and database deployment still need to be verified.
+The codebase remains a paper-trading application foundation. It has no production broker connection, live custody, live customer-money flow, completed KYC/AML operations, approved financial promotions, confirmed referral contract, live execution or production certification.
 
-A dedicated Supabase VYRA project was attempted after approval for the quoted zero monthly cost. Supabase rejected creation because the only available organisation has reached the two-active-free-project limit. The existing projects are 9N8 and Space Ledger. They were not altered, paused or deleted. No VYRA database has been provisioned and no migration has been applied. The next infrastructure decision must respect that constraint.
+The dedicated Neon project `vyra-markets` is provisioned in Frankfurt. Neon Managed Better Auth and the Neon Data API are enabled, and the Neon-native schema is applied to the main branch. The active Next.js app uses Neon Auth and the Neon Data API. All 14 public application tables have RLS enabled; direct role/grant checks and the restricted quote-writer boundary were inspected. A GitHub Actions run has passed 16 unit tests, TypeScript, ESLint and the production build. Two-user JWT-backed isolation, end-to-end email delivery/reset, full database OMS/ledger tests, backup/restore and hosted runtime verification remain outstanding. The Supabase projects 9N8 and Space Ledger have not been touched. The free Render paper-demo service remains uncreated because the Render account contains two workspaces and the owner has not selected which one should own VYRA.
 
 The next practical sequence is:
-1. Finish and review the legal/technical pack in this repository.
-2. Pick one target model and one first asset class.
-3. Obtain a Kenyan regulatory classification opinion and current CMA checklist pack.
-4. Approach IBKR, Saxo, Alpaca and DriveWealth with the partner brief; approach a licensed Kenyan investment bank/fund manager for an ISPP discussion if fund distribution is the priority.
-5. Keep public pages information-only until partner and legal approval.
+1. Complete the two-user Neon session/RLS tests and paper order/ledger integration tests with synthetic accounts.
+2. Complete auth email verification/reset delivery checks and encrypted database export/restore.
+3. Select the Render workspace for a paper-only demo, set secrets securely and add the exact hosted origin to Neon Auth; no production customer data or live keys.
+4. Choose one first country/product and obtain Kenyan regulatory classification advice before account applications, referrals, client data or financial promotions.
+5. Run a provider-neutral procurement process covering the trading platform, broker principal, custody, execution/liquidity, payments, KYC/AML, reports, support and affiliate functions; obtain comparable proposals only after the legal operating model is defined.
+6. Keep public pages information-only and live money movement/live execution disabled until the named regulated partner, permissions and production controls are evidenced.
 6. Resolve the isolated database capacity issue without touching 9N8 or Space Ledger.
 7. Select the Render workspace explicitly before creating a free demo service.
 8. Run CI and a complete app/security review.
