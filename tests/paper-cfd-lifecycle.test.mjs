@@ -231,7 +231,7 @@ test('fill commands are idempotent and do not duplicate positions or fees', () =
   assert.equal(retry.replayed, true);
   assert.equal(retry.state.positions.length, 1);
   assert.equal(retry.state.journals.length, 2);
-  assert.equal(retry.state.events.length, 2);
+  assert.equal(retry.state.events.length, 3);
 });
 
 test('a reused fill idempotency key with a changed fill is rejected', () => {
@@ -239,7 +239,8 @@ test('a reused fill idempotency key with a changed fill is rejected', () => {
   const input = {
     state: accepted.state, orderId: 'order-001', fillId: 'fill-001',
     eventId: 'event-fill-001', idempotencyKey: 'idem-fill-001',
-    positionId: 'position-001', lots: 0.5, execution: execution(), now: NOW,
+    positionId: 'position-001', feeJournalId: 'journal-fee-reused-001',
+    lots: 0.5, execution: execution(), now: NOW,
   };
   const first = fillPaperCfdOrder(input);
   const retry = fillPaperCfdOrder({ ...input, state: first.state, lots: 0.25 });
@@ -252,7 +253,7 @@ test('rejects excessive adverse execution deviation and records the rejected fil
     state: accepted.state, orderId: 'order-001', fillId: 'fill-bad-001',
     eventId: 'event-fill-bad-001', idempotencyKey: 'idem-fill-bad-001',
     positionId: 'position-bad-001', lots: 0.5,
-    execution: execution({ price: 1.102 }), now: NOW,
+    execution: execution({ price: 1.105 }), now: NOW,
   });
   assert.equal(result.ok, false);
   assert.equal(result.code, 'EXECUTION_PRICE_DEVIATION');
@@ -491,7 +492,7 @@ test('partially closes a long CFD position, releases margin and books realised p
   assert.equal(result.releasedMargin, 2750.5);
   assert.equal(result.state.positionCloses.length, 1);
   assert.equal(getPaperCfdAccountSnapshot(result.state).cashBalance, 50030);
-  assert.equal(result.state.journals.length, 3);
+  assert.equal(result.state.journals.length, 4);
   assert.equal(reconcilePaperCfdState(result.state).ok, true);
 });
 
@@ -538,7 +539,7 @@ test('position close commands are idempotent and do not double-post realised P&L
   assert.equal(retry.replayed, true);
   assert.equal(retry.position.status, 'closed');
   assert.equal(retry.state.positionCloses.length, 1);
-  assert.equal(retry.state.journals.length, 3);
+  assert.equal(retry.state.journals.length, 4);
   assert.equal(retry.state.events.length, 2);
 });
 
