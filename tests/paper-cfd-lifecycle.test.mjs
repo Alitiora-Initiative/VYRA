@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   cancelPaperCfdOrder,
+  closePaperCfdPosition,
   createPaperCfdAccountState,
   expirePaperCfdOrder,
   fillPaperCfdOrder,
@@ -443,4 +444,157 @@ test('limit price must respect the enabled contract tick size', () => {
   assert.equal(result.ok, false);
   assert.equal(result.code, 'LIMIT_PRICE_TICK_INVALID');
   assert.equal(result.order.status, 'rejected');
+});
+
+
+function closeExecution({ bid = 1.101, ask = 1.1011, price = bid, feeAmount = 3 } = {}) {
+  const freshQuote = {
+    bid, ask, source: 'paper-feed-a',
+    observedAt: new Date(NOW - 100).toISOString(),
+  };
+  return {
+    price, source: 'paper-close-simulator',
+    observedAt: new Date(NOW - 100).toISOString(),
+    quote: freshQuote, feeAmount,
+  };
+}
+
+function filledPosition() {
+  const accepted = createAndSubmit();
+  const result = fillPaperCfdOrder({
+    state: accepted.state, orderId: 'order-001', fillId: 'fill-close-001',
+    eventId: 'event-fill-close-001', idempotencyKey: 'idem-fill-close-001',
+    positionId: 'position-close-001', feeJournalId: 'journal-fee-open-001',
+    lots: 1, execution: execution({ feeAmount: 4 }), now: NOW,
+  });
+  assert.equal(result.ok, true);
+  return result;
+}
+
+test('partially closes a long CFD position, releases margin and books realised profit and fees', () => {
+  const filled = filledPosition();
+  const result = closePaperCfdPosition({
+    state: filled.state, positionId: 'position-close-001',
+    closeId: 'position-close-event-001', eventId: 'event-position-close-001',
+    idempotencyKey: 'idem-position-close-001', lots: 0.5,
+    pnlJournalId: 'journal-realised-profit-001',
+    feeJournalId: 'journal-close-fee-001',
+    execution: closeExecution({ bid: 1.101, ask: 1.1011, price: 1.10099, feeAmount: 3 }),
+    now: NOW + 100,
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.position.status, 'open');
+  assert.equal(result.position.remainingLots, 0.5);
+  assert.equal(result.position.closedLots, 0.5);
+  assert.equal(result.position.marginRequired, 2750.5);
+  assert.equal(result.positionClose.realisedPnl, 37);
+  assert.equal(result.releasedMargin, 2750.5);
+  assert.equal(result.state.positionCloses.length, 1);
+  assert.equal(getPaperCfdAccountSnapshot(result.state).cashBalance, 50030);
+  assert.equal(result.state.journals.length, 3);
+  assert.equal(reconcilePaperCfdState(result.state).ok, true);
+});
+
+test('fully closes a long CFD position, realises a loss and removes used margin', () => {
+  const firstClose = closePaperCfdPosition({
+    state: filledPosition().state, positionId: 'position-close-001',
+    closeId: 'position-close-profit-001', eventId: 'event-position-close-profit-001',
+    idempotencyKey: 'idem-position-close-profit-001', lots: 0.5,
+    pnlJournalId: 'journal-profit-first-001',
+    execution: closeExecution({ bid: 1.101, ask: 1.1011, price: 1.101, feeAmount: 0 }),
+    now: NOW + 100,
+  });
+  const finalClose = closePaperCfdPosition({
+    state: firstClose.state, positionId: 'position-close-001',
+    closeId: 'position-close-loss-001', eventId: 'event-position-close-loss-001',
+    idempotencyKey: 'idem-position-close-loss-001', lots: 0.5,
+    pnlJournalId: 'journal-loss-second-001',
+    execution: closeExecution({ bid: 1.099, ask: 1.0991, price: 1.099, feeAmount: 0 }),
+    now: NOW + 200,
+  });
+  assert.equal(finalClose.ok, true);
+  assert.equal(finalClose.position.status, 'closed');
+  assert.equal(finalClose.position.remainingLots, 0);
+  assert.equal(finalClose.position.marginRequired, 0);
+  assert.equal(finalClose.positionClose.realisedPnl, -62.5);
+  assert.equal(getPaperCfdAccountSnapshot(finalClose.state).usedMargin, 0);
+  assert.equal(reconcilePaperCfdState(finalClose.state).ok, true);
+});
+
+test('position close commands are idempotent and do not double-post realised P&L', () => {
+  const filled = filledPosition();
+  const input = {
+    state: filled.state, positionId: 'position-close-001',
+    closeId: 'position-close-idem-001', eventId: 'event-position-close-idem-001',
+    idempotencyKey: 'idem-position-close-idem-001', lots: 1,
+    pnlJournalId: 'journal-realised-idem-001',
+    feeJournalId: 'journal-close-fee-idem-001',
+    execution: closeExecution({ bid: 1.101, ask: 1.1011, price: 1.101, feeAmount: 2 }),
+    now: NOW + 100,
+  };
+  const first = closePaperCfdPosition(input);
+  const retry = closePaperCfdPosition({ ...input, state: first.state });
+  assert.equal(retry.ok, true);
+  assert.equal(retry.replayed, true);
+  assert.equal(retry.position.status, 'closed');
+  assert.equal(retry.state.positionCloses.length, 1);
+  assert.equal(retry.state.journals.length, 3);
+  assert.equal(retry.state.events.length, 2);
+});
+
+test('blocks position closes with stale quotes and excessive adverse price deviation', () => {
+  const filled = filledPosition();
+  const stale = closePaperCfdPosition({
+    state: filled.state, positionId: 'position-close-001',
+    closeId: 'position-stale-001', eventId: 'event-position-stale-001',
+    idempotencyKey: 'idem-position-stale-001', lots: 1,
+    pnlJournalId: 'journal-stale-001',
+    execution: {
+      ...closeExecution(),
+      quote: { ...closeExecution().quote, observedAt: new Date(NOW - 10000).toISOString() },
+    },
+    now: NOW,
+  });
+  assert.equal(stale.code, 'QUOTE_STALE');
+  const adverse = closePaperCfdPosition({
+    state: filled.state, positionId: 'position-close-001',
+    closeId: 'position-adverse-001', eventId: 'event-position-adverse-001',
+    idempotencyKey: 'idem-position-adverse-001', lots: 1,
+    pnlJournalId: 'journal-adverse-001',
+    execution: closeExecution({ bid: 1.101, ask: 1.1011, price: 1.09, feeAmount: 0 }),
+    now: NOW + 100,
+  });
+  assert.equal(adverse.code, 'CLOSE_EXECUTION_DEVIATION');
+});
+
+test('position close quantity must respect the CFD lot step and minimum partial volume', () => {
+  const filled = filledPosition();
+  const offStep = closePaperCfdPosition({
+    state: filled.state, positionId: 'position-close-001',
+    closeId: 'position-off-step-001', eventId: 'event-position-off-step-001',
+    idempotencyKey: 'idem-position-off-step-001', lots: 0.015,
+    execution: closeExecution(), now: NOW + 100,
+  });
+  assert.equal(offStep.code, 'POSITION_CLOSE_QUANTITY_INVALID');
+  const belowMinimum = closePaperCfdPosition({
+    state: filled.state, positionId: 'position-close-001',
+    closeId: 'position-min-001', eventId: 'event-position-min-001',
+    idempotencyKey: 'idem-position-min-001', lots: 0.005,
+    execution: closeExecution(), now: NOW + 100,
+  });
+  assert.equal(belowMinimum.code, 'POSITION_CLOSE_QUANTITY_INVALID');
+});
+
+test('tampered closed-position lot history fails reconciliation', () => {
+  const filled = filledPosition();
+  const closed = closePaperCfdPosition({
+    state: filled.state, positionId: 'position-close-001',
+    closeId: 'position-tamper-001', eventId: 'event-position-tamper-001',
+    idempotencyKey: 'idem-position-tamper-001', lots: 0.5,
+    pnlJournalId: 'journal-tamper-001',
+    execution: closeExecution({ feeAmount: 0 }), now: NOW + 100,
+  });
+  const changed = structuredClone(closed.state);
+  changed.positions[0].remainingLots = 0.25;
+  assert.equal(reconcilePaperCfdState(changed).code, 'POSITION_CLOSE_RECONCILIATION_FAILED');
 });
