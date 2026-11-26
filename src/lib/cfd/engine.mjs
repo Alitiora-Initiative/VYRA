@@ -213,8 +213,14 @@ function validateApprovedExecutionPolicy(policy, now = Date.now()) {
       typeof policy.policyId !== 'string' || !policy.policyId.trim() ||
       typeof policy.policyVersion !== 'string' || !policy.policyVersion.trim() ||
       typeof policy.jurisdictionCode !== 'string' || !/^[A-Z]{2}$/.test(policy.jurisdictionCode) ||
-      !policy.clientType || typeof policy.clientType !== 'string') {
-    return fail('EXECUTION_POLICY_MISSING', 'An approved, versioned country and client-type execution policy is required.');
+      typeof policy.clientType !== 'string' || !policy.clientType.trim() ||
+      typeof policy.evidenceUrl !== 'string' || !policy.evidenceUrl.startsWith('https://') ||
+      typeof policy.evidenceReference !== 'string' || policy.evidenceReference.trim().length < 2) {
+    return fail('EXECUTION_POLICY_MISSING', 'An approved, versioned country/client execution policy with source evidence is required.');
+  }
+  const reviewedAt = Date.parse(policy.reviewedAt);
+  if (!Number.isFinite(reviewedAt) || reviewedAt > now) {
+    return fail('EXECUTION_POLICY_EVIDENCE_INVALID', 'Execution policy review evidence must have a valid, non-future review timestamp.');
   }
   const effectiveFrom = Date.parse(policy.effectiveFrom);
   const hasEffectiveUntil = policy.effectiveUntil !== undefined && policy.effectiveUntil !== null;
@@ -304,8 +310,9 @@ export function resolvePaperBrokerageOperatingModel({ policy, netExposureAfterTr
     };
   }
   if (model === 'agency_routed') {
-    if (permissions.agencyRouted !== true || permissions.externalVenueApproved !== true) {
-      return fail('AGENCY_PERMISSION_MISSING', 'Agency routing requires explicit jurisdiction permission and an approved external venue.');
+    if (permissions.agencyRouted !== true || permissions.externalVenueApproved !== true ||
+        permissions.bestExecution !== true || permissions.conflictsControls !== true) {
+      return fail('AGENCY_PERMISSION_MISSING', 'Agency routing requires jurisdiction permission, an approved venue, best-execution and conflicts controls.');
     }
     return {
       ok: true, paperOnly: true, operatingModel: model,
@@ -326,7 +333,7 @@ export function resolvePaperBrokerageOperatingModel({ policy, netExposureAfterTr
   }
   if (model === 'market_maker') {
     if (permissions.principal !== true || permissions.dealing !== true ||
-        permissions.conflictsControls !== true) {
+        permissions.bestExecution !== true || permissions.conflictsControls !== true) {
       return fail('DEALING_PERMISSION_MISSING', 'Market-making requires explicit dealing/principal permission and approved conflicts controls.');
     }
     return {
