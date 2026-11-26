@@ -3,7 +3,7 @@ import { getNeonServer } from '@/lib/neon/server';
 import { isRecord, isSameOriginRequest, jsonError, privateJson } from '@/lib/http';
 import {
   CASE_CATEGORIES, canAccessCase, canChangeLeadStage,
-  canCreateLead, canCreateTask, canUpdateTask,
+  canCreateLead, canCreateTask, canManagePartners, canUpdateTask,
 } from '@/lib/crm/policy.mjs';
 
 export const dynamic = 'force-dynamic';
@@ -168,6 +168,36 @@ export async function POST(request: NextRequest) {
       notice: marketingConsent
         ? 'Marketing consent was captured with a draft policy version. Replace the draft policy version with an approved notice before live outreach.'
         : 'No marketing consent was recorded.',
+    }, 201);
+  }
+
+  if (payload.kind === 'partner') {
+    if (!canManagePartners(role)) return jsonError('Only partner managers and administrators can add partner records.', 403, 'ROLE_FORBIDDEN');
+    const displayName = cleanText(payload.displayName, 120);
+    const partnerType = cleanText(payload.partnerType, 32);
+    const countryCode = payload.countryCode === '' || payload.countryCode === null || payload.countryCode === undefined
+      ? null : validCountryCode(payload.countryCode) ? payload.countryCode.toUpperCase() : false;
+    const notes = cleanText(payload.notes, 600);
+    if (!displayName || displayName.length < 2) return jsonError('Partner name must be at least two characters.');
+    if (!['affiliate','introducing_broker','community','technology_provider','regulated_principal','other'].includes(partnerType ?? '')) {
+      return jsonError('Select a valid partner category.');
+    }
+    if (countryCode === false) return jsonError('Country code must be two letters or left blank.');
+    const { data: partner, error } = await db.from('crm_growth_partners').insert({
+      workspace_id: workspaceId,
+      display_name: displayName,
+      partner_type: partnerType,
+      country_code: countryCode,
+      status: 'research_only',
+      notes,
+      created_by: user.id,
+    }).select('id,display_name,partner_type,country_code,status,legal_entity_verified_at,licence_verified_at,agreement_signed_at,country_scope_approved_at,created_at').single();
+    if (error || !partner) return jsonError('Partner research record could not be saved.', 503, 'CRM_PARTNER_CREATE_FAILED');
+    return privateJson({
+      ok: true,
+      record: partner,
+      audit: 'append_only_database_trigger',
+      notice: 'Partner saved as research only. Legal entity, licence, agreement and country scope remain unverified.',
     }, 201);
   }
 

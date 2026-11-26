@@ -98,9 +98,13 @@ A completed document or software task does not mean VYRA is authorised to conduc
 
 - [x] Build the first AccessGraph jurisdiction/customer-type/product/activity evaluator with versioned evidence, default-deny for unknown jurisdictions and twelve incomplete release gates.
 - [x] Add the Provider Graph with eleven distinct supplier/accountability roles and default `not_verified` state for all research candidates.
-- [~] Add the first staff-only CRM control plane: prospect stages, source/campaign capture, staff roles, task queue, case queue, partner register and append-only audit (feature branch; isolated Neon migration tested, main schema not yet applied).
+- [~] Add a staff-only CRM foundation for prospect stages, source/campaign capture, staff roles, task queue, case queue, partner research and append-only audit (feature branch; isolated Neon migration tested, main schema not yet applied).
+- [~] Add a CFD contract/quote reference schema (disabled by default), no-default country/client margin-policy registry, and tested paper calculations for bid/ask, long/short P&L, leverage caps, progressive margin tiers and reservations (feature branch; no CFD product data seeded).
+- [~] Add versioned country/client execution-model policy registry; separate technology partner, agency, matched-principal, market-maker and hybrid models (feature branch; isolated Neon review branch only).
+- [~] Add paper total-cost venue ranking and STP/systematic-net-residual/partial-internalisation/risk-warehousing simulations (not connected to a provider).
 - [ ] Build a partner capability registry for market data, onboarding, accounts, KYC status, deposits, withdrawals, balances, positions, orders, statements and support.
 - [ ] Build a partner directory with legal entity, regulator, licence, category, scope, official register link and evidence date.
+- [~] Start a provider-sourced Forex/CFD contract specification registry; full instrument catalogue, financing/swaps, corporate actions, sessions and legal client restrictions remain incomplete.
 - [ ] Build a product catalogue with identifier, legal provider, asset class, issuer/manager, currency, domicile, customer restrictions, fees and risks.
 - [x] Add partner-specific country/product eligibility checks and default-deny gates in the existing partner eligibility module.
 - [ ] Add partner-specific country/product allow-lists and emergency disable switches.

@@ -1,12 +1,12 @@
 # VYRA Markets
 
-VYRA is a multi-asset brokerage software foundation designed around distinct market adapters for crypto, equities, FX and commodities. It is a software project—not a licensed brokerage, custodian, exchange or investment adviser.
+VYRA is a Forex and CFD brokerage technology foundation designed for regulated partner-led market access. It is a software project—not a licensed brokerage, custodian, exchange or investment adviser. The existing crypto, equity, FX and commodity spot-market demo is separate from any CFD execution or pricing feed.
 
 ## Current build
 
 - Next.js 16 application with Neon Managed Better Auth email/password sign-in and Neon Auth UI.
 - Neon PostgreSQL database in an isolated Frankfurt project, with a PostgREST-compatible Data API and RLS.
-- Provider-backed market-data adapters: CoinGecko for crypto spot snapshots and Twelve Data for equities, FX and commodities, with free-tier-aware batching/caching.
+- Separate provider-backed spot-market adapters: CoinGecko for crypto snapshots and Twelve Data for equities, FX and commodities, with free-tier-aware batching/caching. These spot feeds are not treated as CFD contract quotes.
 - Quote API that reports provider errors and does not fall back to invented market values.
 - Restricted quote-ingestion database role for market quotes only; it cannot write orders, accounts or ledger entries.
 - Database-backed instrument catalogue and market-quote persistence.
@@ -17,6 +17,8 @@ VYRA is a multi-asset brokerage software foundation designed around distinct mar
 - Live execution adapter contracts with a hard-disabled implementation for each asset class.
 - VYRA Access Graph: versioned country × investor type × product × activity evaluator with source-linked Kenya rules, explicit unassessed markets and twelve default-deny evidence gates.
 - VYRA Provider Graph: eleven accountability roles with source/evidence requirements; current provider candidates remain research-only, uncontracted and disconnected.
+- Read-only Forex/CFD traderoom at /cfd, backed by an enabled-contract registry and fresh source-labelled bid/ask quotes; no sample contracts, spot-price substitution or CFD order submission.
+- A paper-only CFD account and order-lifecycle domain module for synthetic opening balances, idempotent acceptance, margin reservations, partial fills, fee journals, cancellation, expiry, rejection, hash-linked events and reconciliation. This is not yet connected to the CFD API or traderoom.
 - Interactive route simulator at /access-graph, provider map at /provider-graph, and public APIs at GET /api/access-graph and GET /api/provider-graph. These are evidence controls, not legal advice or authorisation.
 
 ## Not yet live
@@ -69,7 +71,8 @@ The SQL migration sets current paper defaults to USD 100,000 starting cash, $10,
 | `GET /api/provider-graph` | Provider-role requirements and verified/unverified relationship state |
 | `GET /api/partners` | Research-only broker candidates; referrals remain disabled |
 | `GET/POST/PATCH /api/crm` | Staff-only prospect CRM, task and operations case queues, partner register and audit history |
-| `GET /api/markets` | Provider quotes, timestamps, quote persistence and scoped limit matching |
+| `GET /api/markets` | Separate spot-market provider quotes, timestamps, quote persistence and scoped limit matching |
+| `GET /api/cfd/market` | Enabled CFD contract specifications and database-authorised fresh bid/ask quotes; no order execution |
 | `GET /api/instruments` | Neon-backed instrument catalogue |
 | `GET /api/me` | Current authenticated user |
 | `GET/PATCH /api/account/profile` | Read/update display name |
@@ -111,9 +114,16 @@ VYRA is being developed first as a **partner-led market-access platform**, not a
 - [Neon migration runbook](docs/NEON_MIGRATION_RUNBOOK.md) — provisioned Neon infrastructure, SQL migration, app integration, security boundaries and remaining tests.
 - [Provider brokerage launch checklist](docs/PROVIDER_BROKERAGE_LAUNCH_CHECKLIST.md) — maps the supplied white-label brokerage checklist to VYRA's real state and launch evidence.
 - [CRM and brokerage operations](docs/CRM_AND_BROKERAGE_OPERATIONS.md) — CRM vendor shortlist, operating queues, launch waves, acquisition/retention analytics and the staff-only CRM foundation.
+- [Forex & CFD product architecture](docs/CFD_PRODUCT_AND_EXECUTION_ARCHITECTURE.md) — CFD contract/margin engine, A-Book/B-Book/Hybrid dealing, Kenya licensing research, CRM/back office, PSP, KYC and provider diligence.
+- [Brokerage operating-model research](docs/BROKERAGE_OPERATING_MODEL_RESEARCH.md) — technology partner, agency/non-dealing, matched principal, market maker, hybrid, STP and newer hedging models.
+- [CFD execution router](docs/CFD_EXECUTION_ROUTER.md) — total-cost venue ranking, progressive margin tiers, systematic hedging, partial internalisation and release controls.
+- [Paper CFD ledger and order lifecycle](docs/PAPER_CFD_LEDGER_AND_ORDER_LIFECYCLE.md) — paper account journal, idempotent order states, reservations, fills, cancellation, expiry, event integrity and reconciliation.
+- [CFD traderoom implementation](docs/CFD_TRADEROOM_IMPLEMENTATION.md) — current read-only contract/quote room, empty-data truth and required controls before paper CFD orders.
 - [App Store listing draft](docs/APP_STORE_LISTING_DRAFT.md) — truthful paper-prototype listing copy and the missing store-eligibility evidence.
 - [GitHub implementation issues](https://github.com/Alitiora-Initiative/VYRA/issues) — trackable delivery backlog.
 
-**CRM implementation status:** the staff-only CRM page and API are being introduced on `feat/brokerage-crm-operations-desk`; the additive CRM migrations have been exercised on an isolated Neon review branch only. The main Neon branch does not yet contain the CRM schema. Staff memberships are not seeded; a database administrator must provision explicit roles after reviewing the PR.
+**Product focus:** VYRA's first brokerage product family is Forex/CFDs. The current branch adds CFD reference data, deterministic paper risk calculations, a read-only CFD traderoom and a paper-only order-lifecycle domain engine. Paper CFD orders are not yet submitted from an API or UI; live execution and real-money CFD accounts remain disabled.
+
+**CRM implementation status:** the staff-only CRM page and API were merged to main in PR #20. The additive CRM and CFD migrations, including role hardening, have been exercised on an isolated Neon review branch only; the main Neon branch does not yet contain those schemas. Staff memberships are not seeded; a database administrator must provision explicit roles after review.
 
 **Current infrastructure truth:** Neon Postgres, Managed Better Auth and the Data API are provisioned; the adapted SQL schema is applied to the dedicated VYRA main branch. The app's active auth/data code uses Neon. The free Render paper-demo service is not yet created. The original Supabase projects 9N8 and Space Ledger remain untouched. Real-money features remain disabled.

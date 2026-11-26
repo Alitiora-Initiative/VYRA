@@ -234,6 +234,7 @@ export default function Home() {
       <Link href="/provider-graph" className="navitem"><BriefcaseBusiness size={18}/>Provider Graph</Link>
       <Link href="/partners" className="navitem"><BriefcaseBusiness size={18}/>Brokerage partners</Link>
       <Link href="/crm" className="navitem"><Users size={18}/>Brokerage CRM</Link>
+      <Link href="/cfd" className="navitem"><ChartNoAxesCombined size={18}/>CFD Traderoom</Link>
       <div className="navlabel">PREFERENCES</div>
       <button className="navitem"><Settings size={18}/>Settings</button>
       <button className="navitem"><CircleHelp size={18}/>Help centre</button>
@@ -242,7 +243,7 @@ export default function Home() {
     <section className="content">
       <header className="topbar"><div className="crumb"><Menu size={18}/><span>Workspace</span><b>/</b>{active}</div><div className="topactions"><button className="iconbtn" onClick={() => void loadMarkets()} aria-label="Refresh market data"><RefreshCw size={16}/></button><button className="iconbtn" aria-label="Notifications"><Bell size={17}/></button>{userEmail ? <><span className="account">{userEmail}</span><form action="/api/logout" method="post"><button className="account" type="submit">Sign out</button></form></> : <Link className="account" href="/login"><LogIn size={16}/>Sign in</Link>}</div></header>
       <div className="page">
-        <div className="welcome"><div><div className="eyebrow"><Globe2 size={14}/> MULTI-ASSET BROKERAGE FOUNDATION</div><h1>Trade with clarity.</h1><p>One workspace for crypto, equities, FX and commodities.</p></div><div className="welcomeActions"><Link className="accessQuickLink" href="/access-graph"><Network size={15}/> Access Graph <ArrowUpRight size={13}/></Link><Link className="accessQuickLink" href="/provider-graph"><BriefcaseBusiness size={15}/> Provider Graph <ArrowUpRight size={13}/></Link><div className="status"><span className="dot"/> PAPER MODE <ShieldCheck size={14}/></div></div></div>
+        <div className="welcome"><div><div className="eyebrow"><Globe2 size={14}/> FOREX & CFD BROKERAGE FOUNDATION</div><h1>Trade with clarity.</h1><p>Built for partner-led Forex & CFD market access, with policy-first account and execution controls.</p></div><div className="welcomeActions"><Link className="accessQuickLink" href="/access-graph"><Network size={15}/> Access Graph <ArrowUpRight size={13}/></Link><Link className="accessQuickLink" href="/provider-graph"><BriefcaseBusiness size={15}/> Provider Graph <ArrowUpRight size={13}/></Link><Link className="accessQuickLink" href="/cfd"><ChartNoAxesCombined size={15}/> CFD Traderoom <ArrowUpRight size={13}/></Link><div className="status"><span className="dot"/> PAPER MODE <ShieldCheck size={14}/></div></div></div>
         <div className="notice"><ShieldCheck size={19}/><div><strong>Paper trading only — live execution is locked</strong><p>Prices below come from connected market-data providers and carry source timestamps. Paper fills use an explicit 5 bps slippage assumption. No client funds or live broker orders are handled.</p></div></div>
         {message && <div className="messageBar" role="status">{message}<button onClick={() => setMessage('')} aria-label="Dismiss"><X size={15}/></button></div>}
         <section className="balance" id="portfolio">
@@ -329,7 +330,7 @@ export default function Home() {
           </form>
         </section></div>}
         <div className="quickLinks"><Link href="/login"><LogIn size={16}/> Account access</Link><a href="/api/health" target="_blank" rel="noreferrer"><ExternalLink size={15}/> API health</a><a href="/api/markets" target="_blank" rel="noreferrer"><ExternalLink size={15}/> Market API</a><span><CreditCard size={16}/> Funding integration not enabled</span><span><Command size={16}/> AI research is not connected</span></div>
-        <footer>VYRA Markets · Multi-asset brokerage software foundation · Paper trading only · Not a licensed brokerage service.</footer>
+        <footer>VYRA Markets · Forex & CFD brokerage software foundation · Paper trading only · Not a licensed brokerage service.</footer>
       </div>
     </section>
   </main>;
