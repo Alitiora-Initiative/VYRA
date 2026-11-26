@@ -41,6 +41,7 @@ The SQL migration sets the current paper defaults to USD 100,000 starting cash, 
 | --- | --- |
 | `GET /api/health` | Runtime configuration and execution gates |
 | `GET /api/execution/readiness` | Provider slots and live execution lock |
+| `GET /api/partners` | Research-only broker candidates; referrals remain disabled |
 | `GET /api/markets` | Provider quotes, timestamps and provider availability |
 | `GET /api/instruments` | Database-backed instrument catalogue |
 | `GET /api/me` | Current authenticated user |
