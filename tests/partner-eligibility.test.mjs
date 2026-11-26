@@ -17,10 +17,17 @@ const gates = {
 const partner = {
   status: 'approved',
   countryCoverageVerifiedForVyra: ['KE'],
-  assetClassesApprovedForVyra: ['equity'],
+  assetClassesApprovedForVyra: ['equity', 'crypto'],
   licenceNumber: 'TEST-LICENCE',
   regulator: 'Test regulator',
   lastVerifiedAt: new Date().toISOString(),
+};
+
+const virtualAssetGates = {
+  virtualAssetActivityClassified: true,
+  virtualAssetRegulatoryRouteApproved: true,
+  virtualAssetPartnerScopeConfirmed: true,
+  virtualAssetPromotionApproved: true,
 };
 
 test('blocks every current research-only partner', () => {
@@ -47,7 +54,7 @@ test('blocks a country without explicit VYRA partner approval', () => {
 
 test('blocks a product not in the partner approved asset-class allow-list', () => {
   const result = evaluatePartnerAccess({
-    partner,
+    partner: { ...partner, assetClassesApprovedForVyra: ['equity'] },
     country: 'KE',
     assetClass: 'crypto',
     gates,
@@ -77,12 +84,57 @@ test('requires every legal, operational and production gate to be true', () => {
   assert.ok(result.reasons.some((reason) => reason.includes('Production access')));
 });
 
-test('allows only a fully verified hypothetical partner record with all gates', () => {
+test('allows only a fully verified hypothetical equity partner record with all gates', () => {
   const result = evaluatePartnerAccess({
     partner,
     country: 'KE',
     assetClass: 'equity',
     gates,
+  });
+  assert.deepEqual(result, { allowed: true, reasons: [] });
+});
+
+test('blocks crypto access without separate VASP activity and promotion gates', () => {
+  const result = evaluatePartnerAccess({
+    partner,
+    country: 'KE',
+    assetClass: 'crypto',
+    gates,
+  });
+  assert.equal(result.allowed, false);
+  assert.equal(result.reasons.length, 4);
+});
+
+test('blocks crypto access when the virtual-asset activity classification is not complete', () => {
+  const result = evaluatePartnerAccess({
+    partner,
+    country: 'KE',
+    assetClass: 'crypto',
+    gates: { ...gates, ...virtualAssetGates, virtualAssetActivityClassified: false },
+  });
+  assert.equal(result.allowed, false);
+  assert.ok(result.reasons.some((reason) => reason.includes('separately classified')));
+});
+
+test('blocks virtual-asset activity even when a caller labels its asset class differently', () => {
+  const result = evaluatePartnerAccess({
+    partner,
+    country: 'KE',
+    assetClass: 'equity',
+    activityClass: 'virtual_asset',
+    gates,
+  });
+  assert.equal(result.allowed, false);
+  assert.equal(result.reasons.length, 4);
+});
+
+test('allows only a hypothetical fully approved crypto arrangement with every separate VASP gate', () => {
+  const result = evaluatePartnerAccess({
+    partner,
+    country: 'KE',
+    assetClass: 'crypto',
+    activityClass: 'virtual_asset',
+    gates: { ...gates, ...virtualAssetGates },
   });
   assert.deepEqual(result, { allowed: true, reasons: [] });
 });
