@@ -18,6 +18,8 @@ VYRA is a multi-asset brokerage software foundation designed around distinct mar
 
 ## Not yet live
 
+VYRA is currently a paper-trading prototype, not the live turnkey brokerage described by some white-label providers. It has no signed broker/provider agreement, production brokerage authorisation, funding rail, custody, dealing/liquidity provider, KYC programme, final legal PDFs, paid affiliate offer or native mobile apps. The supplied provider onboarding checklist is mapped in [Provider Brokerage Launch Checklist](docs/PROVIDER_BROKERAGE_LAUNCH_CHECKLIST.md).
+
 No broker account is connected. No deposits, withdrawals, custody, live trades, real client balances, production suitability/KYC/AML workflow or regulated brokerage operations are enabled. Broker provider slots are architectural boundaries, not working connections. Do not place real broker credentials into the app.
 
 ## Database and authentication
@@ -47,8 +49,9 @@ Required Neon environment:
 - `NEON_AUTH_COOKIE_SECRET` — random secret of at least 32 characters.
 - `NEON_DATA_API_URL` — Neon Data API endpoint for the `vyra` database.
 - `NEON_MARKET_DATA_DATABASE_URL` — pooled PostgreSQL connection string for the restricted `vyra_quote_ingest` role. It can select/insert/update market quotes only; never replace it with the database owner URL.
+- `NEXT_PUBLIC_GTM_ID` — optional Google Tag Manager container ID. GTM loads only after analytics consent; no container ID is currently configured.
 
-The current Neon Auth settings enable email/password sign-up and allow localhost development. Before production deployment, add the exact deployed origin to Neon Auth's trusted origins and verify password-reset email delivery. The password-reset views are handled through Neon Auth UI.
+The current Neon Auth settings require email verification for new email/password accounts, use the shared Neon email provider and allow localhost development. Before staging, add the exact deployed origin to Neon Auth's trusted origins and verify verification/reset email delivery end to end. The password-reset views are handled through Neon Auth UI.
 
 The SQL migration sets current paper defaults to USD 100,000 starting cash, $10,000 maximum order notional, $25,000 maximum position notional, $1,000 daily realised-loss stop and 5 basis points assumed adverse slippage. Existing VYRA users/password hashes did not exist in Supabase, so no user migration was needed; the first real users must register with Neon Auth.
 
@@ -69,6 +72,7 @@ The SQL migration sets current paper defaults to USD 100,000 starting cash, $10,
 | `GET/POST /api/trading/paper/orders` | List or submit paper orders |
 | `POST /api/trading/paper/orders/:id/cancel` | Cancel an open paper order |
 | `POST /api/logout` | Same-origin-protected Neon Auth sign-out |
+| `/legal/aml`, `/legal/payment_policy`, `/legal/term`, `/legal/order_execution`, `/legal/privacy`, `/legal/general_fees` | Publication-status notices only; provider/counsel PDFs have not been supplied |
 
 ## Development checks
 
@@ -96,6 +100,8 @@ VYRA is being developed first as a **partner-led market-access platform**, not a
 - [Brokerage technology vendor map](docs/BROKERAGE_TECH_VENDOR_MAP.md) — brokerage rails, fund/hedge-fund distribution, KYC/AML, custody, data, charting and operational tooling.
 - [Database provider decision](docs/DATABASE_PROVIDER_DECISION.md) — compares Neon, Supabase, Aiven, Firebase, Render, Railway and Turso, with a zero-cost recommendation.
 - [Neon migration runbook](docs/NEON_MIGRATION_RUNBOOK.md) — provisioned Neon infrastructure, SQL migration, app integration, security boundaries and remaining tests.
+- [Provider brokerage launch checklist](docs/PROVIDER_BROKERAGE_LAUNCH_CHECKLIST.md) — maps the supplied white-label brokerage checklist to VYRA's real state and launch evidence.
+- [App Store listing draft](docs/APP_STORE_LISTING_DRAFT.md) — truthful paper-prototype listing copy and the missing store-eligibility evidence.
 - [GitHub implementation issues](https://github.com/Alitiora-Initiative/VYRA/issues) — trackable delivery backlog.
 
-**Current infrastructure truth:** Neon Postgres, Managed Better Auth and the Data API are provisioned. The adapted SQL schema is applied to the dedicated VYRA main branch. The application now uses the Neon Next.js auth integration and Data API client. The Render deployment is not created yet because the intended Render workspace still needs selection; Neon secrets must be set in the target host before the first app deployment. The existing Supabase projects 9N8 and Space Ledger remain untouched. Real-money features remain disabled.
+**Current infrastructure truth:** Neon Postgres, Managed Better Auth and the Data API are provisioned; the adapted SQL schema is applied to the dedicated VYRA main branch. The app's active auth/data code uses Neon. The free Render paper-demo service is not yet created. The original Supabase projects 9N8 and Space Ledger remain untouched. Real-money features remain disabled.
