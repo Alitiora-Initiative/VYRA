@@ -114,7 +114,7 @@ export function getProviderGraphSnapshot() {
       productionApproved: 0,
       capabilitiesVerified: 0,
     },
-    invariant: 'A provider's API or marketing page does not establish VYRA eligibility, regulatory permission, custody, execution, client-money authority or a signed agreement.',
+    invariant: "A provider's API or marketing page does not establish VYRA eligibility, regulatory permission, custody, execution, client-money authority or a signed agreement.",
   };
 }
 
