@@ -65,6 +65,7 @@ The SQL migration sets current paper defaults to USD 100,000 starting cash, $10,
 | `GET /api/ready` | Dependency readiness: Neon Auth, Data API, database and quote-writer configuration; returns 503 until app dependencies are ready |
 | `GET /api/execution/readiness` | Provider slots and live execution lock |
 | `GET /api/access-graph` | Versioned public jurisdiction/product/activity rulepack and evidence sources |
+| `GET /api/provider-graph` | Provider-role requirements and verified/unverified relationship state |
 | `GET /api/partners` | Research-only broker candidates; referrals remain disabled |
 | `GET /api/markets` | Provider quotes, timestamps, quote persistence and scoped limit matching |
 | `GET /api/instruments` | Neon-backed instrument catalogue |
@@ -93,7 +94,7 @@ See `docs/ARCHITECTURE.md`, `docs/PRODUCT.md`, `docs/SECURITY.md`, `docs/LEDGER.
 
 VYRA is being developed first as a **partner-led market-access platform**, not as an unlicensed broker. The intended first model is for regulated partners to own the customer brokerage/fund account, onboarding and KYC decisions, customer money, custody and execution, while VYRA provides approved software, discovery and hand-off functions. This is a target model, not a signed agreement or regulatory approval.
 
-- [Hackathon and investor thesis](docs/HACKATHON_AND_INVESTOR_THESIS.md) — product wedge, AccessGraph moat, five-minute demo script, customer model, investor proof points and roadmap.
+- [Hackathon and investor thesis](docs/HACKATHON_AND_INVESTOR_THESIS.md) — product wedge, AccessGraph and Provider Graph, five-minute demo script, customer model, investor proof points and roadmap. — product wedge, AccessGraph moat, five-minute demo script, customer model, investor proof points and roadmap.
 - [Brokerage master plan](docs/BROKERAGE_MASTER_PLAN.md) — detailed operating model, Kenya and international regulatory analysis, broker and institutional fund-platform comparisons (including alternatives/hedge funds), architecture, document pack, risk register and phased roadmap.
 - [Brokerage flowcharts](docs/BROKERAGE_FLOWCHARTS.md) — regulatory gates, customer hand-off, future order lifecycle, data/privacy boundary, reconciliation and deployment.
 - [Brokerage build checklist](docs/BROKERAGE_BUILD_CHECKLIST.md) — staged engineering, legal, partner and launch tasks.
