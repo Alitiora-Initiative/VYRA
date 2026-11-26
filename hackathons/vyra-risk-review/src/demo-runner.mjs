@@ -23,7 +23,19 @@ export class VYRAOfflineInferenceRunner {
   async run(request) {
     const call = this.calls++;
     const roles = ['evidence-scout', 'route-analyst', 'independent-auditor'];
-    const role = roles[call] ?? 'unexpected-extra-call';
+    let contextDump = '';
+    try {
+      contextDump = JSON.stringify(request?.context ?? {});
+    } catch {
+      contextDump = String(request?.context ?? '');
+    }
+    const role = contextDump.includes('ROLE: evidence-scout')
+      ? 'evidence-scout'
+      : contextDump.includes('ROLE: route-analyst')
+        ? 'route-analyst'
+        : contextDump.includes('Audit the two concurrent analyst reports')
+          ? 'independent-auditor'
+          : (roles[call] ?? 'unexpected-extra-call');
     const startedAt = Date.now();
     this.active += 1;
     this.maxInFlight = Math.max(this.maxInFlight, this.active);
@@ -88,6 +100,7 @@ export class VYRAOfflineInferenceRunner {
     return {
       mode: 'offline-scripted-demo',
       modelProviderCalls: 0,
+      mode: 'offline-scripted-demo',
       completedCalls: this.calls,
       maxConcurrentCalls: this.maxInFlight,
       timeline: [...this.timeline],
