@@ -190,3 +190,35 @@ Engineering and commercial implications:
 - Ask CMA for the applicable VASP broker/exchange process; ask CBK only for wallet/payment/stablecoin functions.
 - No VYRA crypto partner is verified, contracted or production connected.
 - The full breakdown and required controls are in [KENYA_VASP_2026_ADDENDUM.md](KENYA_VASP_2026_ADDENDUM.md).
+
+
+## 10. Institutional fund-distribution platforms and hedge-fund access
+
+These platforms are separate from ordinary brokerage API providers. They primarily describe B2B relationships with wealth managers, advisers, banks, institutional distributors and fund houses. VYRA should not assume direct start-up access or a retail affiliate role.
+
+| Provider | Official evidence | Potential role | Unresolved eligibility |
+|---|---|---|---|
+| iCapital Marketplace | https://marketplace.icapital.com/ | Platform connecting wealth managers and asset managers to alternatives; provider reported 1,358+ asset managers, 2,644 funds, 60 integrated partners and $1.2T+ global platform assets as of 31 July 2026 | Must confirm whether an African/Kenyan distributor or technology vendor can participate, investor restrictions, countries, legal distributor and fees |
+| CAIS | https://www.caisgroup.com/financial-advisor/cais-platform ; https://www.caisgroup.com/investment-solutions/alternative-investments | Adviser-oriented access to private markets, hedge funds and structured notes with pre/post-trade workflows and education | Must confirm eligible adviser/distributor status, country coverage, investor categories, solicitation and compensation rules |
+| Allfunds | https://allfunds.com/en/fund-houses/ ; https://allfunds.com/en/about | Institutional fund distribution, dealing and wealthtech network; provider reports €1.97T AUA, >900 distributor contracts, >19,000 professional users, >200,000 funds/ETFs, as of 30 Sep 2026 | Determine whether VYRA can be technology vendor or access route through a Kenyan licensed distributor; confirm dealing, nominee/omnibus and country rules |
+| IBKR Capital Introduction | https://portal.interactivebrokers.com/en/accounts/hedge-fund-onboarding.php | Online capital introduction connecting eligible hedge funds that use IBKR as principal prime broker with eligible IBKR customers | Public terms state funds need ≥$3m AUM and one-year audited track record or one year trading through IBKR; investors are Accredited Investors and Qualified Purchasers. Confirm whether an approved partner can use this channel |
+| FNZ | https://www.fnz.com/wealth-platform ; https://www.fnz.com/wealth-management-platforms | Enterprise wealth infrastructure integrating client accounts, administration, custody, clearing, execution and reporting | Enterprise procurement / regulated institution model, availability, scope, cost and minimum scale |
+
+### Interpretation
+- iCapital and CAIS are the most relevant research candidates for alternative/private-market/hedge-fund access, but they are adviser/wealth-management ecosystems, not open consumer broker affiliate schemes.
+- Allfunds is more relevant for mainstream mutual-fund/ETF distribution and an established institutional distribution relationship.
+- IBKR's Capital Introduction service is conditional on both fund and investor eligibility, not a public fund listing.
+- FNZ is a possible enterprise infrastructure benchmark and future technology/vendor discussion, not a retail-referral product.
+- None of these providers has confirmed VYRA's eligibility or has partnered with VYRA. No fund or hedge-fund offer is available through VYRA.
+
+## 11. Questions for fund-distribution platforms
+1. Does the platform accept distributors, software vendors or only regulated financial institutions?
+2. What licence or appointment must the distributing firm have in Kenya and each target country?
+3. Can a Kenyan entity or Kenyan resident investor participate, and through which legal entity?
+4. Which fund types are available: approved CIS, UCITS, ETFs, private equity, private credit, hedge funds, structured notes or other products?
+5. Which investor category is eligible, and who verifies it?
+6. Who is the legal offeror, distributor, placement agent, fund manager, administrator, custodian and registrar?
+7. Who handles suitability/appropriateness, subscriptions, redemptions, AML, reporting and complaints?
+8. Can VYRA provide only UI/technology, and if so, what data and outsourcing approvals are required?
+9. Are paid introductions or transaction-linked compensation permitted and what disclosures apply?
+10. What are minimum scale, AUM, account counts, setup fees, subscription fees, platform charges and exit requirements?
