@@ -102,6 +102,15 @@ A completed document or software task does not mean VYRA is authorised to conduc
 - [~] Add a CFD contract/quote reference schema (disabled by default), no-default country/client margin-policy registry, and tested paper calculations for bid/ask, long/short P&L, leverage caps, progressive margin tiers and reservations (feature branch; no CFD product data seeded).
 - [~] Add versioned country/client execution-model policy registry; separate technology partner, agency, matched-principal, market-maker and hybrid models (feature branch; isolated Neon review branch only).
 - [~] Add paper total-cost venue ranking and STP/systematic-net-residual/partial-internalisation/risk-warehousing simulations (not connected to a provider).
+
+- [~] Add paper CFD account, order lifecycle and private persistence schema: synthetic account journal, idempotent acceptance, margin/fee reservations, partial fills, fill fees, cancel/expire/reject, price/lot-step checks, hash-linked events and reconciliation (domain engine and isolated review-branch migrations only; no API or UI integration).
+- [~] Add partial/full paper CFD position closure, realised profit/loss and close-fee journals, margin release and remaining-position re-marking (domain function and isolated review-branch schema only; no API, UI or database service integration).
+- [ ] Build transactional Neon repositories for account/order/fill/close/ledger events using database transactions, row-level locks, unique idempotency constraints and safe replay.
+- [ ] Add authenticated CFD paper APIs and connect the CFD traderoom order preview, submit, open orders, cancel and close controls to the transactional service.
+- [ ] Add PostgreSQL integration tests for duplicate/concurrent submissions, duplicate fills, concurrent partial closes, restart recovery, journal posting and reconciliation; keep client roles denied.
+- [ ] Add position mark-to-market refresh, realised/unrealised P&L reconciliation, multi-currency conversion and stale-price close-only protection.
+- [ ] Add funding/swap calendar, triple-rollover rules where applicable, dividends, corporate actions and contract expiry/roll rules from the selected provider.
+- [ ] Add margin-call state, iterative close-out liquidation, wait-for-final-order-state, account revaluation, restart-safe recovery and a close-only/kill-switch path.
 - [ ] Build a partner capability registry for market data, onboarding, accounts, KYC status, deposits, withdrawals, balances, positions, orders, statements and support.
 - [ ] Build a partner directory with legal entity, regulator, licence, category, scope, official register link and evidence date.
 - [~] Start a provider-sourced Forex/CFD contract specification registry; full instrument catalogue, financing/swaps, corporate actions, sessions and legal client restrictions remain incomplete.
